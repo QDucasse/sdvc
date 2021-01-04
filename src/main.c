@@ -46,20 +46,30 @@ static char* readFile(const char* path) {
 /* Interpret a given file */
 static void scanFile(const char* path) {
   char* source = readFile(path);
-  // Scan the actual file
+  initScanner(source);
+  Token token;
+  for (;;) {
+    token = scanToken();
+    printToken(token);
+    if (token.type == TOKEN_EOF) {
+      printf("File scanned\n");
+      break;
+    }
+
+  }
   free(source);
 
 }
 
 /* ==================================
-              MAIN
+               MAIN
 ====================================*/
 
 int main(int argc, const char* argv[]) {
   if (argc == 2) {
     scanFile(argv[1]);
   } else {
-    fprintf(stderr, "Usage: sdvu [path]\n");
+    fprintf(stderr, "Usage: sdvu path\n");
     exit(64);
   }
   return 0;

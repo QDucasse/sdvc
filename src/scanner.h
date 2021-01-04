@@ -17,7 +17,7 @@ typedef enum {
   TOKEN_IDENTIFIER, TOKEN_TEMP_IDENTIFIER, TOKEN_NUMBER,
 
   /* Keywords */
-  TOKEN_AND, TOKEN_ASYNC, TOKEN_OR, TOKEN_EFFECT,
+  TOKEN_AND, TOKEN_OR, TOKEN_EFFECT,
   TOKEN_FALSE, TOKEN_GUARD_BLOCK, TOKEN_GUARD_COND,
   TOKEN_PROCESS, TOKEN_SYSTEM, TOKEN_TRANSIENT,
   TOKEN_TRUE,
@@ -40,5 +40,6 @@ typedef struct {
 
 void initScanner(const char* source);
 Token scanToken();
+void printToken(Token token);
 
 #endif

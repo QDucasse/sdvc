@@ -4,12 +4,17 @@
 #include "common.h"
 #include "scanner.h"
 
+/* ==================================
+        STRUCTS AND GLOBALS
+=================================== */
+
 typedef struct {
   const char* start;   /* Start of the lexem being scanned */
   const char* current; /* Current character being scanned */
   int line;            /* Line number for error reporting */
 } Scanner;
 
+/* Scanner singleton */
 Scanner scanner;
 
 void initScanner(const char* source) {
@@ -146,13 +151,7 @@ static TokenType checkKeyword(int start, int length, const char* rest, TokenType
 /* Define the identifier type, by comparing it to keywords */
 static TokenType identifierType() {
   switch (scanner.start[0]) {
-    case 'a':
-      if (scanner.current - scanner.start > 1) {
-        switch (scanner.start[1]) {
-          case 'n': return checkKeyword(2, 1, "d", TOKEN_AND);         // and
-          case 's': return checkKeyword(2, 3, "ync", TOKEN_ASYNC);     // async
-        }
-      }
+    case 'a': return checkKeyword(1, 2, "nd", TOKEN_AND); // and
     case 'b':
       if (scanner.current - scanner.start > 1) {
         switch (scanner.start[1]) {
@@ -160,18 +159,18 @@ static TokenType identifierType() {
           case 'y': return checkKeyword(2, 2, "te", TOKEN_BYTE);       // byte
         }
       }
-    case 'f': return checkKeyword(1, 3, "alse", TOKEN_FALSE);          // false
+    case 'f': return checkKeyword(1, 4, "alse", TOKEN_FALSE);          // false
     case 'g':
       if (scanner.current - scanner.start > 5) {
         switch (scanner.start[5]) {
-          case 'b': return checkKeyword(5, 4, "lock", TOKEN_GUARD_BLOCK);     // guardblock
-          case 'c': return checkKeyword(5, 8, "ondition", TOKEN_GUARD_COND);  // guardcondition
+          case 'b': return checkKeyword(6, 4, "lock", TOKEN_GUARD_BLOCK);     // guardblock
+          case 'c': return checkKeyword(6, 8, "ondition", TOKEN_GUARD_COND);  // guardcondition
         }
       }
     case 'i': return checkKeyword(1, 2, "nt", TOKEN_INT);              // int
     case 'o': return checkKeyword(1, 1, "r", TOKEN_OR);                // or
-    case 'p': return checkKeyword(1, 5, "rocess", TOKEN_PROCESS);      // process
-    case 's': return checkKeyword(1, 4, "tate", TOKEN_STATE);
+    case 'p': return checkKeyword(1, 6, "rocess", TOKEN_PROCESS);      // process
+    case 's': return checkKeyword(1, 4, "tate", TOKEN_STATE);          // type
     case 't':
       if (scanner.current - scanner.start > 1) {
         switch (scanner.start[1]) {
@@ -253,4 +252,35 @@ Token scanToken() {
 
 
   return errorToken("Unexpected character.");
+}
+
+/* ==================================
+           TOKEN PRINTING
+====================================*/
+
+static const char* TokenNames[] = {
+ "TOKEN_LEFT_PAREN", "TOKEN_RIGHT_PAREN",
+ "TOKEN_LEFT_BRACE", "TOKEN_RIGHT_BRACE",
+ "TOKEN_COMMA", "TOKEN_DOT", "TOKEN_MINUS",
+ "TOKEN_PLUS", "TOKEN_SEMICOLON", "TOKEN_SLASH",
+ "TOKEN_STAR", "TOKEN_MODULO",
+
+ "TOKEN_EQUAL", "TOKEN_EQUAL_EQUAL",
+
+ "TOKEN_IDENTIFIER", "TOKEN_TEMP_IDENTIFIER", "TOKEN_NUMBER",
+
+ "TOKEN_AND", "TOKEN_OR", "TOKEN_EFFECT",
+ "TOKEN_FALSE", "TOKEN_GUARD_BLOCK", "TOKEN_GUARD_COND",
+ "TOKEN_PROCESS", "TOKEN_SYSTEM", "TOKEN_TRANSIENT",
+ "TOKEN_TRUE",
+
+ "TOKEN_INT", "TOKEN_BOOL", "TOKEN_BYTE", "TOKEN_STATE", "TOKEN_TUPLE",
+
+ "TOKEN_ERROR",
+ "TOKEN_EOF"
+};
+
+/* Print the name of the current token */
+void printToken(Token token) {
+  printf("%s\n", TokenNames[token.type]);
 }
