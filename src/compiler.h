@@ -2,12 +2,15 @@
 #define sdvu_compiler_h
 
 #include "scanner.h"
+#include "string.h"
 #include "table.h"
 #include "value.h"
 
 /* ==================================
         STRUCTS AND GLOBALS
 =================================== */
+
+#define REG_NUMBER 16
 
 /* Parser structure */
 typedef struct {
@@ -20,11 +23,21 @@ typedef struct {
 /* Parser singleton */
 Parser parser;
 
+/* Register structure */
+typedef struct {
+  String* varName; /* Name of the variable in the register */
+  Value* varValue; /* Value of the variable in the register */
+  int number; /* Register number */
+} Register;
+
 /* Compiler structure */
 typedef struct {
   Table globals; /* Hash table of the global values (configuration input and output) */
-  // list of registers (not needed?)
-  int topRegister; /* Index of the first available register */
+
+  Register registers[REG_NUMBER]; /* Array of registers behaving like a stack */
+  Register* topRegister; /* Pointer to the first register available */
+
+  uint16_t* instructions; /* Array of instructions */
 } Compiler;
 
 /* Compiler singleton */
@@ -33,5 +46,8 @@ Compiler compiler;
 /* Allocation/Deallocation routine */
 void initCompiler();
 void freeCompiler();
+
+/* Compile routine */
+bool compile(const char* source);
 
 #endif

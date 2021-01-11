@@ -68,7 +68,7 @@ static void scanFile(const char* path) {
 
 int main(int argc, const char* argv[]) {
   if (argc == 2) {
-    scanFile(argv[1]);
+    compile(argv[1]);
   } else {
     fprintf(stderr, "Usage: sdvu path\n");
     exit(64);

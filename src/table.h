@@ -2,14 +2,8 @@
 #define sdvu_table_h
 
 #include "common.h"
+#include "string.h"
 #include "value.h"
-
-/* Structure of a string (object) */
-typedef struct {
-  int length;  /* Length of the string */
-  char* chars; /* Charaters composing the string */
-  uint32_t hash; /* Hash of the string */
-} String;
 
 /* Entry representation, key and value */
 typedef struct {

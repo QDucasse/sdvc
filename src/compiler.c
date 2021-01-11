@@ -60,15 +60,6 @@ static void errorAtCurrent(const char* message) {
 }
 
 /* ==================================
-      CONSTRUCTION - DESTRUCTION
-=================================== */
-
-// void initCompiler
-
-// void freeCompiler
-
-
-/* ==================================
         FRONT END - PARSING
 =================================== */
 
@@ -116,3 +107,17 @@ static bool match(TokenType type) {
 /* ==================================
       BACK END - INSTRUCTIONS
 =================================== */
+
+/* ==================================
+          COMPILE ROUTINE
+=================================== */
+bool compile(const char* source) {
+  /* Initialize scanner */
+  initScanner(source);
+
+  /* Initialize parser error handling */
+  parser.hadError  = false;
+  parser.panicMode = false;
+
+  return parser.hadError;
+}
