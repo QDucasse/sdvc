@@ -17,7 +17,7 @@ static char* readFile(const char* path) {
     exit(74);
   }
 
-  /* Look for the end of th file */
+  /* Look for the end of the file */
   fseek(file, 0L, SEEK_END);
   /* Number of bytes since the start of the file */
   size_t fileSize = ftell(file);
@@ -52,6 +52,7 @@ static void scanFile(const char* path) {
     token = scanToken();
     printToken(token);
     if (token.type == TOKEN_EOF) {
+      printf("%s: ", path);
       printf("File scanned\n");
       break;
     }

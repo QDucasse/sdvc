@@ -7,23 +7,22 @@
 #include "scanner.h"
 
 /* ==================================
-        STRUCTS AND GLOBALS
+      ALLOCATION - DEALLOCATION
 =================================== */
 
-typedef struct {
-  Token current;  /* current Token being investigated */
-  Token previous; /* next Token being investigated */
-  bool hadError;  /* */
-  bool panicMode; /* To avoid cascading errors */
-} Parser;
+/* Compiler initialization */
+void initCompiler() {
 
-/* Parser singleton */
-Parser parser;
+}
+
+/* Compiler destruction */
+void freeCompiler() {
+
+}
 
 /* ==================================
            ERROR HANDLING
 =================================== */
-
 
 /* Notifies the error with a message */
 static void errorAt(Token* token, const char* message) {
@@ -59,6 +58,15 @@ static void error(const char* message) {
 static void errorAtCurrent(const char* message) {
   errorAt(&parser.current, message);
 }
+
+/* ==================================
+      CONSTRUCTION - DESTRUCTION
+=================================== */
+
+// void initCompiler
+
+// void freeCompiler
+
 
 /* ==================================
         FRONT END - PARSING

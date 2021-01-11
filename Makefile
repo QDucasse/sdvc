@@ -6,6 +6,7 @@
 # SOURCE_DIR   Directory where source files and headers are found.
 
 CFLAGS := -std=c99 -Wall -Werror -Wno-unused-parameter
+BIN_INSTALL := /usr/local/bin/
 
 # Mode configuration.
 ifeq ($(MODE),debug)
@@ -23,6 +24,11 @@ OBJECTS := $(addprefix $(BUILD_DIR)/$(NAME)/, $(notdir $(SOURCES:.c=.o)))
 
 # Targets ---------------------------------------------------------------------
 
+default: build/$(NAME)
+
+# Install the executable in the bin folder
+install: build/$(NAME)
+	install build/$(NAME) $(BIN_INSTALL)$(NAME)
 
 # Link the interpreter.
 build/$(NAME): $(OBJECTS)
@@ -40,3 +46,6 @@ $(BUILD_DIR)/$(NAME)/%.o: $(SOURCE_DIR)/%.c $(HEADERS)
 
 clean:
 	rm -rf build/
+
+uninstall:
+	rm -rf $(BIN_INSTALL)$(NAME)

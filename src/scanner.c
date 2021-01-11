@@ -17,6 +17,7 @@ typedef struct {
 /* Scanner singleton */
 Scanner scanner;
 
+/* Scanner initialization */
 void initScanner(const char* source) {
   scanner.start = source;
   scanner.current = source;
@@ -163,8 +164,10 @@ static TokenType identifierType() {
     case 'g':
       if (scanner.current - scanner.start > 5) {
         switch (scanner.start[5]) {
-          case 'b': return checkKeyword(6, 4, "lock", TOKEN_GUARD_BLOCK);     // guardblock
-          case 'c': return checkKeyword(6, 8, "ondition", TOKEN_GUARD_COND);  // guardcondition
+          case 'b':
+          case 'B': return checkKeyword(6, 4, "lock", TOKEN_GUARD_BLOCK);     // guardblock
+          case 'c':
+          case 'C': return checkKeyword(6, 8, "ondition", TOKEN_GUARD_COND);  // guardcondition
         }
       }
     case 'i': return checkKeyword(1, 2, "nt", TOKEN_INT);              // int
