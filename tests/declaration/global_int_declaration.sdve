@@ -1,0 +1,7 @@
+int plip = 20304;  // No error
+int = 20304;       // Missing name
+int plip 20304;    // Missing '='
+int plip = -32770; // Underflow
+int plip = 32770;  // Overflow
+int plip = false;  // Wrong initialization type
+int plip = 20304   // Missing ';'

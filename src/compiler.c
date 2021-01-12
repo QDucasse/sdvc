@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "common.h"
@@ -161,13 +162,33 @@ static void globalByteDeclaration() {
     if ((value < 0) || (value > 255)) {
       error("Byte variable must be initialized with a number between 0 and 255.");
     }
-    varValue = NUMBER_VAL(value);
+    varValue = INT_VAL(value);
   } else {
-    error("Byte variable must be initialized with a number between 0 and 255.");
+    error("Wrong type, byte variable must be initialized with a number between 0 and 255.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue, VAL_NUMBER);
+  tableSet(&compiler.globals, varName, varValue, VAL_BYTE);
+}
+
+/* Process int global variable */
+static void globalIntDeclaration() {
+  /* Process name and '=' */
+  String* varName = globalName();
+  /* Process Value */
+  Value varValue;
+  if (match(TOKEN_NUMBER) || match(TOKEN_MINUS)) {
+    double value = strtod(parser.previous.start, NULL);
+    if ((value < INT16_MIN) || (value > INT16_MAX)) {
+      error("Int variable must be initialized with a number between -32768 and 32767.");
+    }
+    varValue = INT_VAL(value);
+  } else {
+    error("Wrong type, an int variable must be initialized with a number between -32768 and 32767.");
+  }
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+  /* Add to the globals table */
+  tableSet(&compiler.globals, varName, varValue, VAL_INT);
 }
 
 
@@ -179,7 +200,7 @@ static void globalDeclaration() {
   } else if (match(TOKEN_BYTE)) {
     globalByteDeclaration();
   } else if (match(TOKEN_INT)) {
-    /* Process int definition */
+    globalIntDeclaration();
   } else if (match(TOKEN_STATE)) {
     /* Process state definition */
   } else {

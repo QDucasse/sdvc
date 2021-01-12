@@ -8,7 +8,7 @@ typedef enum {
   VAL_NIL,
   VAL_BOOL,
   VAL_BYTE,
-  VAL_NUMBER,
+  VAL_INT,
 } ValueType;
 
 typedef struct {
@@ -30,16 +30,16 @@ typedef struct { /* Dynamic array */
 #define IS_NIL(value)     ((value).type == VAL_NIL)
 #define IS_BOOL(value)    ((value).type == VAL_BOOL)
 #define IS_BYTE(value)    ((value).type == VAL_BYTE)
-#define IS_NUMBER(value)  ((value).type == VAL_NUMBER)
+#define IS_INT(value)  ((value).type == VAL_INT)
 /* Cast macros */
 #define AS_BOOL(value)    ((value).as.boolean)
 #define AS_BYTE(value)    ((value).as.byte)
-#define AS_NUMBER(value)  ((value).as.number)
+#define AS_INT(value)  ((value).as.number)
 /* C to Compiler Macro */
 #define NIL_VAL            ((Value){VAL_NIL, {.number = 0}})
 #define BOOL_VAL(value)    ((Value){VAL_BOOL, {.boolean = value}})
 #define BYTE_VAL(value)    ((Value){VAL_BYTE, {.byte = value}})
-#define NUMBER_VAL(value)  ((Value){VAL_NUMBER, {.number = value}})
+#define INT_VAL(value)  ((Value){VAL_INT, {.number = value}})
 
 void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
