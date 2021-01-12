@@ -1,0 +1,7 @@
+byte plip = 156;   // No error
+byte = 156;        // Missing name
+byte plip 156;     // Missing '='
+byte plip = -3;    // Underflow
+byte plip = 278;   // Overflow
+byte plip = false; // Wrong initialization type
+byte plip = 156  // Missing ';'

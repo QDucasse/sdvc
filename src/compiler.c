@@ -113,10 +113,12 @@ static bool match(TokenType type) {
 /* Declarations
 ============ */
 
-/* Process bool global variable */
-static void globalBoolDeclaration() {
+// Global
+// ======
+
+/* Process global name */
+static String* globalName() {
   String* varName;
-  Value varValue;
   /* Consume name */
   if (check(TOKEN_IDENTIFIER)) {
     /* Process identifier as string */
@@ -126,6 +128,16 @@ static void globalBoolDeclaration() {
   consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
   /* Process value */
   consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
+
+  return varName;
+}
+
+/* Process bool global variable */
+static void globalBoolDeclaration() {
+  /* Process name and '=' */
+  String* varName = globalName();
+  /* Process Value */
+  Value varValue;
   if (match(TOKEN_TRUE)) {
     varValue = BOOL_VAL(true);
   } else if (match(TOKEN_FALSE)) {
@@ -138,22 +150,45 @@ static void globalBoolDeclaration() {
   tableSet(&compiler.globals, varName, varValue, VAL_BOOL);
 }
 
+/* Process bool global variable */
+static void globalByteDeclaration() {
+  /* Process name and '=' */
+  String* varName = globalName();
+  /* Process Value */
+  Value varValue;
+  if (match(TOKEN_NUMBER)) {
+    double value = strtod(parser.previous.start, NULL);
+    if ((value < 0) || (value > 255)) {
+      error("Byte variable must be initialized with a number between 0 and 255.");
+    }
+    varValue = NUMBER_VAL(value);
+  } else {
+    error("Byte variable must be initialized with a number between 0 and 255.");
+  }
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+  /* Add to the globals table */
+  tableSet(&compiler.globals, varName, varValue, VAL_NUMBER);
+}
+
+
 /* Declaration of a global variable */
 static void globalDeclaration() {
   /* Consume type */
   if (match(TOKEN_BOOL)) {
     globalBoolDeclaration();
   } else if (match(TOKEN_BYTE)) {
-    /* Process byte definition */
+    globalByteDeclaration();
   } else if (match(TOKEN_INT)) {
     /* Process int definition */
   } else if (match(TOKEN_STATE)) {
     /* Process state definition */
+  } else {
+    error("Global declaration must start with a type.");
   }
-  /* Consume name */
-  /* Check if the name is different from t_* */
-  /* Consume initial value */
 }
+
+// Temporary
+// =========
 
 /* Declaration of a temporary variable */
 // static void tempDeclaration()
