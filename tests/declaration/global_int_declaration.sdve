@@ -1,4 +1,5 @@
 int plip = 20304;  // No error
+plip = 20304;      // Missing type
 int = 20304;       // Missing name
 int plip 20304;    // Missing '='
 int plip = -32770; // Underflow

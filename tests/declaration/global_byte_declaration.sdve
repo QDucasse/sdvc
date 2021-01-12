@@ -1,4 +1,5 @@
 byte plip = 156;   // No error
+plip = 156;        // Missing type
 byte = 156;        // Missing name
 byte plip 156;     // Missing '='
 byte plip = -3;    // Underflow
