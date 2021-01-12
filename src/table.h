@@ -9,6 +9,7 @@
 typedef struct {
   String* key;
   Value value;
+  ValueType type;
 } Entry;
 
 /* Table structure, dynamic array of entries */
@@ -20,8 +21,8 @@ typedef struct {
 
 void initTable(Table* table);
 void freeTable(Table* table);
-bool tableGet(Table* table, String* key, Value* value);
-bool tableSet(Table* table, String* key, Value value);
+bool tableGet(Table* table, String* key, Value* value, ValueType* type);
+void tableSet(Table* table, String* key, Value value, ValueType type);
 bool tableDelete(Table* table, String* key);
 void tableAddAll(Table* from, Table* to);
 

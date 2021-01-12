@@ -5,6 +5,8 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "string.h"
+#include "table.h"
 
 /* ==================================
       ALLOCATION - DEALLOCATION
@@ -90,7 +92,7 @@ static void consume(TokenType type, const char* message) {
   errorAtCurrent(message);
 }
 
-/* Checks that the current token is of a givent type */
+/* Checks that the current token is of a given type */
 static bool check(TokenType type) {
   return parser.current.type == type;
 }
@@ -108,16 +110,116 @@ static bool match(TokenType type) {
       BACK END - INSTRUCTIONS
 =================================== */
 
+/* Declarations
+============ */
+
+static void globalBoolDeclaration() {
+  String* varName;
+  Value varValue;
+  /* Consume name */
+  if (check(TOKEN_IDENTIFIER)) {
+    /* Process identifier as string */
+    varName = allocateString(parser.current.start, parser.current.length);
+    /* Add to global table */
+  }
+  consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
+  /* Process value */
+  consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
+  if (match(TOKEN_TRUE)) {
+    varValue = BOOL_VAL(true);
+  } else if (match(TOKEN_FALSE)) {
+    varValue = BOOL_VAL(false);
+  } else {
+    error("Boolean variable must be initialized with either 'true' or 'false'.");
+  }
+
+  /* Add to the globals table */
+  tableSet(&compiler.globals, varName, varValue, VAL_BOOL);
+}
+
+/* Declaration of a global variable */
+static void globalDeclaration() {
+  /* Consume type */
+  if (match(TOKEN_BOOL)) {
+    globalBoolDeclaration();
+  } else if (match(TOKEN_BYTE)) {
+    /* Process byte definition */
+  } else if (match(TOKEN_INT)) {
+    /* Process int definition */
+  } else if (match(TOKEN_STATE)) {
+    /* Process state definition */
+  }
+  /* Consume name */
+  /* Check if the name is different from t_* */
+  /* Consume initial value */
+}
+
+/* Declaration of a temporary variable */
+// static void tempDeclaration()
+/* Consume type from temp scanner */
+
+/* Assignments
+=========== */
+
+/* Check variable name to determine if it is a temporary variable or not */
+// static void assignment()
+
+
+// static void globalAssignment()
+
+/* Assign a value to a given temporary variable and store it in a register */
+// static void tempAssignment()
+/* Consume name from process scanner */
+/* Consume type from temp scanner (or call tempDeclaration?) */
+/* Store in the top register OR lowest freed */
+
+/* Expressions
+=========== */
+
+// static void binary()
+
+// static void unary()
+
+// static void
+
+/* Process
+======= */
+
+/* Process declaration */
+// static void process()
+/* Consume process token */
+/* Consume process name */
+/* Go through guardblock */
+/* Go through guardcondition */
+/* Emit jump to end of effect */
+/* Go through effect */
+/* Patch jump */
+
+/* Guardblock declaration */
+// static void guardblock()
+/* Consume guardblock token */
+/* Consume variable name */
+
+/* Guardcondition declaration */
+// static void guardcondition()
+
+
+/* Effect declaration */
+// static void effect()
+
 /* ==================================
           COMPILE ROUTINE
 =================================== */
-bool compile(const char* source) {
+bool compile(char* source) {
   /* Initialize scanner */
   initScanner(source);
 
   /* Initialize parser error handling */
   parser.hadError  = false;
   parser.panicMode = false;
+
+  /* Compile program */
+  globalDeclaration();
 
   return parser.hadError;
 }

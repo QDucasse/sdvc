@@ -48,6 +48,6 @@ void initCompiler();
 void freeCompiler();
 
 /* Compile routine */
-bool compile(const char* source);
+bool compile(char* source);
 
 #endif

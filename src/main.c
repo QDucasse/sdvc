@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
+#include "compiler.h"
 #include "scanner.h"
 
 /* ==================================
@@ -66,8 +68,9 @@ static void scanFile(const char* path) {
                MAIN
 ====================================*/
 
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
   if (argc == 2) {
+    scanFile(argv[1]);
     compile(argv[1]);
   } else {
     fprintf(stderr, "Usage: sdvu path\n");

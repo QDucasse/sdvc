@@ -4,6 +4,39 @@
 #include "memory.h"
 #include "value.h"
 
+/* ==================================
+           VALUE ARRAYS
+=================================== */
+
+/* Initialization of a ValueArray */
+void initValueArray(ValueArray* array) {
+  array->values = NULL;
+  array->capacity = 0;
+  array->count = 0;
+}
+
+/* Write a value in the ValueArray with automated growth if needed */
+void writeValueArray(ValueArray* array, Value value) {
+  if(array->capacity < array->count+1) {
+    int oldCapacity = array->capacity;
+    array->capacity = GROW_CAPACITY(oldCapacity);
+    array->values = GROW_ARRAY(Value, array->values, oldCapacity, array->capacity);
+  }
+
+  array->values[array->count] = value;
+  array->count++;
+}
+
+/* Free value array */
+void freeValueArray(ValueArray* array) {
+  FREE_ARRAY(Value, array->values, array->capacity);
+  initValueArray(array);
+}
+
+/* ==================================
+             UTILITIES
+=================================== */
+
 /* Print Value */
 void printValue(Value value) {
   switch (value.type) {

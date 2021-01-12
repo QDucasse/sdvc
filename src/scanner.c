@@ -9,16 +9,16 @@
 =================================== */
 
 typedef struct {
-  const char* start;   /* Start of the lexem being scanned */
-  const char* current; /* Current character being scanned */
-  int line;            /* Line number for error reporting */
+  char* start;   /* Start of the lexem being scanned */
+  char* current; /* Current character being scanned */
+  int line;      /* Line number for error reporting */
 } Scanner;
 
 /* Scanner singleton */
 Scanner scanner;
 
 /* Scanner initialization */
-void initScanner(const char* source) {
+void initScanner(char* source) {
   scanner.start = source;
   scanner.current = source;
   scanner.line = 1;
@@ -87,7 +87,7 @@ static Token makeToken(TokenType type) {
 }
 
 /* Create an error token with a message and the line */
-static Token errorToken(const char* message) {
+static Token errorToken(char* message) {
   Token token;
   token.type = TOKEN_ERROR;
   token.start = message;

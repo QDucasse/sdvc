@@ -63,6 +63,7 @@ static void adjustCapacity(Table* table, int capacity) {
   for (int i = 0; i < capacity; i++) {
     entries[i].key = NULL;
     entries[i].value = NIL_VAL;
+    entries[i].type = VAL_NIL;
   }
 
   /* Clear the tombstone count */
@@ -77,6 +78,7 @@ static void adjustCapacity(Table* table, int capacity) {
     Entry* dest = findEntry(entries, capacity, entry->key);
     dest->key = entry->key;
     dest->value = entry->value;
+    dest->type = entry->type;
     table->count++; /* Increment if non-tombstone */
   }
 
@@ -91,21 +93,20 @@ static void adjustCapacity(Table* table, int capacity) {
 ====================================*/
 
 /* Set the value at the given key */
-bool tableSet(Table* table, String* key, Value value) {
+void tableSet(Table* table, String* key, Value value, ValueType type) {
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
     adjustCapacity(table, capacity);
   }
+
   /* Look for the key in the table */
   Entry* entry = findEntry(table->entries, table->capacity, key);
-  /* Check if the key is in the table */
-  bool isNewKey = entry->key == NULL;
-  /* The count is incremented if the key is new AND it is not overwriting a tombstone*/
-  if(isNewKey && IS_NIL(entry->value)) table->count++;
+  /* The count is incremented if the key is not overwriting a tombstone*/
+  if(IS_NIL(entry->value)) table->count++;
 
   entry->key = key;
   entry->value = value;
-  return isNewKey;
+  entry->type = type;
 }
 
 /* Copy the content of a hash table into another */
@@ -113,7 +114,7 @@ void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
     if (entry->key != NULL) {
-      tableSet(to, entry->key, entry->value);
+      tableSet(to, entry->key, entry->value, entry->type);
     }
   }
 }
@@ -122,8 +123,8 @@ void tableAddAll(Table* from, Table* to) {
           GETTING ENTRIES
 ====================================*/
 
-/* Get an entry for a given key and store the value in the pointer */
-bool tableGet(Table* table, String* key, Value* value) {
+/* Get an entry for a given key and store the value and type in their corresponding pointers */
+bool tableGet(Table* table, String* key, Value* value, ValueType* type) {
   /* The table is empty */
   if(table->count == 0) return false;
   /* Look for the entry corresponding to a given key */
@@ -131,6 +132,7 @@ bool tableGet(Table* table, String* key, Value* value) {
   if (entry->key == NULL) return false;
 
   *value = entry->value;
+  *type = entry->type;
   return true;
 }
 
@@ -150,6 +152,7 @@ bool tableDelete(Table* table, String* key) {
   /* Place a tombstone in the entry */
   entry->key = NULL;
   entry->value = BOOL_VAL(true); /* Tombstone is true */
+  entry->type = VAL_NIL;
 
   return true;
 }

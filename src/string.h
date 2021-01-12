@@ -8,4 +8,6 @@ typedef struct {
   uint32_t hash; /* Hash of the string */
 } String;
 
+String* allocateString(char* chars, int length);
+
 #endif

@@ -21,7 +21,7 @@ static uint32_t hashString(const char* key, int length) {
 }
 
 /* Allocate a string */
-static String* allocateString(char* chars, int length) {
+String* allocateString(char* chars, int length) {
   /* Compute the hash */
   uint32_t hash  = hashString(chars, length);
   /* Allocate and fill the actual string */

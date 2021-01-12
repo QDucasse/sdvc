@@ -33,12 +33,12 @@ typedef enum {
 /* Token Definition */
 typedef struct {
   TokenType type;
-  const char* start;
+  char* start;
   int length;
   int line;
 } Token;
 
-void initScanner(const char* source);
+void initScanner(char* source);
 Token scanToken();
 void printToken(Token token);
 
