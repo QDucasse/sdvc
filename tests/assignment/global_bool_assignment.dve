@@ -1,0 +1,5 @@
+bool plip = false; // No Error
+bool = false;      // Missing name
+bool plip false;   // Missing '='
+bool plip = 0;     // Wrong initialization type
+bool plip = false  // Missing ';'

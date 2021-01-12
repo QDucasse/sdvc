@@ -46,23 +46,22 @@ static char* readFile(const char* path) {
 }
 
 /* Interpret a given file */
-static void scanFile(const char* path) {
-  char* source = readFile(path);
-  initScanner(source);
-  Token token;
-  for (;;) {
-    token = scanToken();
-    printToken(token);
-    if (token.type == TOKEN_EOF) {
-      printf("%s: ", path);
-      printf("File scanned\n");
-      break;
-    }
-
-  }
-  free(source);
-
-}
+// static void scanFile(const char* path) {
+//   char* source = readFile(path);
+//   initScanner(source);
+//   Token token;
+//   for (;;) {
+//     token = scanToken();
+//     // printToken(token);
+//     if (token.type == TOKEN_EOF) {
+//       printf("%s: ", path);
+//       printf("File scanned\n");
+//       break;
+//     }
+//
+//   }
+//   free(source);
+// }
 
 /* ==================================
                MAIN
@@ -70,8 +69,9 @@ static void scanFile(const char* path) {
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {
-    scanFile(argv[1]);
-    compile(argv[1]);
+    // scanFile(argv[1]);
+    char* source = readFile(argv[1]);
+    compile(source);
   } else {
     fprintf(stderr, "Usage: sdvu path\n");
     exit(64);

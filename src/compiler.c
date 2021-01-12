@@ -113,6 +113,7 @@ static bool match(TokenType type) {
 /* Declarations
 ============ */
 
+/* Process bool global variable */
 static void globalBoolDeclaration() {
   String* varName;
   Value varValue;
@@ -132,7 +133,7 @@ static void globalBoolDeclaration() {
   } else {
     error("Boolean variable must be initialized with either 'true' or 'false'.");
   }
-
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
   tableSet(&compiler.globals, varName, varValue, VAL_BOOL);
 }
@@ -213,7 +214,7 @@ static void globalDeclaration() {
 bool compile(char* source) {
   /* Initialize scanner */
   initScanner(source);
-
+  advance(); // Move to the first token
   /* Initialize parser error handling */
   parser.hadError  = false;
   parser.panicMode = false;
