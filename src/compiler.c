@@ -8,6 +8,7 @@
 #include "scanner.h"
 #include "string.h"
 #include "table.h"
+#include "value.h"
 
 /* ==================================
       ALLOCATION - DEALLOCATION
@@ -191,6 +192,42 @@ static void globalIntDeclaration() {
   tableSet(&compiler.globals, varName, varValue, VAL_INT);
 }
 
+/* Process state global variable */
+static void globalStateDeclaration() {
+  /* Process state values */
+  int stateNumber = 0;
+  consume(TOKEN_LEFT_BRACE,"Expecting '{' before enumeration of states.");
+  do {
+    consume(TOKEN_IDENTIFIER, "Expecting state name.");
+    consume(TOKEN_LEFT_PAREN, "Expecting '(' before state number.");
+    consume(TOKEN_NUMBER, "Expecting number for corresponding state.");
+    consume(TOKEN_RIGHT_PAREN, "Expecting ')' after state number.");
+    stateNumber++;
+  } while(match(TOKEN_COMMA));
+  if (check(TOKEN_RIGHT_BRACE)) {
+    consume(TOKEN_RIGHT_BRACE,"Expecting '}' after enumeration of states.");
+  } else {
+    error("Missing ',' between states.");
+  }
+  /* Process name and '=' */
+  String* varName = globalName();
+  /* Process Value */
+  Value varValue;
+  if (match(TOKEN_NUMBER)) {
+    double currentState = strtod(parser.previous.start, NULL);
+    if ((currentState < 0) || (currentState > stateNumber-1)) {
+      error("State variable must be initialized with a state between 0 and the number of states.");
+    }
+    varValue = STATE_VAL(currentState, stateNumber);
+  } else {
+    error("Wrong type, an int variable must be initialized with a number between -32768 and 32767.");
+  }
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+
+  /* Add to the globals table */
+  tableSet(&compiler.globals, varName, varValue, VAL_STATE);
+}
+
 
 /* Declaration of a global variable */
 static void globalDeclaration() {
@@ -202,7 +239,7 @@ static void globalDeclaration() {
   } else if (match(TOKEN_INT)) {
     globalIntDeclaration();
   } else if (match(TOKEN_STATE)) {
-    /* Process state definition */
+    globalStateDeclaration();
   } else {
     error("Global declaration must start with a type.");
   }

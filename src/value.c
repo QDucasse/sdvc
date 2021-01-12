@@ -46,6 +46,7 @@ void printValue(Value value) {
       break;
     case VAL_BYTE: printf("%u", AS_BYTE(value)); break;
     case VAL_INT: printf("%g", AS_INT(value)); break;
+    case VAL_STATE: printf("state %d out of %d", AS_STATE(value).currentState, AS_STATE(value).stateNumber); break;
   }
 }
 
@@ -57,7 +58,7 @@ bool valuesEqual(Value a, Value b) {
     case VAL_NIL:    return true;
     case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
     case VAL_BYTE:   return AS_BYTE(a) == AS_BYTE(b);
-    case VAL_INT: return AS_INT(a) == AS_INT(b);
+    case VAL_INT:    return AS_INT(a) == AS_INT(b);
     default:
       return false; /* Unreachable */
   }

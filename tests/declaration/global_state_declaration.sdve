@@ -1,0 +1,10 @@
+state {a(0), b(1), c(2)} plip.state = 0;    // No error
+state a(0), b(1), c(2)} plip.state = 0;     // Missing '{'
+state {(0), b(1), c(2)} plip.state = 0;     // Missing state name
+state {a 0, b 1, c 2} plip.state = 0;       // Missing '('
+state {a(), b(1), c(2)} plip.state = 0;     // Missing state number
+state {a(0, b(1), c(2)} plip.state = 0;     // Missing ')'
+state {a(0) b(1) c(2)} plip.state = 0;      // Missing ','
+state {a(0), b(1), c(2)} = 2;               // Missing name
+state {a(0), b(1), c(2)} plip.state 2;      // Missing '='
+state {a(0), b(1), c(2)} plip.state = 3;    // Error state too high
