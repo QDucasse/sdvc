@@ -16,6 +16,8 @@
 typedef struct {
   Token current;  /* current Token being investigated */
   Token previous; /* next Token being investigated */
+  Token tempCurrent;  /* Current token around temporaries */
+  Token tempPrevious; /* Preivous token around temporaries */
   bool hadError;  /* Previous error was encountered */
   bool panicMode; /* To avoid cascading errors */
 } Parser;

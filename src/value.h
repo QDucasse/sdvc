@@ -27,12 +27,6 @@ typedef struct {
   } as;
 } Value;
 
-typedef struct { /* Dynamic array */
-  int capacity;
-  int count;
-  Value* values;
-} ValueArray;
-
 /* Comparison Macros */
 #define IS_NIL(value)     ((value).type == VAL_NIL)
 #define IS_BOOL(value)    ((value).type == VAL_BOOL)
@@ -50,10 +44,6 @@ typedef struct { /* Dynamic array */
 #define BYTE_VAL(value)    ((Value){VAL_BYTE,  {.byte = value}})
 #define INT_VAL(value)     ((Value){VAL_INT,   {.number = value}})
 #define STATE_VAL(currentState, stateNumber) ((Value){VAL_STATE, {.state.currentState = currentState, .state.stateNumber = stateNumber}})
-
-void initValueArray(ValueArray* array);
-void writeValueArray(ValueArray* array, Value value);
-void freeValueArray(ValueArray* array);
 
 bool valuesEqual(Value a, Value b);
 void printValue(Value value);

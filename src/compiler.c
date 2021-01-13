@@ -10,6 +10,12 @@
 #include "table.h"
 #include "value.h"
 
+bool prefix(const char *pre, const char *str)
+{
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
+
 /* ==================================
       ALLOCATION - DEALLOCATION
 =================================== */
@@ -128,6 +134,9 @@ static String* globalName() {
     /* Add to global table */
   }
   consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
+  if (prefix("t_", varName->chars)) {
+    error("Variable names starting with 't_' are reserved for temporary variables.");
+  }
   /* Process value */
   consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
 
@@ -228,7 +237,6 @@ static void globalStateDeclaration() {
   tableSet(&compiler.globals, varName, varValue, VAL_STATE);
 }
 
-
 /* Declaration of a global variable */
 static void globalDeclaration() {
   /* Consume type */
@@ -248,17 +256,20 @@ static void globalDeclaration() {
 // Temporary
 // =========
 
-/* Declaration of a temporary variable */
-// static void tempDeclaration()
-/* Consume type from temp scanner */
-
 /* Assignments
 =========== */
 
 /* Check variable name to determine if it is a temporary variable or not */
-// static void assignment()
+static void assignment() {
+  printf("Processing assignment\n");
+  while(!check(TOKEN_COMMA) && !check(TOKEN_SEMICOLON)) {
+    //printToken(parser.current);
+    advance();
+  }
+}
 
 
+/* Assign a value to a global variable */
 // static void globalAssignment()
 
 /* Assign a value to a given temporary variable and store it in a register */
@@ -279,27 +290,46 @@ static void globalDeclaration() {
 /* Process
 ======= */
 
+/* Process guardblock (sequnce of assignments) */
+static void guardBlock() {
+  consume(TOKEN_GUARD_BLOCK, "Guardblock should begin with 'guardblock' identifier.");
+  assignment();
+  while(check(TOKEN_COMMA)) {
+    consume(TOKEN_COMMA, "Separate assignments with ','.");
+    assignment();
+  }
+  consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
+}
+
+/* Process effect (sequnce of assignments) */
+static void effect() {
+  consume(TOKEN_EFFECT, "Effect declaration should start with 'effect' identifier.");
+  assignment();
+  while(check(TOKEN_COMMA)) {
+    consume(TOKEN_COMMA, "Separate assignments with ','.");
+    assignment();
+  }
+  consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
+}
+
 /* Process declaration */
-// static void process()
-/* Consume process token */
-/* Consume process name */
-/* Go through guardblock */
-/* Go through guardcondition */
-/* Emit jump to end of effect */
-/* Go through effect */
-/* Patch jump */
-
-/* Guardblock declaration */
-// static void guardblock()
-/* Consume guardblock token */
-/* Consume variable name */
-
-/* Guardcondition declaration */
-// static void guardcondition()
-
-
-/* Effect declaration */
-// static void effect()
+static void process() {
+  /* Consume process token */
+  consume(TOKEN_PROCESS, "Expecting 'process' to begin a process declaration.");
+  /* Consume process name */
+  consume(TOKEN_IDENTIFIER, "Process should be given a name.");
+  /* Go through guardblock */
+  guardBlock();
+  /* Go through guardcondition */
+  consume(TOKEN_GUARD_COND, "Guardcondition should begin with 'guardcondition' identifier.");
+  /* Emit jump to end of effect */
+  /* Process identifier */
+  consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
+  consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
+  /* Go through effect */
+  effect();
+  /* Patch jump */
+}
 
 /* ==================================
           COMPILE ROUTINE
@@ -312,8 +342,22 @@ bool compile(char* source) {
   parser.hadError  = false;
   parser.panicMode = false;
 
-  /* Compile program */
-  globalDeclaration();
+  /* Compile globals */
+  while(!match(TOKEN_TRANSIENT)) {
+    globalDeclaration();
+  }
+
+  /* Go through temporaries */
+  while(!check(TOKEN_PROCESS)) {
+    advance();
+  }
+
+  /* Go through processes */
+  while(!match(TOKEN_EOF)) {
+    process();
+  }
+
+
 
   return parser.hadError;
 }

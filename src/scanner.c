@@ -160,6 +160,7 @@ static TokenType identifierType() {
           case 'y': return checkKeyword(2, 2, "te", TOKEN_BYTE);       // byte
         }
       }
+    case 'e': return checkKeyword(1, 5, "ffect", TOKEN_EFFECT);        // effect
     case 'f': return checkKeyword(1, 4, "alse", TOKEN_FALSE);          // false
     case 'g':
       if (scanner.current - scanner.start > 5) {

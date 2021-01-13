@@ -44,7 +44,5 @@ transient byte t_9 = 0;
 		guardcondition t_8;
 		effect
 			P1.state = 1,
-			test = {P1.x, P1.y},
 			P2.state = 1,
-			P2.w = 2,
-			{P2.w, P2.z} = test;
+			P2.w = 2;
