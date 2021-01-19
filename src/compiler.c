@@ -37,7 +37,7 @@ static bool isTemp(Token* tokenIdentifier) {
 
 /* Compiler initialization */
 void initCompiler() {
-
+  initChunk(chunk);
 }
 
 /* Compiler destruction */
@@ -128,6 +128,32 @@ static bool match(TokenType type) {
   advance();
   return true;
 }
+
+/* Jump handling
+============= */
+
+/* Emit a jump */
+static int emitJump() {
+  /* OP Code for JMP and placeholder for the jump address, size 28-bits */
+  uint32_t instruction = (OP_JMP << 28) | 0xfffffff;
+  writeChunk(chunk, instruction);
+  /* Return the index of the placeholder */
+  return chunk->count - 1;
+}
+
+/* */
+static void patchJump(int offset) {
+  /* -1 to adjust the jump offset itself */
+  int jump = chunk->count - offset - 1;
+
+  if (jump > 0xfffffff) {
+    error("Too much code to jump over.");
+  }
+  /* Replace the operand at the given location with the jump offset */
+  chunk->instructions[offset] = (jump >> 28) & 0xfffffff;
+}
+
+
 
 /* ==================================
       BACK END - INSTRUCTIONS
@@ -362,12 +388,14 @@ static void process() {
   /* Go through guardcondition */
   consume(TOKEN_GUARD_COND, "Guardcondition should begin with 'guardcondition' identifier.");
   /* Emit jump to end of effect */
+  int jmpEffect = emitJump();
   /* Process identifier */
   consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
   consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
   /* Go through effect */
   effect();
   /* Patch jump */
+  patchJump(jmpEffect);
 }
 
 /* ==================================
@@ -382,7 +410,7 @@ bool compile(char* source) {
   parser.panicMode = false;
 
   /* Compile globals */
-  while(!match(TOKEN_TRANSIENT)) {
+  while(!match(TOKEN_PROCESS)) {
     globalDeclaration();
   }
 
@@ -395,8 +423,6 @@ bool compile(char* source) {
   while(!match(TOKEN_EOF)) {
     process();
   }
-
-
 
   return parser.hadError;
 }

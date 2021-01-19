@@ -34,7 +34,6 @@ typedef struct {
   int count;              // Number of allocated entries in use
   int capacity;           // Size of the chunk
   uint32_t* instructions; // Actual raw 32-bits instructions
-  int* lines;             // Line number of the corresponding instructions
 } Chunk;
 
 /* Initialize a given chunk */
@@ -42,7 +41,7 @@ void initChunk(Chunk* chunk);
 /* Free the given chunk */
 void freeChunk(Chunk* chunk);
 /* Write an instruction to the given chunk */
-void writeChunk(Chunk* chunk, uint32_t, int line);
+void writeChunk(Chunk* chunk, uint32_t);
 
 
 #endif

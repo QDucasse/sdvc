@@ -1,6 +1,7 @@
 #ifndef sdvu_compiler_h
 #define sdvu_compiler_h
 
+#include "chunk.h"
 #include "scanner.h"
 #include "string.h"
 #include "table.h"
@@ -32,14 +33,14 @@ typedef struct {
   int number; /* Register number */
 } Register;
 
+Chunk* chunk; /* Array of instructions */
+
 /* Compiler structure */
 typedef struct {
   Table globals; /* Hash table of the global values (configuration input and output) */
 
   Register registers[REG_NUMBER]; /* Array of registers behaving like a stack */
   Register* topRegister; /* Pointer to the first register available */
-
-  uint16_t* instructions; /* Array of instructions */
 } Compiler;
 
 /* Compiler singleton */
