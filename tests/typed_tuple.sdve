@@ -4,7 +4,6 @@ int P1.y = 2;
 state {a(0), b(1)} P2.state = 0;
 int P2.z = 0;
 int P2.w = 0;
-transient tuple {int, int} test = {0, 0};
 transient bool t_0 = false;
 transient bool t_1 = false;
 transient bool t_2 = false;
@@ -15,6 +14,7 @@ transient bool t_6 = false;
 transient bool t_7 = false;
 transient bool t_8 = false;
 transient byte t_9 = 0;
+transient tuple {int, int} test = {0, 0};
 	process P1
 		guardblock
 			t_0 = P1.state == 1,

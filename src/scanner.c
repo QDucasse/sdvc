@@ -178,14 +178,9 @@ static TokenType identifierType() {
     case 't':
       if (scanner.current - scanner.start > 1) {
         switch (scanner.start[1]) {
-          case 'r':
-            if (scanner.current - scanner.start > 2) {
-              switch (scanner.start[2]) {
-                  case 'u': return checkKeyword(3, 1, "e", TOKEN_TRUE);           // true
-                  case 'a': return checkKeyword(3, 6, "nsient", TOKEN_TRANSIENT); // transient
-              }
-            }
-          case 'u': return checkKeyword(2, 3, "ple", TOKEN_TUPLE);         // tuple
+          case 'e': return checkKeyword(2, 2, "mp", TOKEN_TEMP);       // temp
+          case 'r': return checkKeyword(2, 2, "ue", TOKEN_TRUE);       // true
+          case 'u': return checkKeyword(2, 3, "ple", TOKEN_TUPLE);     // tuple
         }
       }
   }
@@ -275,8 +270,7 @@ static const char* TokenNames[] = {
 
  "TOKEN_AND", "TOKEN_OR", "TOKEN_EFFECT",
  "TOKEN_FALSE", "TOKEN_GUARD_BLOCK", "TOKEN_GUARD_COND",
- "TOKEN_PROCESS", "TOKEN_SYSTEM", "TOKEN_TRANSIENT",
- "TOKEN_TRUE",
+ "TOKEN_PROCESS", "TOKEN_SYSTEM", "TOKEN_TEMP", "TOKEN_TRUE",
 
  "TOKEN_INT", "TOKEN_BOOL", "TOKEN_BYTE", "TOKEN_STATE", "TOKEN_TUPLE",
 

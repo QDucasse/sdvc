@@ -10,10 +10,25 @@
 #include "table.h"
 #include "value.h"
 
-bool prefix(const char *pre, const char *str)
+/* ==================================
+          NAME PROCESSING
+=================================== */
+
+/* Check if a string contains another string as a prefix */
+static bool prefix(const char *pre, const char *str)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
 }
+
+/* Determines if an identifier is a global or a temporary */
+static bool isTemp(Token* tokenIdentifier) {
+  String* varName = allocateString(parser.current.start, parser.current.length);
+  if (prefix("t_", varName->chars)) {
+    return true;
+  }
+  return false;
+}
+
 
 
 /* ==================================
@@ -253,39 +268,63 @@ static void globalDeclaration() {
   }
 }
 
-// Temporary
-// =========
-
-/* Assignments
+/* Expressions
 =========== */
 
-/* Check variable name to determine if it is a temporary variable or not */
-static void assignment() {
-  printf("Processing assignment\n");
-  while(!check(TOKEN_COMMA) && !check(TOKEN_SEMICOLON)) {
-    //printToken(parser.current);
-    advance();
-  }
+static void unary() {
+
 }
 
 
-/* Assign a value to a global variable */
-// static void globalAssignment()
+static void binary() {
 
-/* Assign a value to a given temporary variable and store it in a register */
-// static void tempAssignment()
-/* Consume name from process scanner */
-/* Consume type from temp scanner (or call tempDeclaration?) */
-/* Store in the top register OR lowest freed */
+}
 
-/* Expressions
-=========== */
+
+static void expression() {
+  unary();
+  binary();
+}
 
 // static void binary()
 
 // static void unary()
 
-// static void
+
+/* Assignments
+=========== */
+
+/* Assign a value to a global variable */
+static void globalAssignment() {
+  /* Consume identifier, probably need to use it to access the hash table */
+  advance();
+  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
+  /* Output STORE? */
+  /* Process expression */
+  expression();
+}
+
+/* Assign a value to a given temporary variable and store it in a register */
+static void tempAssignment() {
+  /* Consume id, probably need to use it to store in the register */
+  advance();
+  /* Consume type from temp scanner (or call tempDeclaration?) */
+  expression();
+  /* Store in the top register OR lowest freed */
+}
+
+/* Check variable name to determine if it is a temporary variable or not */
+static void assignment() {
+  if (!check(TOKEN_IDENTIFIER)) {
+    error("Assignment should begin with an identifier.");
+  }
+  /* Test the identifier and redirect to either global or temporary assignment */
+  if (isTemp(&parser.current)){
+    tempAssignment();
+  } else {
+    globalAssignment();
+  }
+}
 
 /* Process
 ======= */
