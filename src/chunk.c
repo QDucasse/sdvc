@@ -4,10 +4,12 @@
 #include "memory.h"
 
 /* Chunk Initialization */
-void initChunk(Chunk* chunk) {
+Chunk* initChunk() {
+  Chunk* chunk = (Chunk*)reallocate(NULL, 0, sizeof(Chunk));
   chunk->count = 0;
   chunk->capacity = 0;
   chunk->instructions = NULL;
+  return chunk;
 }
 
 /* Free the given chunk */

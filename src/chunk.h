@@ -37,7 +37,7 @@ typedef struct {
 } Chunk;
 
 /* Initialize a given chunk */
-void initChunk(Chunk* chunk);
+Chunk* initChunk();
 /* Free the given chunk */
 void freeChunk(Chunk* chunk);
 /* Write an instruction to the given chunk */
