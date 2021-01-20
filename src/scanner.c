@@ -15,7 +15,7 @@ typedef struct {
 } Scanner;
 
 /* Scanner singleton */
-Scanner scanner;
+static Scanner scanner;
 
 /* Scanner initialization */
 void initScanner(char* source) {
@@ -36,8 +36,7 @@ static bool isAtEnd() {
 /* Check if the current character is a letter */
 static bool isAlpha(char c) {
   return (c >= 'a' && c <= 'z') ||
-         (c >= 'A' && c <= 'Z') ||
-          c == '_';
+         (c >= 'A' && c <= 'Z');
 }
 
 /* Check if the current character is a digit */
@@ -46,7 +45,7 @@ static bool isDigit(char c) {
 }
 
 /* Check if the current character is either an underscore or a dot (as accepted in the language) */
-static bool isIDPunctuation( char c) {
+static bool isIDPunctuation(char c) {
   return c == '_' || c == '.';
 }
 

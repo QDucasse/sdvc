@@ -2,10 +2,8 @@
 #include "chunk.h"
 #include "memory.h"
 
-void setUp() {
-
-}
-
+/* Setup and teardown routine */
+void setUp() {}
 void tearDown() {}
 
 void testChunkInitialization() {
@@ -45,7 +43,7 @@ void testChunkWriteNoResizing() {
 }
 
 
-/* Writing an instruction in a chunk with enough capacity should not change it */
+/* Writing an instruction in a chunk without enough capacity should change it (*2) */
 void testChunkWriteResizing() {
   Chunk* testChunk = initChunk();
   uint32_t* testInstructions = ALLOCATE(uint32_t, 8);
