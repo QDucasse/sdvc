@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "memory.h"
+#include "mmemory.h"
 #include "sstring.h"
 
 /* ==================================
@@ -25,7 +25,7 @@ String* allocateString(char* chars, int length) {
   /* Compute the hash */
   uint32_t hash  = hashString(chars, length);
   /* Allocate and fill the actual string */
-  String* string = (String*)reallocate(NULL, 0, sizeof(String));
+  String* string = ALLOCATE_OBJ(String);
   string->length = length;
   string->chars  = chars;
   string->hash   = hash;

@@ -1,6 +1,6 @@
 #include "unity.h"
 #include "chunk.h"
-#include "memory.h"
+#include "mmemory.h"
 
 /* Setup and teardown routine */
 void setUp() {}
@@ -28,7 +28,7 @@ void testChunkWriteResizingFromZero() {
 /* Writing an instruction in a chunk with enough capacity should not change it */
 void testChunkWriteNoResizing() {
   Chunk* testChunk = initChunk();
-  uint32_t* testInstructions = ALLOCATE(uint32_t, 2);
+  uint32_t* testInstructions = ALLOCATE_ARRAY(uint32_t, 2);
   testInstructions[0] = 0x01;
   testInstructions[1] = 0x01;
   testChunk->count = 2;
@@ -46,7 +46,7 @@ void testChunkWriteNoResizing() {
 /* Writing an instruction in a chunk without enough capacity should change it (*2) */
 void testChunkWriteResizing() {
   Chunk* testChunk = initChunk();
-  uint32_t* testInstructions = ALLOCATE(uint32_t, 8);
+  uint32_t* testInstructions = ALLOCATE_ARRAY(uint32_t, 8);
   testInstructions[0] = 0x01;
   testChunk->count = 8;
   testChunk->capacity = 8;

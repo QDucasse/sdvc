@@ -3,8 +3,13 @@
 
 #include "common.h"
 
+/* Allocate an object of a given type */
+#define ALLOCATE_OBJ(type) \
+    (type*)reallocate(NULL, 0, sizeof(type))
+
+
 /* Allocate an array with a given element type and count */
-#define ALLOCATE(type, count) \
+#define ALLOCATE_ARRAY(type, count) \
     (type*)reallocate(NULL, 0, sizeof(type) * (count))
 
 #define FREE(type, pointer) reallocate(pointer, sizeof(type), 0)

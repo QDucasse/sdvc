@@ -1,16 +1,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "memory.h"
+#include "mmemory.h"
 #include "table.h"
 #include "value.h"
 
 /* Grow the array when it reaches 75% of its capacity */
 #define TABLE_MAX_LOAD 0.75
 
+Entry* allocateEntry(String* key, Value value) {
+  Entry* entry = ALLOCATE_OBJ(Entry);
+  entry->key = key;
+  entry->value = value;
+  return entry;
+}
+
 /* Initialize the hash table */
 Table* initTable() {
-  Table* table = (Table*)reallocate(NULL, 0, sizeof(Table));
+  Table* table = ALLOCATE_OBJ(Table);
   table->count = 0;
   table->capacity = 0;
   table->entries = NULL;
@@ -46,7 +53,6 @@ static Entry* findEntry(Entry* entries, int capacity, String* key) {
       }
     } else if (entry->key == key) {
       /* Key found */
-      printf("%s\n", entry->key);
       return entry;
     }
 
@@ -61,7 +67,7 @@ static Entry* findEntry(Entry* entries, int capacity, String* key) {
 
 /* Allocate an array of entries */
 static void adjustCapacity(Table* table, int capacity) {
-  Entry* entries = ALLOCATE(Entry, capacity);
+  Entry* entries = ALLOCATE_ARRAY(Entry, capacity);
   /* Fill the entries in the allocated array with NULL keys and NIL values*/
   for (int i = 0; i < capacity; i++) {
     entries[i].key = NULL;

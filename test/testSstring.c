@@ -2,7 +2,7 @@
 #include "unity.h"
 #include "sstring.h"
 #include "sstring.c"
-#include "memory.h"
+#include "mmemory.h"
 
 /* Setup and teardown routine */
 void setUp() {}
