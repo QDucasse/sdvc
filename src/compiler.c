@@ -199,7 +199,7 @@ static void globalBoolDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue, VAL_BOOL);
+  tableSet(&compiler.globals, varName, varValue);
 }
 
 /* Process bool global variable */
@@ -219,7 +219,7 @@ static void globalByteDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue, VAL_BYTE);
+  tableSet(&compiler.globals, varName, varValue);
 }
 
 /* Process int global variable */
@@ -239,7 +239,7 @@ static void globalIntDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue, VAL_INT);
+  tableSet(&compiler.globals, varName, varValue);
 }
 
 /* Process state global variable */
@@ -275,7 +275,7 @@ static void globalStateDeclaration() {
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue, VAL_STATE);
+  tableSet(&compiler.globals, varName, varValue);
 }
 
 /* Declaration of a global variable */

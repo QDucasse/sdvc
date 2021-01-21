@@ -14,6 +14,7 @@ Table* initTable() {
   table->count = 0;
   table->capacity = 0;
   table->entries = NULL;
+  return table;
 }
 
 /* Free the hash table */
