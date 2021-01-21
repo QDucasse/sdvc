@@ -3,7 +3,7 @@
 
 #include "chunk.h"
 #include "scanner.h"
-#include "string.h"
+#include "sstring.h"
 #include "table.h"
 #include "value.h"
 

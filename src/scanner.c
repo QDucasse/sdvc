@@ -50,7 +50,7 @@ static bool isIDPunctuation(char c) {
 }
 
 /* ==================================
-            PEEK ROUTINE
+            SCAN HELPERS
 ====================================*/
 
 /* Consume the current character and return it */
@@ -70,36 +70,14 @@ static char peekNext() {
   return scanner.current[1];
 }
 
-/* ==================================
-          TOKEN CREATION
-====================================*/
-
-/* Create a token from a type */
-static Token makeToken(TokenType type) {
-  Token token;
-  token.type = type;
-  token.start = scanner.start;
-  token.length = (int)(scanner.current - scanner.start);
-  token.line = scanner.line;
-
-  return token;
+/* Check that the current character is the expected */
+static bool match(char expected) {
+  if (isAtEnd()) return false;
+  if (*scanner.current != expected) return false;
+  /* Increment the counter */
+  scanner.current++;
+  return true;
 }
-
-/* Create an error token with a message and the line */
-static Token errorToken(char* message) {
-  Token token;
-  token.type = TOKEN_ERROR;
-  token.start = message;
-  token.length = (int)strlen(message);
-  token.line = scanner.line;
-
-  return token;
-}
-
-/* ==================================
-             WHITESPACE
-====================================*/
-
 
 /* Skip all whitspace characters */
 static void skipWhitespace() {
@@ -130,6 +108,32 @@ static void skipWhitespace() {
         return;
     }
   }
+}
+
+/* ==================================
+          TOKEN CREATION
+====================================*/
+
+/* Create a token from a type */
+static Token makeToken(TokenType type) {
+  Token token;
+  token.type = type;
+  token.start = scanner.start;
+  token.length = (int)(scanner.current - scanner.start);
+  token.line = scanner.line;
+
+  return token;
+}
+
+/* Create an error token with a message and the line */
+static Token errorToken(char* message) {
+  Token token;
+  token.type = TOKEN_ERROR;
+  token.start = message;
+  token.length = (int)strlen(message);
+  token.line = scanner.line;
+
+  return token;
 }
 
 /* ==================================
@@ -195,24 +199,21 @@ static Token identifier() {
 
 /* Create a number token */
 static Token number() {
+  /* Consume the integer part */
   while(isDigit(peek())) advance();
   /* Look for a decimal part */
   if (peek() == '.' && isDigit(peekNext())) {
     /* Consume the . */
     advance();
   }
+  /* Consume the decimal part */
+  while(isDigit(peek())) advance();
   return makeToken(TOKEN_NUMBER);
 }
 
-
-/* Check that the current character is the expected */
-static bool match(char expected) {
-  if (isAtEnd()) return false;
-  if (*scanner.current != expected) return false;
-  /* Increment the counter */
-  scanner.current++;
-  return true;
-}
+/* ==================================
+          SCANNING ROUTINE
+====================================*/
 
 /* Scan the current lexeme into a token */
 Token scanToken() {
@@ -243,11 +244,18 @@ Token scanToken() {
     case '*': return makeToken(TOKEN_STAR);
     case '%': return makeToken(TOKEN_MODULO);
     /* Double character */
+    case '!':
+      return makeToken(TOKEN_BANG_EQUAL);
     case '=':
       return makeToken(
           match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
+    case '<':
+      return makeToken(
+          match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
+    case '>':
+      return makeToken(
+          match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
   }
-
 
   return errorToken("Unexpected character.");
 }
@@ -263,7 +271,9 @@ static const char* TokenNames[] = {
  "TOKEN_PLUS", "TOKEN_SEMICOLON", "TOKEN_SLASH",
  "TOKEN_STAR", "TOKEN_MODULO",
 
- "TOKEN_EQUAL", "TOKEN_EQUAL_EQUAL",
+ "TOKEN_BANG_EQUAL", "TOKEN_EQUAL", "TOKEN_EQUAL_EQUAL",
+ "TOKEN_GREATER", "TOKEN_GREATER_EQUAL",
+ "TOKEN_LESS", "TOKEN_LESS_EQUAL",
 
  "TOKEN_IDENTIFIER", "TOKEN_TEMP_IDENTIFIER", "TOKEN_NUMBER",
 

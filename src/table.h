@@ -2,7 +2,7 @@
 #define sdvu_table_h
 
 #include "common.h"
-#include "string.h"
+#include "sstring.h"
 #include "value.h"
 
 /* Entry representation, key and value */

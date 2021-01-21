@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "memory.h"
-#include "string.h"
+#include "sstring.h"
 
 /* ==================================
            STRING CREATION

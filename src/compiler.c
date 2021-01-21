@@ -6,7 +6,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
-#include "string.h"
+#include "sstring.h"
 #include "table.h"
 #include "value.h"
 
