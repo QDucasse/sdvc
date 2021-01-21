@@ -4,6 +4,11 @@
 #include "scanner.h"
 #include "scanner.c"
 
+typedef struct {
+  TokenType type;
+  char* source;
+} TestStub;
+
 /* Setup and teardown routine */
 void setUp() {}
 void tearDown() {}
@@ -158,7 +163,32 @@ void testCheckKeyword() {
 }
 
 void testIdentifierType() {
+  TestStub stubs[17] = {
+    {TOKEN_AND,         "and"},
+    {TOKEN_BOOL,        "bool"},
+    {TOKEN_BYTE,        "byte"},
+    {TOKEN_EFFECT,      "effect"},
+    {TOKEN_FALSE,       "false"},
+    {TOKEN_GUARD_BLOCK, "guardblock"},
+    {TOKEN_GUARD_BLOCK, "guardBlock"},
+    {TOKEN_GUARD_COND,  "guardcondition"},
+    {TOKEN_GUARD_COND,  "guardCondition"},
+    {TOKEN_INT,         "int"},
+    {TOKEN_OR,          "or"},
+    {TOKEN_PROCESS,     "process"},
+    {TOKEN_STATE,       "state"},
+    {TOKEN_TEMP,        "temp"},
+    {TOKEN_TRUE,        "true"},
+    {TOKEN_TUPLE,       "tuple"},
+    {TOKEN_IDENTIFIER,  "t_250"}
+  };
 
+  for (int i = 0 ; i < 17 ; i++) {
+    TestStub currentStub = stubs[i];
+    initScanner(currentStub.source);
+    Token scannedToken = identifier();
+    TEST_ASSERT_EQUAL(currentStub.type, scannedToken.type);
+  }
 }
 
 void testIdentifier() {
@@ -183,7 +213,53 @@ void testNumber() {
 /* Scanning routine
 ================ */
 
-
 void testScanToken() {
-  
+  TestStub stubs[39] = {
+    {TOKEN_EOF,           "\0"},
+    {TOKEN_LEFT_PAREN,    "("},
+    {TOKEN_RIGHT_PAREN,   ")"},
+    {TOKEN_LEFT_BRACE,    "{"},
+    {TOKEN_RIGHT_BRACE,   "}"},
+    {TOKEN_SEMICOLON,     ";"},
+    {TOKEN_COMMA,         ","},
+    {TOKEN_DOT,           "."},
+    {TOKEN_MINUS,         "-"},
+    {TOKEN_PLUS,          "+"},
+    {TOKEN_SLASH,         "/"},
+    {TOKEN_STAR,          "*"},
+    {TOKEN_MODULO,        "%"},
+    {TOKEN_BANG_EQUAL,    "!="},
+    {TOKEN_EQUAL_EQUAL,   "=="},
+    {TOKEN_EQUAL,         "="},
+    {TOKEN_LESS,          "<"},
+    {TOKEN_LESS_EQUAL,    "<="},
+    {TOKEN_GREATER,       ">"},
+    {TOKEN_GREATER_EQUAL, ">="},
+    {TOKEN_ERROR,         "?"},
+    {TOKEN_AND,           "and"},
+    {TOKEN_BOOL,          "bool"},
+    {TOKEN_BYTE,          "byte"},
+    {TOKEN_EFFECT,        "effect"},
+    {TOKEN_FALSE,         "false"},
+    {TOKEN_GUARD_BLOCK,   "guardblock"},
+    {TOKEN_GUARD_BLOCK,   "guardBlock"},
+    {TOKEN_GUARD_COND,    "guardcondition"},
+    {TOKEN_GUARD_COND,    "guardCondition"},
+    {TOKEN_INT,           "int"},
+    {TOKEN_OR,            "or"},
+    {TOKEN_PROCESS,       "process"},
+    {TOKEN_STATE,         "state"},
+    {TOKEN_TEMP,          "temp"},
+    {TOKEN_TRUE,          "true"},
+    {TOKEN_TUPLE,         "tuple"},
+    {TOKEN_IDENTIFIER,    "t_250"},
+    {TOKEN_NUMBER,        "250.47892"}
+  };
+
+  for (int i=0 ; i<39 ; i++) {
+    TestStub currentStub = stubs[i];
+    initScanner(currentStub.source);
+    Token scannedToken = scanToken();
+    TEST_ASSERT_EQUAL(currentStub.type, scannedToken.type);
+  }
 }
