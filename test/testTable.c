@@ -21,14 +21,18 @@ void testTableInitialization() {
 /* Entry lookup
 ============ */
 void testFindEntry() {
-  Entry* testEntries = ALLOCATE(Entry, 8);
+  Entry testEntries[8];
   String* key1 = allocateString("blip1", 5);
   String* key2 = allocateString("blip2", 5);
   Entry entry1 = {key1, INT_VAL(1)};
   Entry entry2 = {key2, INT_VAL(2)};
-  testEntries[entry1.key->hash % 8] = entry1;
-  testEntries[entry2.key->hash % 8] = entry2;
-  printf("%s\n",testEntries[1].key->chars);
+  uint32_t index1 = entry1.key->hash % 8;
+  uint32_t index2 = entry2.key->hash % 8;
+  printf("%u\n",index1);
+  printf("%u\n",index2);
+  testEntries[index1] = entry1;
+  testEntries[index2] = entry2;
+  printf("%s\n",testEntries[0].key->chars);
   printf("%s\n",findEntry(testEntries, 8, key1)->key->chars);
   TEST_ASSERT_EQUAL(&entry1, findEntry(testEntries, 8, key1));
 }

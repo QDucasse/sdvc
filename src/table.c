@@ -46,6 +46,7 @@ static Entry* findEntry(Entry* entries, int capacity, String* key) {
       }
     } else if (entry->key == key) {
       /* Key found */
+      printf("%s\n", entry->key);
       return entry;
     }
 
