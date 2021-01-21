@@ -4,6 +4,9 @@
 #include "sstring.c"
 #include "memory.h"
 
+/* Setup and teardown routine */
+void setUp() {}
+void tearDown() {}
 
 void testHashString() {
   TEST_ASSERT_EQUAL_UINT32(1706468258, hashString("blip", 4)); // FNV-1a hash

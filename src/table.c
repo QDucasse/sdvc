@@ -9,7 +9,8 @@
 #define TABLE_MAX_LOAD 0.75
 
 /* Initialize the hash table */
-void initTable(Table* table) {
+Table* initTable() {
+  Table* table = (Table*)reallocate(NULL, 0, sizeof(Table));
   table->count = 0;
   table->capacity = 0;
   table->entries = NULL;
@@ -22,7 +23,7 @@ void freeTable(Table* table) {
 }
 
 /* ==================================
-            FIND AN ENTRY
+  FIND AN ENTRY IN ARRAY OF ENTRIES
 ====================================*/
 
 /* Find an entry corresponding to a given key, returns a pointer to the entry */
@@ -32,7 +33,7 @@ static Entry* findEntry(Entry* entries, int capacity, String* key) {
   Entry* tombstone = NULL;
   for (;;) {
     /* Return the entry at the given index in the table */
-    Entry* entry = &entries[index];
+    Entry* entry = &(entries[index]);
 
     if (entry->key == NULL) {
       if (IS_NIL(entry->value)) {
@@ -63,7 +64,6 @@ static void adjustCapacity(Table* table, int capacity) {
   for (int i = 0; i < capacity; i++) {
     entries[i].key = NULL;
     entries[i].value = NIL_VAL;
-    entries[i].type = VAL_NIL;
   }
 
   /* Clear the tombstone count */
@@ -78,7 +78,6 @@ static void adjustCapacity(Table* table, int capacity) {
     Entry* dest = findEntry(entries, capacity, entry->key);
     dest->key = entry->key;
     dest->value = entry->value;
-    dest->type = entry->type;
     table->count++; /* Increment if non-tombstone */
   }
 
@@ -89,11 +88,11 @@ static void adjustCapacity(Table* table, int capacity) {
 }
 
 /* ==================================
-          SETTING ENTRIES
+      TABLE ENTRY MANIPULATION
 ====================================*/
 
 /* Set the value at the given key */
-void tableSet(Table* table, String* key, Value value, ValueType type) {
+void tableSet(Table* table, String* key, Value value) {
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
     adjustCapacity(table, capacity);
@@ -106,7 +105,6 @@ void tableSet(Table* table, String* key, Value value, ValueType type) {
 
   entry->key = key;
   entry->value = value;
-  entry->type = type;
 }
 
 /* Copy the content of a hash table into another */
@@ -114,17 +112,13 @@ void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
     if (entry->key != NULL) {
-      tableSet(to, entry->key, entry->value, entry->type);
+      tableSet(to, entry->key, entry->value);
     }
   }
 }
 
-/* ==================================
-          GETTING ENTRIES
-====================================*/
-
-/* Get an entry for a given key and store the value and type in their corresponding pointers */
-bool tableGet(Table* table, String* key, Value* value, ValueType* type) {
+/* Get an entry for a given key and store the value in the corresponding pointers */
+bool tableGet(Table* table, String* key, Value* value) {
   /* The table is empty */
   if(table->count == 0) return false;
   /* Look for the entry corresponding to a given key */
@@ -132,13 +126,8 @@ bool tableGet(Table* table, String* key, Value* value, ValueType* type) {
   if (entry->key == NULL) return false;
 
   *value = entry->value;
-  *type = entry->type;
   return true;
 }
-
-/* ==================================
-          DELETING ENTRIES
-====================================*/
 
 /* Delete an entry for a given key */
 bool tableDelete(Table* table, String* key) {
@@ -152,7 +141,6 @@ bool tableDelete(Table* table, String* key) {
   /* Place a tombstone in the entry */
   entry->key = NULL;
   entry->value = BOOL_VAL(true); /* Tombstone is true */
-  entry->type = VAL_NIL;
 
   return true;
 }
