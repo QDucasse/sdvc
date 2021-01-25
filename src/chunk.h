@@ -24,17 +24,29 @@
 #define OP_LOAD  0b1111
 
 /* CONFIG bitmasks */
-#define CFG_RRR  0b00
-#define CFG_RRI  0b01
-#define CFG_RIR  0b10
-#define CFG_RII  0b11
+#define CFG_RR  0b00
+#define CFG_RI  0b01n
+#define CFG_IR  0b10
+#define CFG_II  0b11
 
-/* Instruction definition */
+/* Chunk of instructions definition */
 typedef struct {
   int count;              // Number of allocated entries in use
   int capacity;           // Size of the chunk
   uint32_t* instructions; // Actual raw 32-bits instructions
 } Chunk;
+
+/* Instruction config */
+typedef struct {
+  unsigned int op_code: 4;  // Operation code
+  unsigned int cfg_mask: 2; // Config (RR, RI or IR)
+  unsigned int rd: 4;       // Destination register
+  unsigned int ra: 4;       // Source register A
+  unsigned int rb: 4;       // Source register B
+  unsigned int imma: 11;    // Immediate value A
+  unsigned int immb: 11;    // Immediate value B
+  unsigned int addr: 24;    // Address
+} Instruction;
 
 /* Initialize a given chunk */
 Chunk* initChunk();
@@ -43,5 +55,17 @@ void freeChunk(Chunk* chunk);
 /* Write an instruction to the given chunk */
 void writeChunk(Chunk* chunk, uint32_t);
 
+/* Initialization struct initialization */
+Instruction* initInstruction();
+/* Binary instruction of form Register Register */
+uint32_t binaryInstructionRR(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int ra, unsigned int rb);
+/* Binary instruction of form Register Immediate */
+uint32_t binaryInstructionRI(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int ra, unsigned int imm);
+/* Binary instruction of form Immediate Register */
+uint32_t binaryInstructionIR(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int imm, unsigned int rb);
+/* Binary instruction of form Immediate Register */
+uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int imma, unsigned int immb);
+/* Unary instruction */
+uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int addr);
 
 #endif

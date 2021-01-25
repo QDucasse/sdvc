@@ -79,14 +79,7 @@ ADD    Config mask   Destination (reg0)   LHS operand (Imm value = 255)     RHS 
 0000      11                0001                  00011111111                     00000001000
 ```
 
-In the case of the `JMP` operation:
-
-```
-JMP             Address
-1101  00011100011100011100011100011
-```
-
-And the `STORE` and `LOAD`:
+In the case of the `JMP`, `STORE` and `LOAD` operations:
 
 ```
 STORE  Destination (index 15)               Address
