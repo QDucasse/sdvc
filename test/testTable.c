@@ -25,8 +25,10 @@ void testTableInitialization() {
 
 void testFindEntry() {
   Entry testEntries[8];
-  String* key1 = allocateString("blip1", 5);
-  String* key2 = allocateString("blip2", 5);
+  String* key1 = initString();
+  allocateString(key1, "blip1", 5);
+  String* key2 = initString();
+  allocateString(key2, "blip2", 5);
   Entry* entry1 = allocateEntry(key1, INT_VAL(1));
   Entry* entry2 = allocateEntry(key2, INT_VAL(2));
   uint32_t index1 = entry1->key->hash % 8;
@@ -48,35 +50,15 @@ void testAdjustCapacityOnCreation() {
   TEST_ASSERT_EQUAL_INT(0, table->capacity);
   adjustCapacity(table, GROW_CAPACITY(table->capacity));
   TEST_ASSERT_EQUAL_INT(8, table->capacity);
-
 }
-
-// void testAdjustCapacityWhenFull() {
-//   Table* table = initTable();
-//   Entry testEntries[8] = {
-//     {allocateString("blip1", 5), INT_VAL(1)},
-//     {allocateString("blip2", 5), INT_VAL(2)},
-//     {allocateString("blip3", 5), INT_VAL(3)},
-//     {allocateString("blip4", 5), INT_VAL(4)},
-//     {allocateString("blip5", 5), INT_VAL(5)},
-//     {allocateString("blip6", 5), INT_VAL(6)},
-//     {allocateString("blip7", 5), INT_VAL(7)},
-//     {allocateString("blip8", 5), INT_VAL(8)}
-//   };
-//   table->count = 8;
-//   table->capacity = 8;
-//   table->entries = testEntries;
-//
-//   adjustCapacity(table, GROW_CAPACITY(table->capacity));
-//   TEST_ASSERT_EQUAL_INT(16, table->capacity);
-// }
 
 /* Table entry manipulation
 ========================= */
 
 void testTableSet() {
   Table* table = initTable();
-  String* key = allocateString("blip1", 5);
+  String* key = initString();
+  allocateString(key, "blip1", 5);
   Value value = INT_VAL(1);
   Entry* entry = allocateEntry(key, value);
   tableSet(table, key, value);
@@ -90,7 +72,8 @@ void testTableSet() {
 
 void testTableGet() {
   Table* table = initTable();
-  String* key = allocateString("blip1", 5);
+  String* key = initString();
+  allocateString(key, "blip1", 5);
   Value value = INT_VAL(1);
   Entry* entry = allocateEntry(key, value);
   Value outValue = NIL_VAL;
@@ -107,8 +90,10 @@ void testTableGet() {
 
 void testTableDelete() {
   Table* table = initTable();
-  String* key1 = allocateString("blip1", 5);
-  String* key2 = allocateString("blip2", 5);
+  String* key1 = initString();
+  allocateString(key1, "blip1", 5);
+  String* key2 = initString();
+  allocateString(key2, "blip2", 5);
   Value value = INT_VAL(1);
   Entry* entry = allocateEntry(key1, value);
 
@@ -127,9 +112,4 @@ void testTableDelete() {
   TEST_ASSERT_TRUE(found);
   TEST_ASSERT_EQUAL(NULL, removedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(BOOL_VAL(true), removedEntry.value));
-}
-
-
-void testTableAddAll() {
-
 }
