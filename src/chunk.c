@@ -114,9 +114,9 @@ static uint32_t instructionToUint32(Instruction* instruction) {
 
   } else {
     /* Adding destination register */
-    convertedInstruction = convertedInstruction | instruction->rd << 24;
+    convertedInstruction |= instruction->rd << 24;
     /* Adding address */
-    convertedInstruction = convertedInstruction | instruction->addr;
+    convertedInstruction |= instruction->addr;
   }
 
   return convertedInstruction;

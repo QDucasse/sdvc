@@ -126,7 +126,7 @@ void testTableDelete() {
   Entry removedEntry = table->entries[key1->hash % 8];
   TEST_ASSERT_TRUE(found);
   TEST_ASSERT_EQUAL(NULL, removedEntry.key);
-  TEST_ASSERT_TRUE(valuesEqual( BOOL_VAL(true), removedEntry.value));
+  TEST_ASSERT_TRUE(valuesEqual(BOOL_VAL(true), removedEntry.value));
 }
 
 

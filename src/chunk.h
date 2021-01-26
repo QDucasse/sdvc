@@ -25,7 +25,7 @@
 
 /* CONFIG bitmasks */
 #define CFG_RR  0b00
-#define CFG_RI  0b01n
+#define CFG_RI  0b01
 #define CFG_IR  0b10
 #define CFG_II  0b11
 
