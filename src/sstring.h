@@ -5,9 +5,12 @@
 typedef struct {
   uint32_t hash; /* Hash of the string */
   int length;    /* Length of the string */
-  char* chars;   /* Charaters composing the string */
+  char* chars;   /* Characters composing the string */
 } String;
 
-String* allocateString(char* chars, int length);
+/* Initialize the string */
+String* initString();
+/* */
+void allocateString(String* string, char* key, int length);
 
 #endif

@@ -20,15 +20,21 @@ static uint32_t hashString(const char* key, int length) {
   return hash;
 }
 
-/* Allocate a string */
-String* allocateString(char* chars, int length) {
+void allocateString(String* string, char* key, int length) {
   /* Compute the hash */
-  uint32_t hash  = hashString(chars, length);
-  /* Allocate and fill the actual string */
-  String* string = ALLOCATE_OBJ(String);
+  uint32_t hash = hashString(key, length);
+  /* Fill the String fields */
+  string->chars  = key;
   string->length = length;
-  string->chars  = chars;
   string->hash   = hash;
+}
 
+/* Allocate a string */
+String* initString() {
+  /* Allocate the string */
+  String* string = ALLOCATE_OBJ(String);
+  string->length = 0;
+  string->chars  = NULL;
+  string->hash   = 0;
   return string;
 }
