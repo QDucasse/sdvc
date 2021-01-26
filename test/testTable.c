@@ -26,9 +26,9 @@ void testTableInitialization() {
 void testFindEntry() {
   Entry testEntries[8];
   String* key1 = initString();
-  allocateString(key1, "blip1", 5);
+  assignString(key1, "blip1", 5);
   String* key2 = initString();
-  allocateString(key2, "blip2", 5);
+  assignString(key2, "blip2", 5);
   Entry* entry1 = allocateEntry(key1, INT_VAL(1));
   Entry* entry2 = allocateEntry(key2, INT_VAL(2));
   uint32_t index1 = entry1->key->hash % 8;
@@ -58,7 +58,7 @@ void testAdjustCapacityOnCreation() {
 void testTableSet() {
   Table* table = initTable();
   String* key = initString();
-  allocateString(key, "blip1", 5);
+  assignString(key, "blip1", 5);
   Value value = INT_VAL(1);
   Entry* entry = allocateEntry(key, value);
   tableSet(table, key, value);
@@ -73,7 +73,7 @@ void testTableSet() {
 void testTableGet() {
   Table* table = initTable();
   String* key = initString();
-  allocateString(key, "blip1", 5);
+  assignString(key, "blip1", 5);
   Value value = INT_VAL(1);
   Entry* entry = allocateEntry(key, value);
   Value outValue = NIL_VAL;
@@ -91,9 +91,9 @@ void testTableGet() {
 void testTableDelete() {
   Table* table = initTable();
   String* key1 = initString();
-  allocateString(key1, "blip1", 5);
+  assignString(key1, "blip1", 5);
   String* key2 = initString();
-  allocateString(key2, "blip2", 5);
+  assignString(key2, "blip2", 5);
   Value value = INT_VAL(1);
   Entry* entry = allocateEntry(key1, value);
 

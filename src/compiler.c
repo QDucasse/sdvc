@@ -22,7 +22,8 @@ static bool prefix(const char *pre, const char *str)
 
 /* Determines if an identifier is a global or a temporary */
 static bool isTemp(Token* tokenIdentifier) {
-  String* varName = allocateString(parser.current.start, parser.current.length);
+  String* varName = initString();
+  assignString(varName, parser.current.start, parser.current.length);
   if (prefix("t_", varName->chars)) {
     return true;
   }
@@ -167,11 +168,11 @@ static void patchJump(int offset) {
 
 /* Process global name */
 static String* globalName() {
-  String* varName;
+  String* varName = initString();
   /* Consume name */
   if (check(TOKEN_IDENTIFIER)) {
     /* Process identifier as string */
-    varName = allocateString(parser.current.start, parser.current.length);
+    assignString(varName, parser.current.start, parser.current.length);
     /* Add to global table */
   }
   consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");

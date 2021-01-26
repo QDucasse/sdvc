@@ -5,7 +5,7 @@
 #include "sstring.h"
 
 /* ==================================
-           STRING CREATION
+          STRING OPERATIONS
 ====================================*/
 
 /* Compute the hash using the FNV-1a hash function */
@@ -20,7 +20,18 @@ static uint32_t hashString(const char* key, int length) {
   return hash;
 }
 
-void allocateString(String* string, char* key, int length) {
+/* Initialize a string */
+String* initString() {
+  /* Allocate the string in memory */
+  String* string = ALLOCATE_OBJ(String);
+  string->length = 0;
+  string->chars  = NULL;
+  string->hash   = 0;
+  return string;
+}
+
+/* Assign a given character array to the string */
+void assignString(String* string, char* key, int length) {
   /* Compute the hash */
   uint32_t hash = hashString(key, length);
   /* Fill the String fields */
@@ -29,12 +40,9 @@ void allocateString(String* string, char* key, int length) {
   string->hash   = hash;
 }
 
-/* Allocate a string */
-String* initString() {
-  /* Allocate the string */
-  String* string = ALLOCATE_OBJ(String);
-  string->length = 0;
-  string->chars  = NULL;
-  string->hash   = 0;
-  return string;
+/* String comparison */
+bool stringsEqual(String* a, String* b) {
+  if((a->hash != b->hash) || (a->length != b->length)) return false;
+  return memcmp(a->chars, b->chars, a->length) == 0;
+
 }

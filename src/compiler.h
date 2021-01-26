@@ -2,6 +2,7 @@
 #define sdvu_compiler_h
 
 #include "chunk.h"
+#include "register.h"
 #include "scanner.h"
 #include "sstring.h"
 #include "table.h"
@@ -26,13 +27,6 @@ typedef struct {
 /* Parser singleton */
 Parser parser;
 
-/* Register structure */
-typedef struct {
-  String* varName; /* Name of the variable in the register */
-  Value* varValue; /* Value of the variable in the register */
-  int number; /* Register number */
-} Register;
-
 Chunk* chunk; /* Array of instructions */
 
 /* Compiler structure */
@@ -40,7 +34,7 @@ typedef struct {
   Table globals; /* Hash table of the global values (configuration input and output) */
 
   Register registers[REG_NUMBER]; /* Array of registers behaving like a stack */
-  Register* topRegister; /* Pointer to the first register available */
+  Register* topRegister; /* Pointer to the first register available for temporary variables */
 } Compiler;
 
 /* Compiler singleton */
