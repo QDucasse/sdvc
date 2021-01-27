@@ -7,7 +7,7 @@
 ====================== */
 
 /* Memory reallocation */
-void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+void* reallocate(void* pointer, size_t newSize) {
   /* Free option */
   if (newSize == 0) {
     free(pointer);

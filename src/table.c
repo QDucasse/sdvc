@@ -8,11 +8,23 @@
 /* Grow the array when it reaches 75% of its capacity */
 #define TABLE_MAX_LOAD 0.75
 
-Entry* allocateEntry(String* key, Value value) {
+/* Allocate the memory for an entry */
+Entry* initEntry() {
   Entry* entry = ALLOCATE_OBJ(Entry);
+  entry->key = NULL;
+  entry->value = NIL_VAL;
+  return entry;
+}
+
+/* Assign actual values to the entry */
+void assignEntry(Entry* entry, String* key, Value value) {
   entry->key = key;
   entry->value = value;
-  return entry;
+}
+
+/* Free the memory of an entry */
+void freeEntry(Entry* entry) {
+  FREE(entry);
 }
 
 /* Initialize the hash table */
@@ -26,8 +38,7 @@ Table* initTable() {
 
 /* Free the hash table */
 void freeTable(Table* table) {
-  FREE_ARRAY(Entry, table->entries, table->capacity);
-  initTable(table);
+  FREE(table);
 }
 
 /* ==================================
@@ -89,10 +100,14 @@ static void adjustCapacity(Table* table, int capacity) {
     table->count++; /* Increment if non-tombstone */
   }
 
-  /* Release the memory from the old array */
-  FREE_ARRAY(Entry, table->entries, table->capacity);
+  /* Release memory from the old array */
+  FREE(table->entries);
+  /* Set the new entries and capacity */
+  // memcpy(table->entries, entries, sizeof(Entry) * capacity);
   table->entries = entries;
   table->capacity = capacity;
+  /* Release memory from the intermediate array */
+  FREE(entries);
 }
 
 /* ==================================

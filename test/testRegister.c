@@ -12,10 +12,10 @@ void tearDown() {}
 /* Register Initialization */
 void testRegisterInitialization() {
   Register* reg = initRegister(3);
-  String* expected = initString();
-  TEST_ASSERT_TRUE(stringsEqual(expected, reg->varName));
+  TEST_ASSERT_EQUAL(NULL, reg->varName);
   TEST_ASSERT_TRUE(valuesEqual(NIL_VAL, reg->varValue));
   TEST_ASSERT_EQUAL_INT(3, reg->number);
+  freeRegister(reg);
 }
 
 /* Loading values
@@ -29,4 +29,6 @@ void testRegisterLoadVariable() {
   loadVariable(reg, key, BOOL_VAL(false));
   TEST_ASSERT_TRUE(stringsEqual(key, reg->varName));
   TEST_ASSERT_TRUE(valuesEqual(BOOL_VAL(false), reg->varValue));
+  freeRegister(reg);
+  freeString(key);
 }

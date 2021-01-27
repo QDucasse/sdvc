@@ -12,6 +12,8 @@ typedef struct {
 
 /* Initialize the string */
 String* initString();
+/* Free a string */
+void freeString(String* string);
 /* Assign a character array to the string */
 void assignString(String* string, char* key, int length);
 /* String comparison */

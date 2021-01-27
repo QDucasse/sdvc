@@ -57,6 +57,8 @@ void writeChunk(Chunk* chunk, uint32_t);
 
 /* Initialization struct initialization */
 Instruction* initInstruction();
+/* Free the given instruction */
+void freeInstruction(Instruction* instruction);
 /* Binary instruction of form Register Register */
 uint32_t binaryInstructionRR(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int ra, unsigned int rb);
 /* Binary instruction of form Register Immediate */

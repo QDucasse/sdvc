@@ -19,6 +19,7 @@ void testStringInitialization() {
   TEST_ASSERT_EQUAL_INT(0, string->length);
   TEST_ASSERT_EQUAL_STRING(NULL, string->chars);
   TEST_ASSERT_EQUAL_UINT32(0, string->hash);
+  freeString(string);
 }
 
 /* Test string assignment */
@@ -28,6 +29,7 @@ void testStringAssignment() {
   TEST_ASSERT_EQUAL_INT(4, string->length);
   TEST_ASSERT_EQUAL_STRING("blip", string->chars);
   TEST_ASSERT_EQUAL_UINT32(1706468258, string->hash);
+  freeString(string);
 }
 
 /* Test string comparison */
@@ -37,6 +39,8 @@ void testStringEqualTrue() {
   String* b = initString();
   assignString(b, "blip", 4);
   TEST_ASSERT_TRUE(stringsEqual(a, b));
+  freeString(a);
+  freeString(b);
 }
 
 /* Test string comparison */
@@ -46,4 +50,6 @@ void testStringEqualFalse() {
   String* b = initString();
   assignString(b, "bloup", 5);
   TEST_ASSERT_FALSE(stringsEqual(a, b));
+  freeString(a);
+  freeString(b);
 }

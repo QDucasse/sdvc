@@ -38,7 +38,7 @@ static bool isTemp(Token* tokenIdentifier) {
 
 /* Compiler initialization */
 void initCompiler() {
-  initChunk(chunk);
+  initChunk(compiler.chunk);
 }
 
 /* Compiler destruction */
@@ -137,21 +137,21 @@ static bool match(TokenType type) {
 static int emitJump() {
   /* OP Code for JMP and placeholder for the jump address, size 28-bits */
   uint32_t instruction = (OP_JMP << 28) | 0xfffffff;
-  writeChunk(chunk, instruction);
+  writeChunk(&compiler.chunk, instruction);
   /* Return the index of the placeholder */
-  return chunk->count - 1;
+  return compiler.chunk.count - 1;
 }
 
 /* */
 static void patchJump(int offset) {
   /* -1 to adjust the jump offset itself */
-  int jump = chunk->count - offset - 1;
+  int jump = compiler.chunk.count - offset - 1;
 
   if (jump > 0xfffffff) {
     error("Too much code to jump over.");
   }
   /* Replace the operand at the given location with the jump offset */
-  chunk->instructions[offset] = (jump >> 28) & 0xfffffff;
+  compiler.chunk.instructions[offset] = (jump >> 28) & 0xfffffff;
 }
 
 

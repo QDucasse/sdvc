@@ -18,6 +18,7 @@ void testTableInitialization() {
   TEST_ASSERT_EQUAL_INT(0, table->count);
   TEST_ASSERT_EQUAL_INT(0, table->capacity);
   TEST_ASSERT_EQUAL(NULL, table->entries);
+  freeTable(table);
 }
 
 /* Entry lookup
@@ -29,8 +30,10 @@ void testFindEntry() {
   assignString(key1, "blip1", 5);
   String* key2 = initString();
   assignString(key2, "blip2", 5);
-  Entry* entry1 = allocateEntry(key1, INT_VAL(1));
-  Entry* entry2 = allocateEntry(key2, INT_VAL(2));
+  Entry* entry1 = initEntry();
+  assignEntry(entry1, key1, INT_VAL(1));
+  Entry* entry2 = initEntry();
+  assignEntry(entry2, key2, INT_VAL(2));
   uint32_t index1 = entry1->key->hash % 8;
   uint32_t index2 = entry2->key->hash % 8;
   testEntries[index1] = *entry1;
@@ -40,6 +43,12 @@ void testFindEntry() {
   // TEST_ASSERT_EQUAL(entry1, outEntry);
   TEST_ASSERT_EQUAL_STRING(entry1->key->chars, outEntry->key->chars);
   TEST_ASSERT_TRUE(valuesEqual(entry1->value, outEntry->value));
+
+  /* Free allocated objects */
+  freeString(key1);
+  freeString(key2);
+  freeEntry(entry1);
+  freeEntry(entry2);
 }
 
 /* Size Operation
@@ -50,6 +59,7 @@ void testAdjustCapacityOnCreation() {
   TEST_ASSERT_EQUAL_INT(0, table->capacity);
   adjustCapacity(table, GROW_CAPACITY(table->capacity));
   TEST_ASSERT_EQUAL_INT(8, table->capacity);
+  freeTable(table);
 }
 
 /* Table entry manipulation
@@ -60,7 +70,8 @@ void testTableSet() {
   String* key = initString();
   assignString(key, "blip1", 5);
   Value value = INT_VAL(1);
-  Entry* entry = allocateEntry(key, value);
+  Entry* entry = initEntry();
+  assignEntry(entry, key, value);
   tableSet(table, key, value);
   TEST_ASSERT_EQUAL_INT(8, table->capacity);
   // ACTUAL POINTERS ARE NOT EQUAL FOR AN UNKNOWN REASON
@@ -68,6 +79,11 @@ void testTableSet() {
   Entry insertedEntry = table->entries[key->hash % 8];
   TEST_ASSERT_EQUAL_STRING(key, insertedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(value, insertedEntry.value));
+
+  /* Free allocated objects */
+  freeTable(table);
+  freeString(key);
+  freeEntry(entry);
 }
 
 void testTableGet() {
@@ -75,7 +91,8 @@ void testTableGet() {
   String* key = initString();
   assignString(key, "blip1", 5);
   Value value = INT_VAL(1);
-  Entry* entry = allocateEntry(key, value);
+  Entry* entry = initEntry();
+  assignEntry(entry, key, value);
   Value outValue = NIL_VAL;
 
   /* Find value with no entry */
@@ -86,6 +103,11 @@ void testTableGet() {
   tableSet(table, key, value);
   bool found = tableGet(table, key, &outValue);
   TEST_ASSERT_TRUE(found);
+
+  /* Free allocated objects */
+  freeTable(table);
+  freeString(key);
+  freeEntry(entry);
 }
 
 void testTableDelete() {
@@ -95,7 +117,8 @@ void testTableDelete() {
   String* key2 = initString();
   assignString(key2, "blip2", 5);
   Value value = INT_VAL(1);
-  Entry* entry = allocateEntry(key1, value);
+  Entry* entry = initEntry();
+  assignEntry(entry, key1, value);
 
   /* Delete in empty table */
   bool notFound = tableDelete(table, key1);
@@ -112,4 +135,10 @@ void testTableDelete() {
   TEST_ASSERT_TRUE(found);
   TEST_ASSERT_EQUAL(NULL, removedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(BOOL_VAL(true), removedEntry.value));
+
+  /* Free allocated objects */
+  freeTable(table);
+  freeString(key1);
+  freeString(key2);
+  freeEntry(entry);
 }

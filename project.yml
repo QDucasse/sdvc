@@ -92,6 +92,17 @@
   :test: []
   :release: []
 
+:tools:
+  :pre_test_fixture_execute:
+    :executable: valgrind
+    :arguments:
+      - --track-origins=yes
+      - --leak-check=full
+      - --show-leak-kinds=all
+      - --errors-for-leak-kinds=all
+      - --error-exitcode=10
+      - ${1}
+
 :plugins:
   :load_paths:
     - vendor/ceedling/plugins
@@ -99,4 +110,5 @@
     - stdout_pretty_tests_report
     - module_generator
     - raw_output_report
+    - command_hooks
 ...

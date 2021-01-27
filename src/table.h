@@ -11,6 +11,12 @@ typedef struct {
   Value value;
 } Entry;
 
+/* Entry operations */
+Entry* initEntry();
+void assignEntry(Entry* entry, String* keym, Value value);
+void freeEntry(Entry* entry);
+
+
 /* Table structure, dynamic array of entries */
 typedef struct {
   int count;      /* Number of used entries + TOMBSTONES */
@@ -18,6 +24,7 @@ typedef struct {
   Entry* entries; /* Actual entries */
 } Table;
 
+/* Table operations */
 Table* initTable();
 void freeTable(Table* table);
 bool tableGet(Table* table, String* key, Value* value);

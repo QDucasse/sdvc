@@ -44,6 +44,7 @@ void testChunkWriteNoResizing() {
   TEST_ASSERT_EQUAL_INT(8, testChunk->capacity);
   TEST_ASSERT_EQUAL_UINT32(0xFF, testChunk->instructions[testChunk->count-1]);
   freeChunk(testChunk);
+  FREE(testInstructions);
 }
 
 
@@ -61,6 +62,7 @@ void testChunkWriteResizing() {
   TEST_ASSERT_EQUAL_INT(16, testChunk->capacity);
   TEST_ASSERT_EQUAL_UINT32(0x09, testChunk->instructions[testChunk->count-1]);
   freeChunk(testChunk);
+  FREE(testInstructions);
 }
 
 /* ==================================
@@ -78,6 +80,7 @@ void testInstructionInitialization() {
   TEST_ASSERT_EQUAL_UINT(instruction->imma, 0);
   TEST_ASSERT_EQUAL_UINT(instruction->immb, 0);
   TEST_ASSERT_EQUAL_UINT(instruction->addr, 0);
+  freeInstruction(instruction);
 }
 
 /* RR representation of an instruction */
@@ -98,6 +101,7 @@ void testInstructionBinaryRR() {
     uint32_t expectedBits = op_code << 28 | 0b0011110000000000100000000010;
     TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
   }
+  freeInstruction(instruction);
 }
 
 /* RI representation of a binary instruction */
@@ -118,6 +122,7 @@ void testInstructionBinaryRI() {
     uint32_t expectedBits = op_code << 28 | 0b0111110000000000100011111111;
     TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
   }
+  freeInstruction(instruction);
 }
 
 /* IR representation of a binary instruction */
@@ -138,6 +143,7 @@ void testInstructionBinaryIR() {
     uint32_t expectedBits = op_code << 28 | 0b1011110001111111100000000010;
     TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
   }
+  freeInstruction(instruction);
 }
 
 /* IR representation of a binary instruction */
@@ -158,6 +164,7 @@ void testInstructionBinaryII() {
     uint32_t expectedBits = op_code << 28 | 0b1111110001111111100011111111;
     TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
   }
+  freeInstruction(instruction);
 }
 
 /* Unary instruction */
@@ -178,4 +185,5 @@ void testInstructionUnary() {
     uint32_t expectedBits = op_code << 28 | 0b1111000000000110001010100111;
     TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
   }
+  freeInstruction(instruction);
 }

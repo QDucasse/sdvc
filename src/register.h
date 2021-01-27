@@ -14,6 +14,8 @@ typedef struct {
 
 /* Register initialization */
 Register* initRegister(int number);
+/* Free a given register */
+void freeRegister(Register* reg);
 /* Load a variable in a register */
 void loadVariable(Register* reg, String* varName, Value varValue);
 

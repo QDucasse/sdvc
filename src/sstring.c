@@ -30,6 +30,11 @@ String* initString() {
   return string;
 }
 
+/* Free an allocated string */
+void freeString(String* string) {
+  FREE(string);
+}
+
 /* Assign a given character array to the string */
 void assignString(String* string, char* key, int length) {
   /* Compute the hash */

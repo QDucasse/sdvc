@@ -22,10 +22,8 @@ Chunk* initChunk() {
 
 /* Free the given chunk */
 void freeChunk(Chunk* chunk) {
-  /* Free the array "code" */
-  FREE_ARRAY(uint32_t, chunk->instructions, chunk->capacity);
   /* Free the structure */
-  FREE(Chunk, chunk);
+  FREE(chunk);
 }
 
 /* Writing
@@ -39,7 +37,7 @@ void writeChunk(Chunk* chunk, uint32_t instruction) {
     /* Figure out the new capacity */
     chunk->capacity = GROW_CAPACITY(oldCapacity);
     /* Grow the array for the amount of capacity */
-    chunk->instructions = GROW_ARRAY(uint32_t, chunk->instructions, oldCapacity, chunk->capacity);
+    chunk->instructions = GROW_ARRAY(uint32_t, chunk->instructions, chunk->capacity);
   }
 
   /* Add the byte of code to the chunk */
@@ -66,6 +64,11 @@ Instruction* initInstruction() {
   instruction->immb = 0;
   instruction->addr = 0;
   return instruction;
+}
+
+/* Free the given instruction */
+void freeInstruction(Instruction* instruction) {
+  FREE(instruction);
 }
 
 /* Conversion from Instruction struct to uint32_t */

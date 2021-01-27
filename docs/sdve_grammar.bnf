@@ -1,0 +1,56 @@
+(* Grammar of the SDVE language *)
+
+<program> ::= { <global-declaration> }, { <process> } ;
+
+<global-declaration> ::= <type-name>,  <identifier>, "=", <value>, ";"  ;
+
+<process> ::= "process", <identifier>,
+                         <guardblock>,
+                         <guardcondition>,
+                         <effect> ;
+
+<guardblock> ::= "guardblock" <assignments> ";" ;
+
+<guardcondition> ::= "guardcondition", <temp-identifier> ";" ;
+
+<effect> ::= "effect", <assignments>, ";" ;
+
+<assignments> ::= <assignment>, { ",", <assignment> } ;
+
+<assignment> ::= <global-assignment>
+               | <temp-assignment> ;
+
+<global-assignment> ::= <identifier>, ["[" <number> "]"], "=", <expression> ;
+
+<temp-assignment> ::= "temp", <type-name>, "=", <expression> ;
+
+<type-name> ::= "bool" | "byte" | "int" | <state-type> ;
+
+<state-type> ::= "state", "{"  { <identifier>, "(", <number>, ")" }, "}" ;
+
+<expression> ::= <operand>, [ <operator>, <operand> ] ;
+
+<operand> ::= <identifier>
+            | <temp-identifier>
+            | <value> ;
+
+<operator> ::= "+" | "-" | "*" | "/" | "%"
+             | "<" | "<=" | ">" | ">=" | "==" | "!="
+             | "and" | "or" ;
+
+<temp-identifier> ::= "t_", <number> ;
+
+<identifier> ::= <character>, { <character> | <digit> | "." | "_" } ;
+
+<number> ::= <digit>, { <digit> };
+
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+<character> ::= "A" | "B" | "C" | "D" | "E" | "F" | "G"
+              | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+              | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+              | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+              | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+              | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+              | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+              | "x" | "y" | "z" ;
