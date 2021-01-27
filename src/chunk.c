@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "common.h"
 #include "chunk.h"
 #include "mmemory.h"
 
