@@ -15,29 +15,16 @@
 
 #define REG_NUMBER 16
 
-/* Parser structure */
-typedef struct {
-  Token current;  /* current Token being investigated */
-  Token previous; /* next Token being investigated */
-  Token tempCurrent;  /* Current token around temporaries */
-  Token tempPrevious; /* Preivous token around temporaries */
-  bool hadError;  /* Previous error was encountered */
-  bool panicMode; /* To avoid cascading errors */
-} Parser;
-
-/* Parser singleton */
-Parser parser;
-
 /* Compiler structure */
 typedef struct {
-  Table globals; /* Hash table of the global values (configuration input and output) */
-  Chunk chunk;   /* Chunk of memory containing the instructions */
+  Table* globals; /* Hash table of the global values (configuration input and output) */
+  Chunk* chunk;   /* Chunk of memory containing the instructions */
   Register registers[REG_NUMBER]; /* Array of registers behaving like a stack */
   Register* topTempRegister;      /* Pointer to the first register available for temporary variables */
 } Compiler;
 
 /* Compiler singleton */
-Compiler compiler;
+Compiler* compiler;
 
 /* Allocation/Deallocation routine */
 void initCompiler();

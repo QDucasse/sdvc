@@ -7,8 +7,21 @@
 #include "compiler.h"
 #include "scanner.h"
 #include "sstring.h"
+#include "register.h"
 #include "table.h"
 #include "value.h"
+
+
+/* Parser structure */
+typedef struct {
+  Token current;  /* current Token being investigated */
+  Token previous; /* next Token being investigated */
+  bool hadError;  /* Previous error was encountered */
+  bool panicMode; /* To avoid cascading errors */
+} Parser;
+
+/* Parser singleton */
+static Parser parser;
 
 /* ==================================
           NAME PROCESSING
@@ -22,15 +35,12 @@ static bool prefix(const char *pre, const char *str)
 
 /* Determines if an identifier is a global or a temporary */
 static bool isTemp(Token* tokenIdentifier) {
-  String* varName = initString();
-  assignString(varName, parser.current.start, parser.current.length);
-  if (prefix("t_", varName->chars)) {
+  char* name = tokenIdentifier->start;
+  if (prefix("t_", name)) {
     return true;
   }
   return false;
 }
-
-
 
 /* ==================================
       ALLOCATION - DEALLOCATION
@@ -38,12 +48,19 @@ static bool isTemp(Token* tokenIdentifier) {
 
 /* Compiler initialization */
 void initCompiler() {
-  initChunk(compiler.chunk);
+  compiler->chunk     = initChunk();
+  compiler->globals   = initTable();
+  for (int i = 0 ; i < REG_NUMBER ; i++) {
+    compiler->registers[i] = *initRegister(i);
+  }
 }
 
 /* Compiler destruction */
 void freeCompiler() {
-
+  freeChunk(compiler->chunk);
+  freeTable(compiler->globals);
+  FREE(compiler->registers);
+  FREE(compiler);
 }
 
 /* ==================================
@@ -137,21 +154,21 @@ static bool match(TokenType type) {
 static int emitJump() {
   /* OP Code for JMP and placeholder for the jump address, size 28-bits */
   uint32_t instruction = (OP_JMP << 28) | 0xfffffff;
-  writeChunk(&compiler.chunk, instruction);
+  writeChunk(compiler->chunk, instruction);
   /* Return the index of the placeholder */
-  return compiler.chunk.count - 1;
+  return compiler->chunk->count - 1;
 }
 
 /* */
 static void patchJump(int offset) {
   /* -1 to adjust the jump offset itself */
-  int jump = compiler.chunk.count - offset - 1;
+  int jump = compiler->chunk->count - offset - 1;
 
   if (jump > 0xfffffff) {
     error("Too much code to jump over.");
   }
   /* Replace the operand at the given location with the jump offset */
-  compiler.chunk.instructions[offset] = (jump >> 28) & 0xfffffff;
+  compiler->chunk->instructions[offset] = (jump >> 28) & 0xfffffff;
 }
 
 
@@ -200,7 +217,7 @@ static void globalBoolDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue);
+  tableSet(compiler->globals, varName, varValue);
 }
 
 /* Process bool global variable */
@@ -220,7 +237,7 @@ static void globalByteDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue);
+  tableSet(compiler->globals, varName, varValue);
 }
 
 /* Process int global variable */
@@ -240,7 +257,7 @@ static void globalIntDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue);
+  tableSet(compiler->globals, varName, varValue);
 }
 
 /* Process state global variable */
@@ -276,7 +293,7 @@ static void globalStateDeclaration() {
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 
   /* Add to the globals table */
-  tableSet(&compiler.globals, varName, varValue);
+  tableSet(compiler->globals, varName, varValue);
 }
 
 /* Declaration of a global variable */

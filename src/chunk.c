@@ -141,7 +141,6 @@ uint32_t binaryInstructionRR(Instruction* instruction, unsigned int op_code,
   instruction->ra = ra;
   instruction->rb = rb;
   return instructionToUint32(instruction);
-
 }
 
 /* Fill the instruction with information for RI then export to uint32 */
