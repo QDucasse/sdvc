@@ -51,8 +51,6 @@ void testFindEntry() {
   testEntries[index1] = *entry1;
   testEntries[index2] = *entry2;
   Entry* outEntry = findEntry(testEntries, 8, key1);
-  // ACTUAL POINTERS ARE NOT EQUAL FOR AN UNKNOWN REASON
-  // TEST_ASSERT_EQUAL(entry1, outEntry);
   TEST_ASSERT_EQUAL_STRING(entry1->key->chars, outEntry->key->chars);
   TEST_ASSERT_TRUE(valuesEqual(entry1->value, outEntry->value));
 }
@@ -75,8 +73,6 @@ void testTableSet() {
   assignEntry(entry1, key1, value);
   tableSet(testTable, key1, value);
   TEST_ASSERT_EQUAL_INT(8, testTable->capacity);
-  // ACTUAL POINTERS ARE NOT EQUAL FOR AN UNKNOWN REASON
-  // TEST_ASSERT_EQUAL(&table->entries[key->hash % 8], entry);
   Entry insertedEntry = testTable->entries[key1->hash % 8];
   TEST_ASSERT_EQUAL_STRING(key1, insertedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(value, insertedEntry.value));

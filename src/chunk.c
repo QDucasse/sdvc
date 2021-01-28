@@ -23,7 +23,9 @@ Chunk* initChunk() {
 
 /* Free the given chunk */
 void freeChunk(Chunk* chunk) {
-  /* Free the structure */
+  /* Free the instructions array */
+  FREE(chunk->instructions);
+  /* Free the actual structure */
   FREE(chunk);
 }
 

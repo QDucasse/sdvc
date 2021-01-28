@@ -5,8 +5,7 @@
 
 static Chunk* testChunk;
 static Instruction* testInstruction;
-static uint32_t bitInstruction = 0xFF;
-static uint32_t testInstructions[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static uint32_t testBitInstruction = 0xFF;
 
 /* Setup and teardown routine */
 void setUp() {
@@ -14,8 +13,8 @@ void setUp() {
   testInstruction = initInstruction();
 }
 void tearDown() {
-  freeChunk(testChunk);
   freeInstruction(testInstruction);
+  freeChunk(testChunk);
 }
 
 /* ==================================
@@ -30,35 +29,37 @@ void testChunkInitialization() {
 
 /* Writing an instruction in an empty chunk should raise the capacity to 8 */
 void testChunkWriteResizingFromZero() {
-  writeChunk(testChunk, bitInstruction);
+  writeChunk(testChunk, testBitInstruction);
   TEST_ASSERT_EQUAL_INT(1, testChunk->count);
   TEST_ASSERT_EQUAL_INT(8, testChunk->capacity);
-  TEST_ASSERT_EQUAL_UINT32(0xFF, testChunk->instructions[testChunk->count-1]);
+  TEST_ASSERT_EQUAL_UINT32(testBitInstruction, testChunk->instructions[testChunk->count-1]);
 }
 
 /* Writing an instruction in a chunk with enough capacity should not change it */
 void testChunkWriteNoResizing() {
-  testInstructions[0] = 0x01;
-  testInstructions[1] = 0x01;
-  testChunk->count = 2;
-  testChunk->capacity = 8; // First capacity augmentation begins at 8
-  testChunk->instructions = testInstructions;
-  writeChunk(testChunk, bitInstruction);
+  writeChunk(testChunk, 0x01);
+  writeChunk(testChunk, 0x02);
+  writeChunk(testChunk, testBitInstruction);
   TEST_ASSERT_EQUAL_INT(3, testChunk->count);
   TEST_ASSERT_EQUAL_INT(8, testChunk->capacity);
-  TEST_ASSERT_EQUAL_UINT32(0xFF, testChunk->instructions[testChunk->count-1]);
+  TEST_ASSERT_EQUAL_UINT32(testBitInstruction, testChunk->instructions[testChunk->count-1]);
 }
 
 
 /* Writing an instruction in a chunk without enough capacity should change it (*2) */
 void testChunkWriteResizing() {
-  testChunk->count = 8;
-  testChunk->capacity = 8;
-  testChunk->instructions = testInstructions;
-  writeChunk(testChunk, bitInstruction);
+  writeChunk(testChunk, 0x01);
+  writeChunk(testChunk, 0x02);
+  writeChunk(testChunk, 0x03);
+  writeChunk(testChunk, 0x04);
+  writeChunk(testChunk, 0x05);
+  writeChunk(testChunk, 0x06);
+  writeChunk(testChunk, 0x07);
+  writeChunk(testChunk, 0x08);
+  writeChunk(testChunk, testBitInstruction);
   TEST_ASSERT_EQUAL_INT(9, testChunk->count);
   TEST_ASSERT_EQUAL_INT(16, testChunk->capacity);
-  TEST_ASSERT_EQUAL_UINT32(0xFF, testChunk->instructions[testChunk->count-1]);
+  TEST_ASSERT_EQUAL_UINT32(testBitInstruction, testChunk->instructions[testChunk->count-1]);
 }
 
 /* ==================================

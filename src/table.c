@@ -38,6 +38,7 @@ Table* initTable() {
 
 /* Free the hash table */
 void freeTable(Table* table) {
+  FREE(table->entries);
   FREE(table);
 }
 
@@ -99,15 +100,10 @@ static void adjustCapacity(Table* table, int capacity) {
     dest->value = entry->value;
     table->count++; /* Increment if non-tombstone */
   }
-
-  /* Release memory from the old array */
-  FREE(table->entries);
+  
   /* Set the new entries and capacity */
-  // memcpy(table->entries, entries, sizeof(Entry) * capacity);
   table->entries = entries;
   table->capacity = capacity;
-  /* Release memory from the intermediate array */
-  FREE(entries);
 }
 
 /* ==================================
