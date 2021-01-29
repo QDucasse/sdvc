@@ -59,6 +59,8 @@ void writeChunk(Chunk* chunk, uint32_t);
 Instruction* initInstruction();
 /* Free the given instruction */
 void freeInstruction(Instruction* instruction);
+/* Convert an instruction to a uint32_t counterpart */
+uint32_t instructionToUint32(Instruction* instruction);
 /* Binary instruction of form Register Register */
 uint32_t binaryInstructionRR(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int ra, unsigned int rb);
 /* Binary instruction of form Register Immediate */

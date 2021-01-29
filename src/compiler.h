@@ -19,8 +19,8 @@
 typedef struct {
   Table* globals; /* Hash table of the global values (configuration input and output) */
   Chunk* chunk;   /* Chunk of memory containing the instructions */
-  Register registers[REG_NUMBER]; /* Array of registers behaving like a stack */
-  Register* topTempRegister;      /* Pointer to the first register available for temporary variables */
+  Register* registers;       /* Array of registers behaving like a stack */
+  Register* topTempRegister; /* Pointer to the first register available for temporary variables */
 } Compiler;
 
 /* Compiler singleton */

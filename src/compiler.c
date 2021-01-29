@@ -23,9 +23,34 @@ typedef struct {
 /* Parser singleton */
 static Parser parser;
 
+
+/* Binary Operator Table */
+int binopTable[] = {
+  [TOKEN_MINUS]         = OP_SUB,
+  [TOKEN_PLUS]          = OP_ADD,
+  [TOKEN_SLASH]         = OP_DIV,
+  [TOKEN_STAR]          = OP_MUL,
+  [TOKEN_MODULO]        = OP_MOD,
+  [TOKEN_BANG_EQUAL]    = OP_NEQ,
+  [TOKEN_EQUAL_EQUAL]   = OP_EQ,
+  [TOKEN_GREATER]       = OP_GT,
+  [TOKEN_GREATER_EQUAL] = OP_GTEQ,
+  [TOKEN_LESS]          = OP_LT,
+  [TOKEN_LESS_EQUAL]    = OP_LTEQ,
+  [TOKEN_AND]           = OP_AND,
+  [TOKEN_OR]            = OP_OR
+};
+
 /* ==================================
           NAME PROCESSING
 =================================== */
+
+void print_binary(unsigned char c)
+{
+ unsigned char i1 = (1 << (sizeof(c)*8-1));
+ for(; i1; i1 >>= 1)
+      printf("%d",(c&i1)!=0);
+}
 
 /* Check if a string contains another string as a prefix */
 static bool prefix(const char *pre, const char *str)
@@ -34,12 +59,23 @@ static bool prefix(const char *pre, const char *str)
 }
 
 /* Determines if an identifier is a global or a temporary */
-static bool isTemp(Token* tokenIdentifier) {
+static bool isTemp(char* name) {
+  return prefix("t_", name);
+}
+
+/* Determines if an identifier is a global or a temporary */
+static bool isTempToken(Token* tokenIdentifier) {
   char* name = tokenIdentifier->start;
-  if (prefix("t_", name)) {
-    return true;
-  }
-  return false;
+  return isTemp(name);
+}
+
+/* Determines if the given token is a binary operator */
+static bool isBinOp(Token* tokenOperator) {
+  TokenType type = tokenOperator->type;
+  return type == TOKEN_MINUS || type == TOKEN_PLUS || type == TOKEN_SLASH ||
+         type == TOKEN_STAR  || type == TOKEN_MODULO || type == TOKEN_BANG_EQUAL ||
+         type == TOKEN_EQUAL_EQUAL || type == TOKEN_GREATER || type == TOKEN_GREATER_EQUAL ||
+         type == TOKEN_LESS || type == TOKEN_LESS_EQUAL || type == TOKEN_AND || type == TOKEN_OR;
 }
 
 /* ==================================
@@ -48,8 +84,10 @@ static bool isTemp(Token* tokenIdentifier) {
 
 /* Compiler initialization */
 void initCompiler() {
+  compiler = ALLOCATE_OBJ(Compiler);
   compiler->chunk     = initChunk();
   compiler->globals   = initTable();
+  compiler->registers = ALLOCATE_ARRAY(Register, REG_NUMBER);
   for (int i = 0 ; i < REG_NUMBER ; i++) {
     compiler->registers[i] = *initRegister(i);
   }
@@ -180,8 +218,8 @@ static void patchJump(int offset) {
 /* Declarations
 ============ */
 
-// Global
-// ======
+/* Globals
+======= */
 
 /* Process global name */
 static String* globalName() {
@@ -193,7 +231,7 @@ static String* globalName() {
     /* Add to global table */
   }
   consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
-  if (prefix("t_", varName->chars)) {
+  if (isTemp(varName->chars)) {
     error("Variable names starting with 't_' are reserved for temporary variables.");
   }
   /* Process value */
@@ -238,6 +276,7 @@ static void globalByteDeclaration() {
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue);
+
 }
 
 /* Process int global variable */
@@ -291,7 +330,6 @@ static void globalStateDeclaration() {
     error("Wrong type, an int variable must be initialized with a number between -32768 and 32767.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
-
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue);
 }
@@ -312,61 +350,130 @@ static void globalDeclaration() {
   }
 }
 
-/* Expressions
-=========== */
-
-static void unary() {
-
-}
-
-
-static void binary() {
-
-}
-
-
-static void expression() {
-  unary();
-  binary();
-}
-
-// static void binary()
-
-// static void unary()
-
-
 /* Assignments
 =========== */
 
+static void leftHandSide(Instruction* instruction) {
+  if(check(TOKEN_NUMBER)) {
+    /* I? */
+    instruction->imma = (unsigned int) strtol(parser.current.start, NULL, 0);
+    /* Set first cfg bit to 0 */
+    instruction->cfg_mask = 0b0 << 1;
+  } else if(check(TOKEN_IDENTIFIER)) {
+    /* Left hand side is an Identifier */
+    if (isTempToken(&parser.current)) {
+      /* LHS is a temporary */
+      String* tempKey = initString();
+      assignString(tempKey, parser.current.start, parser.current.length);
+      /* Resolve register */
+      /* Set the resolved register to ra */
+      printf("Setting resolved register as a temporary!.\n");
+    } else {
+      /* LHS is a global */
+      String* globKey = initString();
+      assignString(globKey, parser.current.start, parser.current.length);
+      /* Resolve register */
+      /* Set the resolved register to ra */
+      printf("Setting resolved register as a global!.\n");
+    }
+    /* Set first cfg bit to 1 */
+    instruction->cfg_mask = 0b1 << 1;
+  } else {
+    /* Not a variable or an immediate value */
+    error("An assignment needs the rvalue to be either a variable or immediate value.");
+  }
+  /* Consume LHS token */
+  advance();
+}
+
+static void rightHandSide(Instruction* instruction) {
+  if(check(TOKEN_NUMBER)) {  /* ?I */
+    instruction->immb = (unsigned int) strtol(parser.current.start, NULL, 0);
+    /* Set second cfg bit to 1 */
+    instruction->cfg_mask |= 0b1;
+  } else if(check(TOKEN_IDENTIFIER)) { /* ?R */
+    /* Left hand side is an Identifier */
+    if (isTempToken(&parser.current)) {
+      /* RHS is a temporary */
+      String* tempKey = initString();
+      assignString(tempKey, parser.current.start, parser.current.length);
+      /* Resolve register */
+      /* Set the resolved register to rb */
+      printf("Setting resolved register as a temporary!.\n");
+    } else {
+      /* RHS is a global */
+      String* globKey = initString();
+      assignString(globKey, parser.current.start, parser.current.length);
+      /* Resolve register */
+      /* Set the resolved register to rb */
+      printf("Setting resolved register as a global!.\n");
+    }
+    /* Set second cfg bit to 0 */
+    instruction->cfg_mask |= 0b0;
+  }
+  /* Consume RHS token */
+  advance();
+
+}
+
+void operator(Instruction* instruction) {
+  /* Consume operator */
+  if (isBinOp(&parser.current)) {
+    instruction->op_code = binopTable[parser.current.type];
+    advance();
+  } else {
+    error("Expected binary operator.");
+  }
+}
+
+static void expression() {
+  /* Consume identifier, probably need to use it to access the hash table */
+  consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
+  /* Store the name of the variable in a string */
+  String* keyAssignedVar = initString();
+  assignString(keyAssignedVar, parser.previous.start, parser.previous.length);
+  /* Consume the equal token */
+  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
+  Instruction* instruction = initInstruction();
+  /* Consume left hand side of expression */
+  leftHandSide(instruction);
+  /* Consume operator */
+  operator(instruction);
+  /* Consume right hand side of expression */
+  rightHandSide(instruction);
+  /* Write instruction */
+  uint32_t bitsInstruction = instructionToUint32(instruction);
+  print_binary(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+}
+
+
 /* Assign a value to a global variable */
 static void globalAssignment() {
-  /* Consume identifier, probably need to use it to access the hash table */
-  advance();
-  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
-  /* Output STORE? */
-  /* Process expression */
   expression();
 }
 
 /* Assign a value to a given temporary variable and store it in a register */
 static void tempAssignment() {
-  /* Consume id, probably need to use it to store in the register */
-  advance();
-  /* Consume type from temp scanner (or call tempDeclaration?) */
+  /* Consume temp token, probably need to use it to access the hash table */
+  consume(TOKEN_TEMP, "Temporary variable assignment should begin with 'temp'.");
+  /* Consume the type */
+  if (check(TOKEN_BOOL) || check(TOKEN_BYTE) || check(TOKEN_INT)) {
+    advance();
+  } else {
+    error("Temporary variable assignment should have a type.");
+  }
   expression();
-  /* Store in the top register OR lowest freed */
 }
 
 /* Check variable name to determine if it is a temporary variable or not */
 static void assignment() {
-  if (!check(TOKEN_IDENTIFIER)) {
-    error("Assignment should begin with an identifier.");
-  }
-  /* Test the identifier and redirect to either global or temporary assignment */
-  if (isTemp(&parser.current)){
+  if (check(TOKEN_TEMP)) {
     tempAssignment();
-  } else {
+  } else if (check(TOKEN_IDENTIFIER)) {
     globalAssignment();
+  } else {
+    error("An assignment should begin with either an identifier (global) or 'temp' (temporary).");
   }
 }
 
@@ -430,11 +537,6 @@ bool compile(char* source) {
   /* Compile globals */
   while(!match(TOKEN_PROCESS)) {
     globalDeclaration();
-  }
-
-  /* Go through temporaries */
-  while(!check(TOKEN_PROCESS)) {
-    advance();
   }
 
   /* Go through processes */

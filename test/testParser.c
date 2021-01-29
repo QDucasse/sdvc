@@ -85,26 +85,34 @@ void testConsume() {
   }
 }
 
-void testConsumeFailing() {
-  for (int j = 0 ; j < 38 ; j++){
-    for (int i = 0 ; i < 38 ; i++) {
-      if (j == i) continue;
-      TestStub currentStub = stubs[i];
-      TestStub otherStub   = stubs[j];
-      initScanner(currentStub.source);
-      parser.current = scanToken(); // Process a given token
-
-      /* Redirect sterr to the string buffer */
-      char string[currentStub.size + 40];
-      freopen("/dev/null", "a", stderr);
-      setbuf(stderr, string);
-      consume(otherStub.type, "Type not verified.");
-
-      TEST_ASSERT_EQUAL_STRING()
-
-    }
-  }
-}
+// void testConsumeFailing() {
+//   for (int j = 0 ; j < 38 ; j++){
+//     for (int i = 0 ; i < 38 ; i++) {
+//       if (j == i) continue;
+//       TestStub currentStub = stubs[i];
+//       TestStub otherStub   = stubs[j];
+//       printf("%u\n", currentStub.type);
+//       printf("%u\n", otherStub.type);
+//       initScanner(currentStub.source);
+//       parser.current = scanToken(); // Process a given token
+//
+//       /* Redirect sterr to the string buffer */
+//       char string[100];
+//       freopen("/dev/null", "a", stderr);
+//       setbuf(stderr, string);
+//       consume(otherStub.type, "Type not verified.");
+//
+//       /* Crafting the expected string */
+//       char expected[100];
+//       strcpy(expected, "[line 1] Error at '");
+//       strcat(expected, currentStub.source);
+//       strcat(expected,"': Type not verified.\n\x10");
+//
+//       TEST_ASSERT_EQUAL_STRING(expected, string);
+//
+//     }
+//   }
+// }
 
 void testCheck() {
 

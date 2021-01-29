@@ -1,24 +1,12 @@
 state {a(0), b(1)} P1.state = 0;
 int P1.x = 1;
 int P1.y = 2;
-state {a(0), b(1)} P2.state = 0;
 int P2.z = 0;
 int P2.w = 0;
-transient bool t_0 = false;
-transient bool t_1 = false;
-transient bool t_2 = false;
-transient bool t_3 = false;
-transient bool t_4 = false;
-transient bool t_5 = false;
-transient bool t_6 = false;
-transient bool t_7 = false;
-transient bool t_8 = false;
-transient byte t_9 = 0;
-transient tuple {int, int} test = {0, 0};
 	process P1
 		guardblock
-			t_0 = P1.state == 1,
-			t_1 = t_0 and true;
+			temp bool t_0 = P1.state == 1,
+			temp bool t_1 = t_0 and true;
 
 		guardcondition t_1;
 		effect
@@ -26,8 +14,8 @@ transient tuple {int, int} test = {0, 0};
 
 	process P2
 		guardblock
-			t_2 = P2.state == 1,
-			t_3 = t_2 and true;
+			temp bool t_2 = P2.state == 1,
+			temp bool t_3 = t_2 and true;
 
 		guardcondition t_3;
 		effect
@@ -35,11 +23,11 @@ transient tuple {int, int} test = {0, 0};
 
 	process P1_P2
 		guardblock
-			t_4 = P1.state == 0,
-			t_5 = t_4 and true,
-			t_6 = P2.state == 0,
-			t_7 = t_6 and true,
-			t_8 = t_5 and t_7;
+			temp bool t_4 = P1.state == 0,
+			temp bool t_5 = t_4 and true,
+			temp bool t_6 = P2.state == 0,
+			temp bool t_7 = t_6 and true,
+			temp bool t_8 = t_5 and t_7;
 
 		guardcondition t_8;
 		effect

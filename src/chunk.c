@@ -75,7 +75,7 @@ void freeInstruction(Instruction* instruction) {
 }
 
 /* Conversion from Instruction struct to uint32_t */
-static uint32_t instructionToUint32(Instruction* instruction) {
+uint32_t instructionToUint32(Instruction* instruction) {
   /* Adding op code to the instruction*/
   uint32_t convertedInstruction = instruction->op_code << 28;
   bool isBinary = instruction->op_code < 13;

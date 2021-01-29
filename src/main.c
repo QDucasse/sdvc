@@ -69,7 +69,7 @@ static char* readFile(const char* path) {
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {
-    // scanFile(argv[1]);
+    initCompiler();
     char* source = readFile(argv[1]);
     compile(source);
   } else {
