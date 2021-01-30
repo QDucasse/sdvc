@@ -245,7 +245,7 @@ static void globalBoolDeclaration() {
   /* Process name and '=' */
   String* varName = globalName();
   /* Process Value */
-  Value varValue;
+  Value varValue = NIL_VAL;
   if (match(TOKEN_TRUE)) {
     varValue = BOOL_VAL(true);
   } else if (match(TOKEN_FALSE)) {
@@ -263,7 +263,7 @@ static void globalByteDeclaration() {
   /* Process name and '=' */
   String* varName = globalName();
   /* Process Value */
-  Value varValue;
+  Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER)) {
     double value = strtod(parser.previous.start, NULL);
     if ((value < 0) || (value > 255)) {
@@ -284,7 +284,7 @@ static void globalIntDeclaration() {
   /* Process name and '=' */
   String* varName = globalName();
   /* Process Value */
-  Value varValue;
+  Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER) || match(TOKEN_MINUS)) {
     double value = strtod(parser.previous.start, NULL);
     if ((value < INT16_MIN) || (value > INT16_MAX)) {
@@ -319,7 +319,7 @@ static void globalStateDeclaration() {
   /* Process name and '=' */
   String* varName = globalName();
   /* Process Value */
-  Value varValue;
+  Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER)) {
     double currentState = strtod(parser.previous.start, NULL);
     if ((currentState < 0) || (currentState > stateNumber-1)) {
@@ -353,6 +353,16 @@ static void globalDeclaration() {
 /* Assignments
 =========== */
 
+/* Look for the register containing a given variable (NULL otherwise) */
+static Register* getRegNumberFromVar(String* varName) {
+  for (int i = 0 ; i < REG_NUMBER ; i++) {
+    if (stringsEqual(varName, compiler->registers[i].varName)) {
+      return &compiler->registers[i];
+    }
+  }
+  return NULL;
+}
+
 static void leftHandSide(Instruction* instruction) {
   if(check(TOKEN_NUMBER)) {
     /* I? */
@@ -366,6 +376,7 @@ static void leftHandSide(Instruction* instruction) {
       String* tempKey = initString();
       assignString(tempKey, parser.current.start, parser.current.length);
       /* Resolve register */
+      Register* foundReg = getRegFromVar(globKey);
       /* Set the resolved register to ra */
       printf("Setting resolved register as a temporary!.\n");
     } else {
@@ -373,6 +384,7 @@ static void leftHandSide(Instruction* instruction) {
       String* globKey = initString();
       assignString(globKey, parser.current.start, parser.current.length);
       /* Resolve register */
+      Register* foundReg = getRegFromVar(globKey);
       /* Set the resolved register to ra */
       printf("Setting resolved register as a global!.\n");
     }
@@ -398,6 +410,7 @@ static void rightHandSide(Instruction* instruction) {
       String* tempKey = initString();
       assignString(tempKey, parser.current.start, parser.current.length);
       /* Resolve register */
+      Register* foundReg = getRegFromVar(tempKey);
       /* Set the resolved register to rb */
       printf("Setting resolved register as a temporary!.\n");
     } else {
@@ -405,8 +418,16 @@ static void rightHandSide(Instruction* instruction) {
       String* globKey = initString();
       assignString(globKey, parser.current.start, parser.current.length);
       /* Resolve register */
-      /* Set the resolved register to rb */
-      printf("Setting resolved register as a global!.\n");
+      Register* foundReg = getRegFromVar(globKey);
+      /* If the register is NULL -> Store the value into a new one */
+      if (foundReg == NULL) {
+        /* Go to the table and store the value in a register */
+        /* Emit a load instruction with the correct address */
+      } else {
+        /* Set the resolved register to rb */
+        instruction->rb = foundReg->number;
+      }
+      printf("Setting resolved register %u as a global!.\n", instruction->rb);
     }
     /* Set second cfg bit to 0 */
     instruction->cfg_mask |= 0b0;
