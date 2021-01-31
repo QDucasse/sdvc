@@ -188,26 +188,26 @@ static bool match(TokenType type) {
 /* Jump handling
 ============= */
 
-/* Emit a jump */
-static int emitJump() {
-  /* OP Code for JMP and placeholder for the jump address, size 28-bits */
-  uint32_t instruction = (OP_JMP << 28) | 0xfffffff;
-  writeChunk(compiler->chunk, instruction);
-  /* Return the index of the placeholder */
-  return compiler->chunk->count - 1;
-}
-
-/* */
-static void patchJump(int offset) {
-  /* -1 to adjust the jump offset itself */
-  int jump = compiler->chunk->count - offset - 1;
-
-  if (jump > 0xfffffff) {
-    error("Too much code to jump over.");
-  }
-  /* Replace the operand at the given location with the jump offset */
-  compiler->chunk->instructions[offset] = (jump >> 28) & 0xfffffff;
-}
+// /* Emit a jump */
+// static int emitJump() {
+//   /* OP Code for JMP and placeholder for the jump address, size 28-bits */
+//   uint32_t instruction = (OP_JMP << 28) | 0xfffffff;
+//   writeChunk(compiler->chunk, instruction);
+//   /* Return the index of the placeholder */
+//   return compiler->chunk->count - 1;
+// }
+//
+// /* */
+// static void patchJump(int offset) {
+//   /* -1 to adjust the jump offset itself */
+//   int jump = compiler->chunk->count - offset - 1;
+//
+//   if (jump > 0xfffffff) {
+//     error("Too much code to jump over.");
+//   }
+//   /* Replace the operand at the given location with the jump offset */
+//   compiler->chunk->instructions[offset] = (jump >> 28) & 0xfffffff;
+// }
 
 
 
@@ -354,7 +354,7 @@ static void globalDeclaration() {
 =========== */
 
 /* Look for the register containing a given variable (NULL otherwise) */
-static Register* getRegNumberFromVar(String* varName) {
+static Register* getRegFromVar(String* varName) {
   for (int i = 0 ; i < REG_NUMBER ; i++) {
     if (stringsEqual(varName, compiler->registers[i].varName)) {
       return &compiler->registers[i];
@@ -371,22 +371,38 @@ static void leftHandSide(Instruction* instruction) {
     instruction->cfg_mask = 0b0 << 1;
   } else if(check(TOKEN_IDENTIFIER)) {
     /* Left hand side is an Identifier */
-    if (isTempToken(&parser.current)) {
+    if (isTempToken(&parser.current)) {  // TEMPORARY
       /* LHS is a temporary */
       String* tempKey = initString();
       assignString(tempKey, parser.current.start, parser.current.length);
       /* Resolve register */
-      Register* foundReg = getRegFromVar(globKey);
+      Register* foundReg = getRegFromVar(tempKey);
+      /* Check if the value is found in the registers */
+      if (foundReg == NULL) {
+        /* If not found, raise an error (a rvalue temp should be in a register) */
+        error("Temporary variable on the right side of an assignment should be defined.");
+      } else {
+        /* Set the resolved register to ra */
+        instruction->ra = foundReg->number;
+      }
+      printf("Setting resolved register %u as a global!.\n", instruction->ra);
       /* Set the resolved register to ra */
       printf("Setting resolved register as a temporary!.\n");
-    } else {
+    } else {  // GLOBAL
       /* LHS is a global */
       String* globKey = initString();
       assignString(globKey, parser.current.start, parser.current.length);
       /* Resolve register */
       Register* foundReg = getRegFromVar(globKey);
-      /* Set the resolved register to ra */
-      printf("Setting resolved register as a global!.\n");
+      /* Check if the value is found in the registers */
+      if (foundReg == NULL) {
+        /* Go to the table and store the value in a register */
+        /* Emit a load instruction with the correct address */
+      } else {
+        /* Set the resolved register to rb */
+        instruction->rb = foundReg->number;
+      }
+      printf("Setting resolved register %u as a global!.\n", instruction->rb);
     }
     /* Set first cfg bit to 1 */
     instruction->cfg_mask = 0b1 << 1;
@@ -411,8 +427,15 @@ static void rightHandSide(Instruction* instruction) {
       assignString(tempKey, parser.current.start, parser.current.length);
       /* Resolve register */
       Register* foundReg = getRegFromVar(tempKey);
-      /* Set the resolved register to rb */
-      printf("Setting resolved register as a temporary!.\n");
+      if (foundReg == NULL) {
+        /* If not found, raise an error (a rvalue temp should be in a register) */
+        error("Temporary variable on the right side of an assignment should be defined.");
+      } else {
+        /* Set the resolved register to ra */
+        instruction->rb = foundReg->number;
+      }
+      printf("Setting resolved register %u as a temporary!.\n", instruction->rb);
+
     } else {
       /* RHS is a global */
       String* globKey = initString();
@@ -484,6 +507,9 @@ static void tempAssignment() {
   } else {
     error("Temporary variable assignment should have a type.");
   }
+
+  // consume(TOKEN_IDENTIFIER, "Assignment of temporary variables should begin with a name.");
+  // consume(TOKEN_EQUAL, "Assignment should have an '=' sign.");
   expression();
 }
 
@@ -534,14 +560,14 @@ static void process() {
   /* Go through guardcondition */
   consume(TOKEN_GUARD_COND, "Guardcondition should begin with 'guardcondition' identifier.");
   /* Emit jump to end of effect */
-  int jmpEffect = emitJump();
+  // int jmpEffect = emitJump();
   /* Process identifier */
   consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
   consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
   /* Go through effect */
   effect();
   /* Patch jump */
-  patchJump(jmpEffect);
+  // patchJump(jmpEffect);
 }
 
 /* ==================================
@@ -556,7 +582,7 @@ bool compile(char* source) {
   parser.panicMode = false;
 
   /* Compile globals */
-  while(!match(TOKEN_PROCESS)) {
+  while(!check(TOKEN_PROCESS)) {
     globalDeclaration();
   }
 
