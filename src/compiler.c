@@ -356,7 +356,8 @@ static void globalDeclaration() {
 /* Look for the register containing a given variable (NULL otherwise) */
 static Register* getRegFromVar(String* varName) {
   for (int i = 0 ; i < REG_NUMBER ; i++) {
-    if (stringsEqual(varName, compiler->registers[i].varName)) {
+    printf("Looking into register %i!\n", compiler->registers[i].number);
+    if ((compiler->registers[i].varName != NULL) && stringsEqual(varName, compiler->registers[i].varName)) {
       return &compiler->registers[i];
     }
   }
@@ -393,7 +394,8 @@ static void leftHandSide(Instruction* instruction) {
       String* globKey = initString();
       assignString(globKey, parser.current.start, parser.current.length);
       /* Resolve register */
-      Register* foundReg = getRegFromVar(globKey);
+      Register* foundReg = initRegister(0);
+      foundReg = getRegFromVar(globKey);
       /* Check if the value is found in the registers */
       if (foundReg == NULL) {
         /* Go to the table and store the value in a register */
@@ -485,6 +487,7 @@ static void expression() {
   operator(instruction);
   /* Consume right hand side of expression */
   rightHandSide(instruction);
+  /* Resolve rd and write it in the instruction */
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
   print_binary(bitsInstruction);
