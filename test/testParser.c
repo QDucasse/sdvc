@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "disassembler.h"
 #include "mmemory.h"
 #include "scanner.h"
 #include "sstring.h"
@@ -114,18 +115,18 @@ void testConsume() {
 //   }
 // }
 
-void testCheck() {
-
-}
-
-void testCheckFailing() {
-
-}
-
-void testMatch() {
-
-}
-
-void testMatchFailing() {
-
-}
+// void testCheck() {
+//
+// }
+//
+// void testCheckFailing() {
+//
+// }
+//
+// void testMatch() {
+//
+// }
+//
+// void testMatchFailing() {
+//
+// }

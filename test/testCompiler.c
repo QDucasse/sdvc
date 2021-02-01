@@ -27,14 +27,21 @@ void testStrCmpPrefix() {
   TEST_ASSERT_FALSE(prefix("bipboup","blip bloup"));
 }
 
-/* Test if a string is a temporary variable identifier */
 void testStrIsTemp() {
+  char* tokenIdentifierName1 = "t_335";
+  char* tokenIdentifierName2 = "blip";
+  TEST_ASSERT_TRUE(isTemp(tokenIdentifierName1));
+  TEST_ASSERT_FALSE(isTemp(tokenIdentifierName2));
+}
+
+/* Test if a string is a temporary variable identifier */
+void testStrIsTempToken() {
   char* tokenIdentifierName1 = "t_335";
   char* tokenIdentifierName2 = "blip";
   Token token1 = {.start = tokenIdentifierName1};
   Token token2 = {.start = tokenIdentifierName2};
-  TEST_ASSERT_TRUE(isTemp(&token1));
-  TEST_ASSERT_FALSE(isTemp(&token2));
+  TEST_ASSERT_TRUE(isTempToken(&token1));
+  TEST_ASSERT_FALSE(isTempToken(&token2));
 }
 
 /* ==================================

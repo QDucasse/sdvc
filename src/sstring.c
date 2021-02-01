@@ -32,15 +32,16 @@ String* initString() {
 
 /* Free an allocated string */
 void freeString(String* string) {
+  FREE(string->chars);
   FREE(string);
 }
 
 /* Assign a given character array to the string */
 void assignString(String* string, char* key, int length) {
   /* Copy the identifier */
-  string->chars = malloc(sizeof(char) * length);
-  memcpy(string->chars, key, length + 1);
-  string->chars[length + 1] = '\0';
+  string->chars = malloc(sizeof(char) * (length + 1));
+  memcpy(string->chars, key, length);
+  string->chars[length] = '\0';
   string->length = length;
 
   /* Compute the hash */
