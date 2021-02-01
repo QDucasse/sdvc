@@ -1,5 +1,6 @@
 #include "unity.h"
 #include "chunk.h"
+#include "disassembler.h"
 #include "mmemory.h"
 
 
@@ -78,6 +79,9 @@ void testInstructionInitialization() {
   TEST_ASSERT_EQUAL_UINT(testInstruction->addr, 0);
 }
 
+/* Binary Instructions
+=================== */
+
 /* RR representation of an instruction */
 void testInstructionBinaryRR() {
   // Add the content of registers 1 and 2 and put the result in register 15
@@ -154,10 +158,13 @@ void testInstructionBinaryII() {
   }
 }
 
+/* Unary Instructions (STORE/JMP)
+============================== */
+
 /* Unary instruction */
 void testInstructionUnary() {
   // Store the content of register 15 in address 25255
-  for (unsigned int op_code = 13 ; op_code < 16 ; op_code++) {
+  for (unsigned int op_code = 13 ; op_code < 15 ; op_code++) {
     uint32_t instructionBits = unaryInstruction(testInstruction, op_code, 15, 25255);
     TEST_ASSERT_EQUAL_UINT(testInstruction->op_code,  op_code);
     TEST_ASSERT_EQUAL_UINT(testInstruction->cfg_mask, 0);
@@ -171,4 +178,55 @@ void testInstructionUnary() {
     uint32_t expectedBits = op_code << 28 | 0b1111000000000110001010100111;
     TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
   }
+}
+
+/* LOAD instruction
+================ */
+
+/* Load instruction with REG configuration */
+void testInstructionLoadReg() {
+  uint32_t instructionBits = loadInstructionReg(testInstruction, 15, 12);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->op_code,  OP_LOAD);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->cfg_mask, LOAD_REG);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->rd, 15);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->ra, 12);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->rb, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->imma, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->immb, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->addr, 0);
+  // instruction: opcode(4bits) | cfg(2bits) | rd(1111) | ra(1010)
+  uint32_t expectedBits = OP_LOAD << 28 | 0b0011110000000000000000001100;
+  TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
+}
+
+/* Load instruction with IMM configuration */
+void testInstructionLoadImm() {
+  uint32_t instructionBits = loadInstructionImm(testInstruction, 15, 255);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->op_code,  OP_LOAD);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->cfg_mask, LOAD_IMM);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->rd, 15);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->ra, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->rb, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->imma, 255);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->immb, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->addr, 0);
+  // instruction: opcode(4bits) | cfg(2bits) | rd(1111) | imma(11111111)
+  uint32_t expectedBits = OP_LOAD << 28 | 0b0111110000000000000011111111;
+  TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
+}
+
+/* Load instruction with ADR configuration */
+void testInstructionLoadAdr() {
+  uint32_t instructionBits = loadInstructionAddr(testInstruction, 15, 25255);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->op_code,  OP_LOAD);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->cfg_mask, LOAD_ADR);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->rd, 15);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->ra, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->rb, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->imma, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->immb, 0);
+  TEST_ASSERT_EQUAL_UINT(testInstruction->addr, 25255);
+  // instruction: opcode(4bits) | cfg(2bits) | rd(1111) | addr(110001010100111)
+  uint32_t expectedBits = OP_LOAD << 28 | 0b1011110000000110001010100111;
+  TEST_ASSERT_EQUAL_UINT(expectedBits, instructionBits);
 }

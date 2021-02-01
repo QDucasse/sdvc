@@ -26,7 +26,10 @@ CodeNames codeNames[] = {
   [CFG_RR]   = {CFG_RR, "CFG_RR"},
   [CFG_RI]   = {CFG_RI, "CFG_RI"},
   [CFG_IR]   = {CFG_IR, "CFG_IR"},
-  [CFG_II]   = {CFG_II, "CFG_II"},
+  [CFG_II]   = {CFG_II, "CFG_II"}
+};
+
+CodeNames loadConfigs[] = {
   [LOAD_REG] = {LOAD_REG, "LOAD_REG"},
   [LOAD_IMM] = {LOAD_IMM, "LOAD_IMM"},
   [LOAD_ADR] = {LOAD_ADR, "LOAD_ADR"}
@@ -59,9 +62,9 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int addr = (bitInstruction & 0x3FFFFFF);           // 0000 0000 0011 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
-      case LOAD_REG: printf("OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", codeNames[cfg_mask].name, rd, ra); break;
-      case LOAD_ADR: printf("OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", codeNames[cfg_mask].name, rd, imma); break;
-      case LOAD_IMM: printf("OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", codeNames[cfg_mask].name, rd, addr); break;
+      case LOAD_REG: printf("OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", loadConfigs[cfg_mask].name, rd, ra); break;
+      case LOAD_ADR: printf("OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", loadConfigs[cfg_mask].name, rd, imma); break;
+      case LOAD_IMM: printf("OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", loadConfigs[cfg_mask].name, rd, addr); break;
       default: break; // Unreachable
     }
   } else { // UNARY STORE/JMP

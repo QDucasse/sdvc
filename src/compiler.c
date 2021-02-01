@@ -498,7 +498,14 @@ static void expression(Instruction* instruction) {
     rightHandSide(instruction);
     /* Resolve rd and write it in the instruction */
   } else {
-    instruction->op_code = OP_STORE;
+    instruction->op_code  = OP_LOAD;
+    /* Convert the binary bitmask to the load version */
+    if ((instruction->cfg_mask == CFG_RR) || (instruction->cfg_mask == CFG_RI)) {
+      /* REG as the left-hand side */
+      instruction->cfg_mask = LOAD_REG;
+    } else {
+      instruction->cfg_mask = LOAD_IMM;
+    }
   }
   printf("OP_CODE from expression : %u\n", instruction->op_code);
 }

@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "disassembler.h"
 #include "mmemory.h"
 #include "scanner.h"
 #include "sstring.h"

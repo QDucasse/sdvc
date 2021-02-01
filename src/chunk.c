@@ -211,7 +211,7 @@ uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
 ================= */
 
 /* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
-uint32_t loadInstructionReg(Instruction* instruction, unsigned int ra, unsigned int rd) {
+uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned int ra) {
   instruction->op_code = OP_LOAD;
   instruction->cfg_mask = LOAD_REG;
   instruction->rd = rd;
@@ -220,7 +220,7 @@ uint32_t loadInstructionReg(Instruction* instruction, unsigned int ra, unsigned 
 }
 
 /* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
-uint32_t loadInstructionImm(Instruction* instruction, unsigned int imma, unsigned int rd) {
+uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned int imma) {
   instruction->op_code = OP_LOAD;
   instruction->cfg_mask = LOAD_IMM;
   instruction->rd = rd;
@@ -229,7 +229,7 @@ uint32_t loadInstructionImm(Instruction* instruction, unsigned int imma, unsigne
 }
 
 /* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
-uint32_t loadInstructionAddr(Instruction* instruction, unsigned int addr, unsigned int rd) {
+uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr) {
   instruction->op_code = OP_LOAD;
   instruction->cfg_mask = LOAD_ADR;
   instruction->rd = rd;

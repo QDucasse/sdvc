@@ -33,4 +33,5 @@ int P2.w = 0;
 		effect
 			P1.state = 1,
 			P2.state = 1,
-			P2.w = 2;
+			P2.w = 2,
+			P2.w = P1.state;

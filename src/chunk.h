@@ -34,6 +34,8 @@
 #define LOAD_IMM 0b01
 #define LOAD_ADR 0b10
 
+
+
 /* Chunk of instructions definition */
 typedef struct {
   int count;              // Number of allocated entries in use
@@ -74,7 +76,12 @@ uint32_t binaryInstructionRI(Instruction* instruction, unsigned int op_code, uns
 uint32_t binaryInstructionIR(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int imm, unsigned int rb);
 /* Binary instruction of form Immediate Register */
 uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int imma, unsigned int immb);
-/* Unary instruction */
+/* Unary instruction STORE/JMP */
 uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int addr);
-
+/* Load from a register */
+uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned int ra);
+/* Load from an immediate value */
+uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned int imma);
+/* Load from an address */
+uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr);
 #endif
