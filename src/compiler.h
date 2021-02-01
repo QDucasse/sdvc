@@ -13,8 +13,6 @@
         STRUCTS AND GLOBALS
 =================================== */
 
-#define REG_NUMBER 16
-
 /* Compiler structure */
 typedef struct {
   Table* globals; /* Hash table of the global values (configuration input and output) */

@@ -80,6 +80,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
   uint32_t convertedInstruction = instruction->op_code << 28;
   bool isBinary = instruction->op_code < 13;
   if (isBinary) {
+    /* BINARY OPERATIONS */
     /* Adding config mask */
     convertedInstruction |= instruction->cfg_mask << 26;
     /* Adding destination register */
@@ -118,7 +119,28 @@ uint32_t instructionToUint32(Instruction* instruction) {
       default: break; // Unreachable
     }
 
+  } else if (instruction->op_code == OP_LOAD) {
+    /* LOAD OPERATION */
+    /* Adding config mask */
+    convertedInstruction |= instruction->cfg_mask << 26;
+    /* Adding destination register */
+    convertedInstruction |= instruction->rd << 22;
+    switch(instruction->cfg_mask) {
+      case LOAD_REG:
+        /* Adding Ra */
+        convertedInstruction |= instruction->ra;
+        break;
+      case LOAD_IMM:
+      /* Adding Imma */
+        convertedInstruction |= instruction->imma;
+        break;
+      case LOAD_ADR:
+        convertedInstruction |= instruction->addr;
+        break;
+      default: break;// Unreachable
+    }
   } else {
+    /* STORE/JMP OPERATIONS */
     /* Adding destination register */
     convertedInstruction |= instruction->rd << 24;
     /* Adding address */
@@ -176,10 +198,40 @@ uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code,
   return instructionToUint32(instruction);
 }
 
-/* Fill the instruction with a destination register and address for STORE, LOAD or JMP then export to uint32_t */
+/* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
 uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
                           unsigned int rd, unsigned int addr) {
   instruction->op_code = op_code;
+  instruction->rd = rd;
+  instruction->addr = addr;
+  return instructionToUint32(instruction);
+}
+
+/* LOAD instructions
+================= */
+
+/* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
+uint32_t loadInstructionReg(Instruction* instruction, unsigned int ra, unsigned int rd) {
+  instruction->op_code = OP_LOAD;
+  instruction->cfg_mask = LOAD_REG;
+  instruction->rd = rd;
+  instruction->ra = ra;
+  return instructionToUint32(instruction);
+}
+
+/* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
+uint32_t loadInstructionImm(Instruction* instruction, unsigned int imma, unsigned int rd) {
+  instruction->op_code = OP_LOAD;
+  instruction->cfg_mask = LOAD_IMM;
+  instruction->rd = rd;
+  instruction->imma = imma;
+  return instructionToUint32(instruction);
+}
+
+/* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
+uint32_t loadInstructionAddr(Instruction* instruction, unsigned int addr, unsigned int rd) {
+  instruction->op_code = OP_LOAD;
+  instruction->cfg_mask = LOAD_ADR;
   instruction->rd = rd;
   instruction->addr = addr;
   return instructionToUint32(instruction);

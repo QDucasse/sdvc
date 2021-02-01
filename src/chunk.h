@@ -23,11 +23,16 @@
 #define OP_STORE 0b1110
 #define OP_LOAD  0b1111
 
-/* CONFIG bitmasks */
+/* CONFIG bitmasks for binary operations */
 #define CFG_RR  0b00
 #define CFG_RI  0b01
 #define CFG_IR  0b10
 #define CFG_II  0b11
+
+/* Config bitmasks for the LOAD operation */
+#define LOAD_REG 0b00
+#define LOAD_IMM 0b01
+#define LOAD_ADR 0b10
 
 /* Chunk of instructions definition */
 typedef struct {
@@ -39,13 +44,13 @@ typedef struct {
 /* Instruction config */
 typedef struct {
   unsigned int op_code: 4;  // Operation code
-  unsigned int cfg_mask: 2; // Config (RR, RI or IR)
+  unsigned int cfg_mask: 2; // Config ; RR, RI or IR for binary ; REG, IMM or ADR for LOAD
   unsigned int rd: 4;       // Destination register
   unsigned int ra: 4;       // Source register A
   unsigned int rb: 4;       // Source register B
   unsigned int imma: 11;    // Immediate value A
   unsigned int immb: 11;    // Immediate value B
-  unsigned int addr: 24;    // Address
+  unsigned int addr: 22;    // Address
 } Instruction;
 
 /* Initialize a given chunk */

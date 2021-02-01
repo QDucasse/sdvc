@@ -37,11 +37,14 @@ void freeString(String* string) {
 
 /* Assign a given character array to the string */
 void assignString(String* string, char* key, int length) {
+  /* Copy the identifier */
+  string->chars = malloc(sizeof(char) * length);
+  memcpy(string->chars, key, length + 1);
+  string->chars[length + 1] = '\0';
+  string->length = length;
+
   /* Compute the hash */
   uint32_t hash = hashString(key, length);
-  /* Fill the String fields */
-  string->chars  = key;
-  string->length = length;
   string->hash   = hash;
 }
 

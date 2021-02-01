@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "disassembler.h"
 #include "scanner.h"
 #include "sstring.h"
 #include "register.h"
@@ -45,17 +46,15 @@ int binopTable[] = {
           NAME PROCESSING
 =================================== */
 
-void print_binary(unsigned char c)
-{
- unsigned char i1 = (1 << (sizeof(c)*8-1));
- for(; i1; i1 >>= 1)
-      printf("%d",(c&i1)!=0);
+void print_binary(unsigned char c) {
+  unsigned char i1 = (1 << (sizeof(c)*8-1));
+  for(; i1; i1 >>= 1) printf("%d",(c&i1)!=0);
+  printf("\n");
 }
 
 /* Check if a string contains another string as a prefix */
-static bool prefix(const char *pre, const char *str)
-{
-    return strncmp(pre, str, strlen(pre)) == 0;
+static bool prefix(const char *pre, const char *str) {
+  return strncmp(pre, str, strlen(pre)) == 0;
 }
 
 /* Determines if an identifier is a global or a temporary */
@@ -225,18 +224,13 @@ static bool match(TokenType type) {
 static String* globalName() {
   String* varName = initString();
   /* Consume name */
-  if (check(TOKEN_IDENTIFIER)) {
-    /* Process identifier as string */
-    assignString(varName, parser.current.start, parser.current.length);
-    /* Add to global table */
-  }
   consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
+  assignString(varName, parser.previous.start, parser.previous.length);
   if (isTemp(varName->chars)) {
     error("Variable names starting with 't_' are reserved for temporary variables.");
   }
   /* Process value */
   consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
-
   return varName;
 }
 
@@ -356,7 +350,7 @@ static void globalDeclaration() {
 /* Look for the register containing a given variable (NULL otherwise) */
 static Register* getRegFromVar(String* varName) {
   for (int i = 0 ; i < REG_NUMBER ; i++) {
-    printf("Looking into register %i!\n", compiler->registers[i].number);
+    // printf("Looking into register %i!\n", compiler->registers[i].number);
     if ((compiler->registers[i].varName != NULL) && stringsEqual(varName, compiler->registers[i].varName)) {
       return &compiler->registers[i];
     }
@@ -368,8 +362,15 @@ static void leftHandSide(Instruction* instruction) {
   if(check(TOKEN_NUMBER)) {
     /* I? */
     instruction->imma = (unsigned int) strtol(parser.current.start, NULL, 0);
+    printf("LHS: Setting Immediate value %u!\n", instruction->imma);
     /* Set first cfg bit to 0 */
-    instruction->cfg_mask = 0b0 << 1;
+    instruction->cfg_mask = 0b1 << 1;
+  } else if (check(TOKEN_TRUE) || check(TOKEN_FALSE)) {
+    /* I? */
+    instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 0 : 1;
+    printf("LHS: Setting Immediate boolean value %u!\n", instruction->imma);
+    /* Set first cfg bit to 0 */
+    instruction->cfg_mask = 0b1 << 1;
   } else if(check(TOKEN_IDENTIFIER)) {
     /* Left hand side is an Identifier */
     if (isTempToken(&parser.current)) {  // TEMPORARY
@@ -386,9 +387,8 @@ static void leftHandSide(Instruction* instruction) {
         /* Set the resolved register to ra */
         instruction->ra = foundReg->number;
       }
-      printf("Setting resolved register %u as a global!.\n", instruction->ra);
+      printf("LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
       /* Set the resolved register to ra */
-      printf("Setting resolved register as a temporary!.\n");
     } else {  // GLOBAL
       /* LHS is a global */
       String* globKey = initString();
@@ -404,10 +404,10 @@ static void leftHandSide(Instruction* instruction) {
         /* Set the resolved register to rb */
         instruction->rb = foundReg->number;
       }
-      printf("Setting resolved register %u as a global!.\n", instruction->rb);
+      printf("LHS: Setting resolved register %u as a global!\n", instruction->rb);
     }
     /* Set first cfg bit to 1 */
-    instruction->cfg_mask = 0b1 << 1;
+    instruction->cfg_mask = 0b0 << 1;
   } else {
     /* Not a variable or an immediate value */
     error("An assignment needs the rvalue to be either a variable or immediate value.");
@@ -420,6 +420,13 @@ static void rightHandSide(Instruction* instruction) {
   if(check(TOKEN_NUMBER)) {  /* ?I */
     instruction->immb = (unsigned int) strtol(parser.current.start, NULL, 0);
     /* Set second cfg bit to 1 */
+    printf("RHS: Setting Immediate value %u!\n", instruction->immb);
+    instruction->cfg_mask |= 0b1;
+  } else if (check(TOKEN_TRUE) || check(TOKEN_FALSE)) {
+    /* I? */
+    instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 0 : 1;
+    printf("RHS: Setting Immediate boolean value %u!\n", instruction->imma);
+    /* Set first cfg bit to 0 */
     instruction->cfg_mask |= 0b1;
   } else if(check(TOKEN_IDENTIFIER)) { /* ?R */
     /* Left hand side is an Identifier */
@@ -436,7 +443,7 @@ static void rightHandSide(Instruction* instruction) {
         /* Set the resolved register to ra */
         instruction->rb = foundReg->number;
       }
-      printf("Setting resolved register %u as a temporary!.\n", instruction->rb);
+      printf("RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
 
     } else {
       /* RHS is a global */
@@ -452,7 +459,7 @@ static void rightHandSide(Instruction* instruction) {
         /* Set the resolved register to rb */
         instruction->rb = foundReg->number;
       }
-      printf("Setting resolved register %u as a global!.\n", instruction->rb);
+      printf("RHS: Setting resolved register %u as a global!\n", instruction->rb);
     }
     /* Set second cfg bit to 0 */
     instruction->cfg_mask |= 0b0;
@@ -466,13 +473,14 @@ void operator(Instruction* instruction) {
   /* Consume operator */
   if (isBinOp(&parser.current)) {
     instruction->op_code = binopTable[parser.current.type];
+    printf("OP_CODE from operator: %u\n", instruction->op_code);
     advance();
   } else {
     error("Expected binary operator.");
   }
 }
 
-static void expression() {
+static void expression(Instruction* instruction) {
   /* Consume identifier, probably need to use it to access the hash table */
   consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
   /* Store the name of the variable in a string */
@@ -480,24 +488,31 @@ static void expression() {
   assignString(keyAssignedVar, parser.previous.start, parser.previous.length);
   /* Consume the equal token */
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
-  Instruction* instruction = initInstruction();
   /* Consume left hand side of expression */
   leftHandSide(instruction);
-  /* Consume operator */
-  operator(instruction);
-  /* Consume right hand side of expression */
-  rightHandSide(instruction);
-  /* Resolve rd and write it in the instruction */
-  /* Write instruction */
-  uint32_t bitsInstruction = instructionToUint32(instruction);
-  print_binary(bitsInstruction);
-  writeChunk(compiler->chunk, bitsInstruction);
+
+  if (!(check(TOKEN_SEMICOLON) || check(TOKEN_COMMA))) {
+    /* Consume operator */
+    operator(instruction);
+    /* Consume right hand side of expression */
+    rightHandSide(instruction);
+    /* Resolve rd and write it in the instruction */
+  } else {
+    instruction->op_code = OP_STORE;
+  }
+  printf("OP_CODE from expression : %u\n", instruction->op_code);
 }
 
 
 /* Assign a value to a global variable */
 static void globalAssignment() {
-  expression();
+  Instruction* instruction = initInstruction();
+  expression(instruction);
+  /* Write instruction */
+  uint32_t bitsInstruction = instructionToUint32(instruction);
+  // printf("Instruction: %u\n", bitsInstruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
 }
 
 /* Assign a value to a given temporary variable and store it in a register */
@@ -510,10 +525,13 @@ static void tempAssignment() {
   } else {
     error("Temporary variable assignment should have a type.");
   }
-
-  // consume(TOKEN_IDENTIFIER, "Assignment of temporary variables should begin with a name.");
-  // consume(TOKEN_EQUAL, "Assignment should have an '=' sign.");
-  expression();
+  Instruction* instruction = initInstruction();
+  expression(instruction);
+  /* Write instruction */
+  uint32_t bitsInstruction = instructionToUint32(instruction);
+  // printf("Instruction: %u\n", bitsInstruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
 }
 
 /* Check variable name to determine if it is a temporary variable or not */
@@ -589,9 +607,12 @@ bool compile(char* source) {
     globalDeclaration();
   }
 
+  showTableState(compiler->globals);
+  showRegisterState(compiler->registers);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
     process();
+    // showRegisterState(compiler->registers);
   }
 
   return parser.hadError;
