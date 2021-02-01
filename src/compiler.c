@@ -90,6 +90,8 @@ void initCompiler() {
   for (int i = 0 ; i < REG_NUMBER ; i++) {
     compiler->registers[i] = *initRegister(i);
   }
+  compiler->topTempRegister = &compiler->registers[0];
+  compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
 }
 
 /* Compiler destruction */
@@ -347,6 +349,16 @@ static void globalDeclaration() {
 /* Assignments
 =========== */
 
+/* Load a global variable with a given name to the corresponding register */
+static Register* loadGlob(String* name) {
+  /* test if the top temp reg == top glob reg */
+  /* if true -> move on register down */
+
+  /* if false -> write the global variable here */
+  /* emit a load from the address */
+  return initRegister(1);
+}
+
 /* Look for the register containing a given variable (NULL otherwise) */
 static Register* getRegFromVar(String* varName) {
   for (int i = 0 ; i < REG_NUMBER ; i++) {
@@ -399,6 +411,8 @@ static void leftHandSide(Instruction* instruction) {
       /* Check if the value is found in the registers */
       if (foundReg == NULL) {
         /* Go to the table and store the value in a register */
+        Register* loadedReg = loadGlob(globKey);
+        instruction->ra = loadedReg->number;
         /* Emit a load instruction with the correct address */
       } else {
         /* Set the resolved register to rb */
@@ -473,7 +487,7 @@ void operator(Instruction* instruction) {
   /* Consume operator */
   if (isBinOp(&parser.current)) {
     instruction->op_code = binopTable[parser.current.type];
-    printf("OP_CODE from operator: %u\n", instruction->op_code);
+    // printf("OP_CODE from operator: %u\n", instruction->op_code);
     advance();
   } else {
     error("Expected binary operator.");
@@ -507,7 +521,7 @@ static void expression(Instruction* instruction) {
       instruction->cfg_mask = LOAD_IMM;
     }
   }
-  printf("OP_CODE from expression : %u\n", instruction->op_code);
+  // printf("OP_CODE from expression : %u\n", instruction->op_code);
 }
 
 

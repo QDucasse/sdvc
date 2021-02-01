@@ -19,6 +19,7 @@ typedef struct {
   Chunk* chunk;   /* Chunk of memory containing the instructions */
   Register* registers;       /* Array of registers behaving like a stack */
   Register* topTempRegister; /* Pointer to the first register available for temporary variables */
+  Register* topGlobRegister; /* Pointer to the first register available for global variables */
 } Compiler;
 
 /* Compiler singleton */
