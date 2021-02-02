@@ -352,11 +352,52 @@ static void globalDeclaration() {
 /* Load a global variable with a given name to the corresponding register */
 static Register* loadGlob(String* name) {
   /* test if the top temp reg == top glob reg */
-  /* if true -> move on register down */
-
-  /* if false -> write the global variable here */
-  /* emit a load from the address */
-  return initRegister(1);
+  Register* workingRegister = compiler->topGlobRegister;
+  int topRegNumber  = compiler->topTempRegister->number;
+  int topGlobNumber = compiler->topGlobRegister->number;
+  if (topRegNumber == topGlobNumber) {
+    /* Check if the pointer reached the top */
+    if (topGlobNumber == REG_NUMBER) {
+      error("No more registers available for global allocation.");
+    } else {
+      /* Shift the pointer head */
+      workingRegister = &compiler->registers[topGlobNumber + 1];
+      compiler->topGlobRegister = workingRegister;
+      /* Store the old entry in the table */
+      tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue);
+      /* Emit a store with the variable in the register */
+      Instruction* storeInstruction = initInstruction();
+      // TODO: SET THE ACTUAL ADDRESS
+      uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, workingRegister->number, 0xFFF);
+      writeChunk(compiler->chunk, bitStoreInstruction);
+      /* Load the new entry in the table */
+      tableGet(compiler->globals, name, &workingRegister->varValue);
+      workingRegister->varName = name;
+      /* Emit a load with the variable in the to use */
+      Instruction* loadInstruction = initInstruction();
+      // TODO: SET THE ACTUAL ADDRESS
+      uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, 0xFF);
+      writeChunk(compiler->chunk, bitLoadInstruction);
+      /* Shift the pointer head back up */
+      compiler->topGlobRegister = &compiler->registers[topGlobNumber];
+      /* Return the final register */
+    }
+  } else {
+    /* Load the new entry in the table */
+    tableGet(compiler->globals, name, &workingRegister->varValue);
+    workingRegister->varName = name;
+    /* Emit a load with the variable in the to use */
+    Instruction* loadInstruction = initInstruction();
+    // TODO: SET THE ACTUAL ADDRESS
+    uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, 0xFF);
+    writeChunk(compiler->chunk, bitLoadInstruction);
+    /* Check if the pointer reached the bottom of the stack */
+    if (!(topGlobNumber == 0)) {
+      /* Shift the pointer up */
+      compiler->topGlobRegister = &compiler->registers[topGlobNumber-1];
+    }
+  }
+  return workingRegister;
 }
 
 /* Look for the register containing a given variable (NULL otherwise) */
@@ -399,8 +440,10 @@ static void leftHandSide(Instruction* instruction) {
         /* Set the resolved register to ra */
         instruction->ra = foundReg->number;
       }
+      /* Shift the temporary head down */
+      int topTempNumber = compiler->topTempRegister->number;
+      compiler->topTempRegister = &compiler->registers[topTempNumber-1];
       printf("LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
-      /* Set the resolved register to ra */
     } else {  // GLOBAL
       /* LHS is a global */
       String* globKey = initString();
@@ -413,12 +456,11 @@ static void leftHandSide(Instruction* instruction) {
         /* Go to the table and store the value in a register */
         Register* loadedReg = loadGlob(globKey);
         instruction->ra = loadedReg->number;
-        /* Emit a load instruction with the correct address */
       } else {
-        /* Set the resolved register to rb */
-        instruction->rb = foundReg->number;
+        /* Set the resolved register to ra */
+        instruction->ra = foundReg->number;
       }
-      printf("LHS: Setting resolved register %u as a global!\n", instruction->rb);
+      printf("LHS: Setting resolved register %u as a global!\n", instruction->ra);
     }
     /* Set first cfg bit to 1 */
     instruction->cfg_mask = 0b0 << 1;
@@ -457,8 +499,10 @@ static void rightHandSide(Instruction* instruction) {
         /* Set the resolved register to ra */
         instruction->rb = foundReg->number;
       }
+      /* Shift the temporary head down */
+      int topTempNumber = compiler->topTempRegister->number;
+      compiler->topTempRegister = &compiler->registers[topTempNumber-1];
       printf("RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
-
     } else {
       /* RHS is a global */
       String* globKey = initString();
@@ -468,7 +512,8 @@ static void rightHandSide(Instruction* instruction) {
       /* If the register is NULL -> Store the value into a new one */
       if (foundReg == NULL) {
         /* Go to the table and store the value in a register */
-        /* Emit a load instruction with the correct address */
+        Register* loadedReg = loadGlob(globKey);
+        instruction->rb = loadedReg->number;
       } else {
         /* Set the resolved register to rb */
         instruction->rb = foundReg->number;
@@ -480,7 +525,6 @@ static void rightHandSide(Instruction* instruction) {
   }
   /* Consume RHS token */
   advance();
-
 }
 
 void operator(Instruction* instruction) {
@@ -495,13 +539,6 @@ void operator(Instruction* instruction) {
 }
 
 static void expression(Instruction* instruction) {
-  /* Consume identifier, probably need to use it to access the hash table */
-  consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
-  /* Store the name of the variable in a string */
-  String* keyAssignedVar = initString();
-  assignString(keyAssignedVar, parser.previous.start, parser.previous.length);
-  /* Consume the equal token */
-  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
   /* Consume left hand side of expression */
   leftHandSide(instruction);
 
@@ -527,11 +564,29 @@ static void expression(Instruction* instruction) {
 
 /* Assign a value to a global variable */
 static void globalAssignment() {
+  /* Consume identifier, probably need to use it to access the hash table */
+  consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
+  /* Store the name of the variable in a string */
+  String* globKey = initString();
+  assignString(globKey, parser.previous.start, parser.previous.length);
+  /* Consume the equal token */
+  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
+  /* Process expression */
   Instruction* instruction = initInstruction();
   expression(instruction);
+  /* Determine rd */
+  Register* foundReg = getRegFromVar(globKey);
+  /* If the register is NULL -> Store the value into a new one */
+  if (foundReg == NULL) {
+    /* Go to the table and store the value in a register */
+    Register* loadedReg = loadGlob(globKey);
+    instruction->rd = loadedReg->number;
+  } else {
+    /* Set the resolved register to rb */
+    instruction->rd = foundReg->number;
+  }
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
-  // printf("Instruction: %u\n", bitsInstruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
 }
@@ -546,17 +601,31 @@ static void tempAssignment() {
   } else {
     error("Temporary variable assignment should have a type.");
   }
+  /* Consume identifier, probably need to use it to access the hash table */
+  consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
+  /* Store the name of the variable in a string */
+  String* tempKey = initString();
+  assignString(tempKey, parser.previous.start, parser.previous.length);
+  /* Consume the equal token */
+  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
+  /* Process expression */
   Instruction* instruction = initInstruction();
   expression(instruction);
+  /* Determine rd and shift pointer up */
+  int topTempNumber = compiler->topTempRegister->number;
+  compiler->topTempRegister->varName = tempKey;
+  compiler->topTempRegister = &compiler->registers[topTempNumber+1];
+  instruction->rd = topTempNumber;
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
-  // printf("Instruction: %u\n", bitsInstruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
 }
 
 /* Check variable name to determine if it is a temporary variable or not */
 static void assignment() {
+  // showTableState(compiler->globals);
+  showRegisterState(compiler->registers);
   if (check(TOKEN_TEMP)) {
     tempAssignment();
   } else if (check(TOKEN_IDENTIFIER)) {
