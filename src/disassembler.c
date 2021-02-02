@@ -88,13 +88,21 @@ void showTableState(Table* table) {
   printf("=== --------------------------- ===\n");
 }
 
-void showRegisterState(Register* registers) {
+void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister) {
   printf("=== Register states ===\n");
   for (int i = 0 ; i < REG_NUMBER ; i++) {
     if (!(registers[i].varName == NULL)) {
-      printf("[%2i] - Variable named %s\n", i, registers[i].varName->chars);
+      printf("[%2i] - Variable named %8s", i, registers[i].varName->chars);
     } else {
-      printf("[%2i] - Empty\n", i);
+      printf("[%2i] - Empty                  ", i);
+    }
+
+    if (i == topTempRegister->number) {
+      printf(" < TOP Temp\n");
+    } else if (i == topGlobRegister->number) {
+      printf(" < TOP Glob\n");
+    } else {
+      printf("\n");
     }
   }
   printf("=== --------------- ===\n");

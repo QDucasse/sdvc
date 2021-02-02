@@ -346,8 +346,22 @@ static void globalDeclaration() {
   }
 }
 
-/* Assignments
-=========== */
+/* Register utilities
+================== */
+
+/* Shift the pointer up for the top register available for temporary variables */
+static int incrementTopTempRegister() {
+  int topTempNumber = compiler->topTempRegister->number;
+  compiler->topTempRegister = &compiler->registers[topTempNumber + 1];
+  return topTempNumber;
+}
+
+/* Shift the pointer down for the top register available for temporary variables */
+static int decrementTopTempRegister() {
+  int topTempNumber = compiler->topTempRegister->number;
+  compiler->topTempRegister = &compiler->registers[topTempNumber - 1];
+  return topTempNumber;
+}
 
 /* Load a global variable with a given name to the corresponding register */
 static Register* loadGlob(String* name) {
@@ -411,6 +425,9 @@ static Register* getRegFromVar(String* varName) {
   return NULL;
 }
 
+/* Assignments
+=========== */
+
 static void leftHandSide(Instruction* instruction) {
   if(check(TOKEN_NUMBER)) {
     /* I? */
@@ -441,8 +458,7 @@ static void leftHandSide(Instruction* instruction) {
         instruction->ra = foundReg->number;
       }
       /* Shift the temporary head down */
-      int topTempNumber = compiler->topTempRegister->number;
-      compiler->topTempRegister = &compiler->registers[topTempNumber-1];
+      decrementTopTempRegister();
       printf("LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
     } else {  // GLOBAL
       /* LHS is a global */
@@ -500,8 +516,7 @@ static void rightHandSide(Instruction* instruction) {
         instruction->rb = foundReg->number;
       }
       /* Shift the temporary head down */
-      int topTempNumber = compiler->topTempRegister->number;
-      compiler->topTempRegister = &compiler->registers[topTempNumber-1];
+      decrementTopTempRegister();
       printf("RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
     } else {
       /* RHS is a global */
@@ -612,10 +627,8 @@ static void tempAssignment() {
   Instruction* instruction = initInstruction();
   expression(instruction);
   /* Determine rd and shift pointer up */
-  int topTempNumber = compiler->topTempRegister->number;
   compiler->topTempRegister->varName = tempKey;
-  compiler->topTempRegister = &compiler->registers[topTempNumber+1];
-  instruction->rd = topTempNumber;
+  instruction->rd = incrementTopTempRegister();;
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
   disassembleInstruction(bitsInstruction);
@@ -625,7 +638,7 @@ static void tempAssignment() {
 /* Check variable name to determine if it is a temporary variable or not */
 static void assignment() {
   // showTableState(compiler->globals);
-  showRegisterState(compiler->registers);
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
   if (check(TOKEN_TEMP)) {
     tempAssignment();
   } else if (check(TOKEN_IDENTIFIER)) {
@@ -673,10 +686,7 @@ static void process() {
   /* Emit jump to end of effect */
   // int jmpEffect = emitJump();
   /* Process identifier */
-  consume(TOKEN_IDENTIFIER, "Guardcondition should hol
-    Iceberg announcer announce: (IcePackageLoaded version: self repositoryModel ????).
-[3:40 PM] Hernán Morales Durand: But currently it announces IceRepositoryModified
-[3:40 PM] Hernán Morales Durand: I could open an issue for d a variable to be tested.");
+  consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
   consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
   /* Go through effect */
   effect();
@@ -701,11 +711,9 @@ bool compile(char* source) {
   }
 
   showTableState(compiler->globals);
-  showRegisterState(compiler->registers);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
     process();
-    // showRegisterState(compiler->registers);
   }
   disassembleChunk(compiler->chunk);
   return parser.hadError;
