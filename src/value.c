@@ -16,7 +16,7 @@ void printValue(Value value) {
       printf(AS_BOOL(value) ? "true" : "false");
       break;
     case VAL_BYTE: printf("%u", AS_BYTE(value)); break;
-    case VAL_INT: printf("%g", AS_INT(value)); break;
+    case VAL_INT: printf("%d", AS_INT(value)); break;
     case VAL_STATE: printf("state %d out of %d", AS_STATE(value).currentState, AS_STATE(value).stateNumber); break;
   }
 }

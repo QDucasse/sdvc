@@ -135,6 +135,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
         convertedInstruction |= instruction->imma;
         break;
       case LOAD_ADR:
+      /* Adding address */
         convertedInstruction |= instruction->addr;
         break;
       default: break;// Unreachable
@@ -202,6 +203,14 @@ uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code,
 uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
                           unsigned int rd, unsigned int addr) {
   instruction->op_code = op_code;
+  instruction->rd = rd;
+  instruction->addr = addr;
+  return instructionToUint32(instruction);
+}
+
+/* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
+uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr) {
+  instruction->op_code = OP_STORE;
   instruction->rd = rd;
   instruction->addr = addr;
   return instructionToUint32(instruction);

@@ -8,6 +8,7 @@ Register* initRegister(int number) {
   reg->varName = NULL;
   reg->varValue = NIL_VAL;
   reg->number = number;
+  reg->address = 0;
   return reg;
 }
 

@@ -13,13 +13,15 @@ Entry* initEntry() {
   Entry* entry = ALLOCATE_OBJ(Entry);
   entry->key = NULL;
   entry->value = NIL_VAL;
+  entry->address = 0;
   return entry;
 }
 
 /* Assign actual values to the entry */
-void assignEntry(Entry* entry, String* key, Value value) {
+void assignEntry(Entry* entry, String* key, Value value, uint32_t address) {
   entry->key = key;
   entry->value = value;
+  entry->address = address;
 }
 
 /* Free the memory of an entry */
@@ -33,6 +35,7 @@ Table* initTable() {
   table->count = 0;
   table->capacity = 0;
   table->entries = NULL;
+  table->currentAddress = 0;
   return table;
 }
 
@@ -100,7 +103,7 @@ static void adjustCapacity(Table* table, int capacity) {
     dest->value = entry->value;
     table->count++; /* Increment if non-tombstone */
   }
-  
+
   /* Set the new entries and capacity */
   table->entries = entries;
   table->capacity = capacity;
@@ -111,7 +114,7 @@ static void adjustCapacity(Table* table, int capacity) {
 ====================================*/
 
 /* Set the value at the given key */
-void tableSet(Table* table, String* key, Value value) {
+void tableSet(Table* table, String* key, Value value, uint32_t address) {
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
     adjustCapacity(table, capacity);
@@ -124,6 +127,7 @@ void tableSet(Table* table, String* key, Value value) {
 
   entry->key = key;
   entry->value = value;
+  entry->address = address;
 }
 
 /* Copy the content of a hash table into another */
@@ -131,20 +135,22 @@ void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
     if (entry->key != NULL) {
-      tableSet(to, entry->key, entry->value);
+      tableSet(to, entry->key, entry->value, entry->address);
     }
   }
 }
 
 /* Get an entry for a given key and store the value in the corresponding pointers */
-bool tableGet(Table* table, String* key, Value* value) {
+bool tableGet(Table* table, String* key, Value* value, uint32_t* address) {
   /* The table is empty */
   if(table->count == 0) return false;
   /* Look for the entry corresponding to a given key */
   Entry* entry = findEntry(table->entries, table->capacity, key);
   if (entry->key == NULL) return false;
 
-  *value = entry->value;
+  *value   = entry->value;
+  *address = entry->address;
+  printf("%u\n", *address); 
   return true;
 }
 
@@ -160,6 +166,7 @@ bool tableDelete(Table* table, String* key) {
   /* Place a tombstone in the entry */
   entry->key = NULL;
   entry->value = BOOL_VAL(true); /* Tombstone is true */
+  entry->address = 0;
 
   return true;
 }

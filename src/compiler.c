@@ -46,12 +46,6 @@ int binopTable[] = {
           NAME PROCESSING
 =================================== */
 
-void print_binary(unsigned char c) {
-  unsigned char i1 = (1 << (sizeof(c)*8-1));
-  for(; i1; i1 >>= 1) printf("%d",(c&i1)!=0);
-  printf("\n");
-}
-
 /* Check if a string contains another string as a prefix */
 static bool prefix(const char *pre, const char *str) {
   return strncmp(pre, str, strlen(pre)) == 0;
@@ -271,7 +265,9 @@ static void globalBoolDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(compiler->globals, varName, varValue);
+  uint32_t size = sizeof(bool);
+  compiler->globals->currentAddress += size;
+  tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
 
 /* Process bool global variable */
@@ -291,8 +287,9 @@ static void globalByteDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(compiler->globals, varName, varValue);
-
+  uint32_t size = sizeof(uint8_t);
+  compiler->globals->currentAddress += size;
+  tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
 
 /* Process int global variable */
@@ -312,7 +309,9 @@ static void globalIntDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(compiler->globals, varName, varValue);
+  uint32_t size = sizeof(int);
+  compiler->globals->currentAddress += size;
+  tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
 
 /* Process state global variable */
@@ -347,7 +346,9 @@ static void globalStateDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  tableSet(compiler->globals, varName, varValue);
+  uint32_t size = sizeof(int);
+  compiler->globals->currentAddress += size;
+  tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
 
 /* Declaration of a global variable */
@@ -404,19 +405,19 @@ static Register* loadGlob(String* name) {
       workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
-      tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue);
+      tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue, workingRegister->address);
       /* Emit a store with the variable in the register */
+      printf("%u\n",workingRegister->address);
       Instruction* storeInstruction = initInstruction();
-      // TODO: SET THE ACTUAL ADDRESS
-      uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, workingRegister->number, 0xFFF);
+      uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, workingRegister->number, workingRegister->address);
       writeChunk(compiler->chunk, bitStoreInstruction);
       /* Load the new entry in the table */
-      tableGet(compiler->globals, name, &workingRegister->varValue);
+      tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
       workingRegister->varName = name;
+      printf("%u\n", workingRegister->address);
       /* Emit a load with the variable in the to use */
       Instruction* loadInstruction = initInstruction();
-      // TODO: SET THE ACTUAL ADDRESS
-      uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, 0xFF);
+      uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, workingRegister->address);
       writeChunk(compiler->chunk, bitLoadInstruction);
       /* Shift the pointer head back up */
       if (!nearEnd) compiler->topGlobRegister = &compiler->registers[topGlobNumber];
@@ -424,12 +425,11 @@ static Register* loadGlob(String* name) {
     }
   } else {
     /* Load the new entry in the table */
-    tableGet(compiler->globals, name, &workingRegister->varValue);
+    tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
     workingRegister->varName = name;
     /* Emit a load with the variable in the to use */
     Instruction* loadInstruction = initInstruction();
-    // TODO: SET THE ACTUAL ADDRESS
-    uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, 0xFF);
+    uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, workingRegister->address);
     writeChunk(compiler->chunk, bitLoadInstruction);
     /* Check if the pointer reached the bottom of the stack */
     if (!(topGlobNumber == 0)) {
@@ -497,7 +497,8 @@ static void leftHandSide(Instruction* instruction) {
       if (foundReg == NULL) {
         /* Go to the table and store the value in a register */
         Register* loadedReg = loadGlob(globKey);
-        instruction->ra = loadedReg->number;
+        instruction->ra   = loadedReg->number;
+        instruction->addr = loadedReg->address;
       } else {
         /* Set the resolved register to ra */
         instruction->ra = foundReg->number;
@@ -572,7 +573,6 @@ void operator(Instruction* instruction) {
   /* Consume operator */
   if (isBinOp(&parser.current)) {
     instruction->op_code = binopTable[parser.current.type];
-    // printf("OP_CODE from operator: %u\n", instruction->op_code);
     advance();
   } else {
     error("Expected binary operator.");
@@ -599,7 +599,6 @@ static void expression(Instruction* instruction) {
       instruction->cfg_mask = LOAD_IMM;
     }
   }
-  // printf("OP_CODE from expression : %u\n", instruction->op_code);
 }
 
 

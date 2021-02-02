@@ -60,8 +60,8 @@ void disassembleInstruction(uint32_t bitInstruction) {
   } else if (op_code == OP_LOAD) {
     unsigned int rd       = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
-    unsigned int ra   = (bitInstruction & 0x7800) >> 11;        // 0000 0000 0000 0000 0111 1000 0000 0000
-    unsigned int imma = (bitInstruction & 0x3FF800) >> 11;      // 0000 0000 0011 1111 1111 1000 0000 0000
+    unsigned int ra   = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
+    unsigned int imma = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
     unsigned int addr = (bitInstruction & 0x3FFFFFF);           // 0000 0000 0011 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
@@ -82,7 +82,7 @@ void showTableState(Table* table) {
   printf("=== Global Variables Hash Table ===\n");
   for (int i = 0 ; i < table->capacity ; i++) {
     if (!IS_NIL(table->entries[i].value)) {
-      printf("[%2i] - Variable named %s\n", i, table->entries[i].key->chars);
+      printf("[%2i] - Variable named %8s at address %u\n", i, table->entries[i].key->chars, table->entries[i].address);
     }
   }
   printf("=== --------------------------- ===\n");
@@ -92,9 +92,9 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
   printf("=== Register states ===\n");
   for (int i = 0 ; i < REG_NUMBER ; i++) {
     if (!(registers[i].varName == NULL)) {
-      printf("[%2i] - Variable named %8s", i, registers[i].varName->chars);
+      printf("[%2i] - Variable named %8s at address %u", i, registers[i].varName->chars, registers[i].address);
     } else {
-      printf("[%2i] - Empty                  ", i);
+      printf("[%2i] - Empty                           ", i);
     }
 
     if (i == topTempRegister->number && i == topGlobRegister->number) {

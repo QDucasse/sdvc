@@ -9,9 +9,10 @@
 
 /* Register structure */
 typedef struct {
-  String* varName; /* Name of the variable in the register */
-  Value varValue;  /* Value of the variable in the register */
-  int number;      /* Register number */
+  String* varName;  /* Name of the variable in the register */
+  Value varValue;   /* Value of the variable in the register */
+  int number;       /* Register number */
+  uint32_t address; /* Store the address in case of a global variable */
 } Register;
 
 /* Register initialization */

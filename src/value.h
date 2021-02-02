@@ -22,7 +22,7 @@ typedef struct {
   union {
     bool boolean;
     uint8_t byte;
-    double number;
+    int number;
     State state;
   } as;
 } Value;
