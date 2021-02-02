@@ -15,9 +15,3 @@ Register* initRegister(int number) {
 void freeRegister(Register* reg) {
   FREE(reg);
 }
-
-/* Load a temporary variable */
-void loadVariable(Register* reg, String* varName, Value varValue){
-  reg->varName  = varName;
-  reg->varValue = varValue;
-}

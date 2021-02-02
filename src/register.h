@@ -5,7 +5,7 @@
 #include "sstring.h"
 #include "value.h"
 
-#define REG_NUMBER 16
+#define REG_NUMBER 5
 
 /* Register structure */
 typedef struct {
@@ -18,7 +18,5 @@ typedef struct {
 Register* initRegister(int number);
 /* Free a given register */
 void freeRegister(Register* reg);
-/* Load a variable in a register */
-void loadVariable(Register* reg, String* varName, Value varValue);
 
 #endif

@@ -51,10 +51,10 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
 
     switch (cfg_mask) {
-      case CFG_RR: printf("%7s - Config: %8s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, ra, rb); break;
-      case CFG_RI: printf("%7s - Config: %8s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, ra, immb); break;
-      case CFG_IR: printf("%7s - Config: %8s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, imma, rb); break;
-      case CFG_II: printf("%7s - Config: %8s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, imma, immb); break;
+      case CFG_RR: printf("%8s - Config: %8s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, ra, rb); break;
+      case CFG_RI: printf("%8s - Config: %8s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, ra, immb); break;
+      case CFG_IR: printf("%8s - Config: %8s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, imma, rb); break;
+      case CFG_II: printf("%8s - Config: %8s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, imma, immb); break;
       default: break; // Unreachable
     }
   } else if (op_code == OP_LOAD) {
@@ -65,15 +65,15 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int addr = (bitInstruction & 0x3FFFFFF);           // 0000 0000 0011 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
-      case LOAD_REG: printf("OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", loadConfigs[cfg_mask].name, rd, ra); break;
-      case LOAD_IMM: printf("OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", loadConfigs[cfg_mask].name, rd, imma); break;
-      case LOAD_ADR: printf("OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", loadConfigs[cfg_mask].name, rd, addr); break;
+      case LOAD_REG: printf(" OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", loadConfigs[cfg_mask].name, rd, ra); break;
+      case LOAD_IMM: printf(" OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", loadConfigs[cfg_mask].name, rd, imma); break;
+      case LOAD_ADR: printf(" OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", loadConfigs[cfg_mask].name, rd, addr); break;
       default: break; // Unreachable
     }
   } else { // UNARY STORE/JMP
     unsigned int rd   = (bitInstruction & 0xF00000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
     unsigned int addr = (bitInstruction & 0xFFFFF ) >> 20;        // 0000 0000 1111 1111 1111 1111 1111 1111
-    printf("%8s - Rd: %2u - Addr: %u \n", codeNames[op_code].name, rd, addr);
+    printf("%8s -                  - Rd: %2u - Addr: %u \n", codeNames[op_code].name, rd, addr);
   }
   // printf("=== ------------------------- ===\n\n");
 }
@@ -97,7 +97,9 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
       printf("[%2i] - Empty                  ", i);
     }
 
-    if (i == topTempRegister->number) {
+    if (i == topTempRegister->number && i == topGlobRegister->number) {
+      printf(" << TOP Temp | TOP Glob\n");
+    } else if (i == topTempRegister->number) {
       printf(" < TOP Temp\n");
     } else if (i == topGlobRegister->number) {
       printf(" < TOP Glob\n");

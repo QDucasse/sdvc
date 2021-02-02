@@ -106,6 +106,26 @@ void freeCompiler() {
            ERROR HANDLING
 =================================== */
 
+/* Synchronize the parser when it encounters an error*/
+static void synchronize() {
+  parser.panicMode = false;
+  /* Look for a statement boundary */
+  while (parser.current.type != TOKEN_EOF) {
+    /* Look for an end notice */
+    if (parser.previous.type == TOKEN_SEMICOLON) return;
+    /* Look for the beginning of the next statement */
+    switch (parser.current.type) {
+      case TOKEN_PROCESS:
+      case TOKEN_GUARD_COND:
+      case TOKEN_GUARD_BLOCK:
+        return;
+      default:
+        /* Do nothing */
+        ;
+    }
+  }
+}
+
 /* Notifies the error with a message */
 static void errorAt(Token* token, const char* message) {
   /* if PANIC MODE already triggered */
@@ -352,7 +372,13 @@ static void globalDeclaration() {
 /* Shift the pointer up for the top register available for temporary variables */
 static int incrementTopTempRegister() {
   int topTempNumber = compiler->topTempRegister->number;
+  if (topTempNumber + 1 == REG_NUMBER) {
+    error("Not enough registers to hold temporary variables");
+  }
   compiler->topTempRegister = &compiler->registers[topTempNumber + 1];
+  if (topTempNumber == compiler->topGlobRegister->number) {
+    compiler->topGlobRegister = &compiler->registers[topTempNumber + 1];
+  }
   return topTempNumber;
 }
 
@@ -374,8 +400,8 @@ static Register* loadGlob(String* name) {
     if (topGlobNumber == REG_NUMBER) {
       error("No more registers available for global allocation.");
     } else {
-      /* Shift the pointer head */
-      workingRegister = &compiler->registers[topGlobNumber + 1];
+      bool nearEnd = (topGlobNumber + 1 == REG_NUMBER);
+      workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
       tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue);
@@ -393,7 +419,7 @@ static Register* loadGlob(String* name) {
       uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, 0xFF);
       writeChunk(compiler->chunk, bitLoadInstruction);
       /* Shift the pointer head back up */
-      compiler->topGlobRegister = &compiler->registers[topGlobNumber];
+      if (!nearEnd) compiler->topGlobRegister = &compiler->registers[topGlobNumber];
       /* Return the final register */
     }
   } else {
@@ -646,6 +672,8 @@ static void assignment() {
   } else {
     error("An assignment should begin with either an identifier (global) or 'temp' (temporary).");
   }
+
+  if (parser.panicMode) synchronize();
 }
 
 /* Process
