@@ -10,6 +10,7 @@
 void disassembleInstruction(uint32_t bitInstruction);
 void showTableState(Table* table);
 void showRegisterState(Register* registers);
+void disassembleChunk(Chunk* chunk);
 
 
 #endif

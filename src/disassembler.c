@@ -22,7 +22,10 @@ CodeNames codeNames[] = {
   [OP_NEQ]   = {OP_NEQ, "OP_NEQ"},
   [OP_JMP]   = {OP_JMP, "OP_JMP"},
   [OP_STORE] = {OP_STORE, "OP_STORE"},
-  [OP_LOAD]  = {OP_LOAD, "OP_LOAD"},
+  [OP_LOAD]  = {OP_LOAD, "OP_LOAD"}
+};
+
+CodeNames configNames[] = {
   [CFG_RR]   = {CFG_RR, "CFG_RR"},
   [CFG_RI]   = {CFG_RI, "CFG_RI"},
   [CFG_IR]   = {CFG_IR, "CFG_IR"},
@@ -38,7 +41,7 @@ CodeNames loadConfigs[] = {
 void disassembleInstruction(uint32_t bitInstruction) {
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
   /* Test if the instruction is binary or not */
-  printf("=== Disassembling instruction ===\n");
+  // printf("=== Disassembling instruction ===\n");
   if (op_code < 13) { // BINARY
     unsigned int rd       = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
@@ -48,10 +51,10 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
 
     switch (cfg_mask) {
-      case CFG_RR: printf("%s - Config: %s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code].name, codeNames[cfg_mask].name, rd, ra, rb); break;
-      case CFG_RI: printf("%s - Config: %s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code].name, codeNames[cfg_mask].name, rd, ra, immb); break;
-      case CFG_IR: printf("%s - Config: %s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code].name, codeNames[cfg_mask].name, rd, imma, rb); break;
-      case CFG_II: printf("%s - Config: %s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code].name, codeNames[cfg_mask].name, rd, imma, immb); break;
+      case CFG_RR: printf("%7s - Config: %8s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, ra, rb); break;
+      case CFG_RI: printf("%7s - Config: %8s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, ra, immb); break;
+      case CFG_IR: printf("%7s - Config: %8s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, imma, rb); break;
+      case CFG_II: printf("%7s - Config: %8s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code].name, configNames[cfg_mask].name, rd, imma, immb); break;
       default: break; // Unreachable
     }
   } else if (op_code == OP_LOAD) {
@@ -63,8 +66,8 @@ void disassembleInstruction(uint32_t bitInstruction) {
 
     switch (cfg_mask) {
       case LOAD_REG: printf("OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", loadConfigs[cfg_mask].name, rd, ra); break;
-      case LOAD_ADR: printf("OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", loadConfigs[cfg_mask].name, rd, imma); break;
-      case LOAD_IMM: printf("OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", loadConfigs[cfg_mask].name, rd, addr); break;
+      case LOAD_IMM: printf("OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", loadConfigs[cfg_mask].name, rd, imma); break;
+      case LOAD_ADR: printf("OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", loadConfigs[cfg_mask].name, rd, addr); break;
       default: break; // Unreachable
     }
   } else { // UNARY STORE/JMP
@@ -72,7 +75,7 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int addr = (bitInstruction & 0xFFFFF ) >> 20;        // 0000 0000 1111 1111 1111 1111 1111 1111
     printf("%8s - Rd: %2u - Addr: %u \n", codeNames[op_code].name, rd, addr);
   }
-  printf("=== ------------------------- ===\n\n");
+  // printf("=== ------------------------- ===\n\n");
 }
 
 void showTableState(Table* table) {
@@ -95,4 +98,12 @@ void showRegisterState(Register* registers) {
     }
   }
   printf("=== --------------- ===\n");
+}
+
+void disassembleChunk(Chunk* chunk) {
+  printf("=== Disassembling resulting chunk ===\n");
+  for (int i = 0 ; i < chunk->capacity ; i++) {
+    disassembleInstruction(chunk->instructions[i]);
+  }
+  printf("=== ----------------------------- ===\n");
 }

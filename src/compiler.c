@@ -673,7 +673,10 @@ static void process() {
   /* Emit jump to end of effect */
   // int jmpEffect = emitJump();
   /* Process identifier */
-  consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
+  consume(TOKEN_IDENTIFIER, "Guardcondition should hol
+    Iceberg announcer announce: (IcePackageLoaded version: self repositoryModel ????).
+[3:40 PM] Hernán Morales Durand: But currently it announces IceRepositoryModified
+[3:40 PM] Hernán Morales Durand: I could open an issue for d a variable to be tested.");
   consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
   /* Go through effect */
   effect();
@@ -704,6 +707,6 @@ bool compile(char* source) {
     process();
     // showRegisterState(compiler->registers);
   }
-
+  disassembleChunk(compiler->chunk);
   return parser.hadError;
 }
