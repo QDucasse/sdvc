@@ -32,7 +32,7 @@ void testRegisterInitialization() {
 void testVariableLoading() {
   Value value = INT_VAL(1);
   uint32_t address = 0xFF;
-  loadVariable(reg, key, &value, &address);
+  loadVariable(reg, key, value, address);
   TEST_ASSERT_TRUE(stringsEqual(key, reg->varName));
   TEST_ASSERT_TRUE(valuesEqual(INT_VAL(1), reg->varValue));
   TEST_ASSERT_EQUAL_INT(3, reg->number);

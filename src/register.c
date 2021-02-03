@@ -23,8 +23,8 @@ void printRegister(Register* reg) {
   printf("' at address %u\n", reg->address);
 }
 
-void loadVariable(Register* reg, String* varName, Value* varValue, uint32_t* varAddress) {
+void loadVariable(Register* reg, String* varName, Value varValue, uint32_t varAddress) {
   reg->varName = varName;
-  reg->varValue = *varValue;
-  reg->address = *varAddress;
+  reg->varValue = varValue;
+  reg->address = varAddress;
 }

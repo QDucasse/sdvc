@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "mmemory.h"
+#include "register.h"
 #include "table.h"
 #include "value.h"
 
@@ -170,4 +171,18 @@ bool tableDelete(Table* table, String* key) {
   entry->address = 0;
 
   return true;
+}
+
+
+/* ==================================
+    TABLE TO REGISTER OPERATIONS
+====================================*/
+
+bool tableGetToRegister(Table* table, String* key, Register* reg) {
+  reg->varName = key;
+  return tableGet(table, key, &reg->varValue, &reg->address);
+}
+
+void tableSetFromRegister(Table* table, Register* reg) {
+  return tableSet(table, reg->varName, reg->varValue, reg->address);
 }

@@ -2,6 +2,7 @@
 #define sdvu_table_h
 
 #include "common.h"
+#include "register.h"
 #include "sstring.h"
 #include "value.h"
 
@@ -33,5 +34,7 @@ bool tableGet(Table* table, String* key, Value* value, uint32_t* address);
 void tableSet(Table* table, String* key, Value value, uint32_t address);
 bool tableDelete(Table* table, String* key);
 void tableAddAll(Table* from, Table* to);
+void tableSetFromRegister(Table* table, Register* reg);
+bool tableGetToRegister(Table* table, String* key, Register* reg);
 
 #endif

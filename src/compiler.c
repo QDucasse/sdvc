@@ -406,15 +406,17 @@ static Register* loadGlob(String* name) {
       printRegister(workingRegister);
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
-      tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue, workingRegister->address);
+      tableSetFromRegister(compiler->globals, workingRegister);
+      // tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue, workingRegister->address);
       /* Emit a store with the variable in the register */
       Instruction* storeInstruction = initInstruction();
       uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, workingRegister->number, workingRegister->address);
       disassembleInstruction(bitStoreInstruction);
       writeChunk(compiler->chunk, bitStoreInstruction);
       /* Load the new entry in the table */
-      tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
-      workingRegister->varName = name;
+      tableGetToRegister(compiler->globals, name, workingRegister);
+      // tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
+      // workingRegister->varName = name;
       printf("%u\n", workingRegister->address);
       /* Emit a load with the variable in the to use */
       Instruction* loadInstruction = initInstruction();

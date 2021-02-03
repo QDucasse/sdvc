@@ -85,43 +85,7 @@ void testTableSet() {
   TEST_ASSERT_EQUAL_UINT32(address, insertedEntry.address);
 }
 
-void testTableSetFromRegister() {
-  /* Register setup */
-  assignString(key1, "blip1", 5);
-  Value value = INT_VAL(1);
-  uint32_t address = 0xFF;
-  loadVariable(reg1, key1, &value, &address);
-  /* Table setup */
-  assignEntry(entry1, key1, value, address);
-  tableSet(testTable, reg1->varName, reg1->varValue, reg1->address);
-  TEST_ASSERT_EQUAL_INT(8, testTable->capacity);
-  Entry insertedEntry = testTable->entries[key1->hash % 8];
-  TEST_ASSERT_EQUAL_STRING(key1, insertedEntry.key);
-  TEST_ASSERT_TRUE(valuesEqual(value, insertedEntry.value));
-  TEST_ASSERT_EQUAL_UINT32(address, insertedEntry.address);
-}
-
 void testTableGet() {
-  Value outValue = NIL_VAL;
-  uint32_t outAddress = 0;
-  /* Find value with no entry */
-  bool notFound = tableGet(testTable, key1, &outValue, &outAddress);
-  TEST_ASSERT_FALSE(notFound);
-
-  /* Register setup */
-  assignString(key1, "blip1", 5);
-  Value value = INT_VAL(1);
-  uint32_t address = 0xFF;
-
-  /* Find value with entry */
-  tableSet(testTable, key1, value, 0xF);
-  bool found = tableGet(testTable, key1, &reg1->varValue, &reg1->address);
-  TEST_ASSERT_TRUE(found);
-  TEST_ASSERT_TRUE(valuesEqual(INT_VAL(1), reg1->varValue));
-  TEST_ASSERT_EQUAL_UINT32(0xF, reg1->address);
-}
-
-void testTableGetInRegister() {
   assignString(key1, "blip1", 5);
   Value value = INT_VAL(1);
   assignEntry(entry1, key1, value, 0xF);
@@ -158,4 +122,35 @@ void testTableDelete() {
   TEST_ASSERT_TRUE(found);
   TEST_ASSERT_EQUAL(NULL, removedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(BOOL_VAL(true), removedEntry.value));
+}
+
+/* Register to table operations
+============================ */
+
+void testTableGetToRegister() {
+  /* Set entry */
+  assignString(key1, "blip1", 5);
+  Value value = INT_VAL(1);
+  uint32_t address = 0xFF;
+  tableSet(testTable, key1, value, address);
+
+  tableGetToRegister(testTable, key1, reg1);
+  TEST_ASSERT_EQUAL_STRING(key1, reg1->varName);
+  TEST_ASSERT_TRUE(valuesEqual(value, reg1->varValue));
+  TEST_ASSERT_EQUAL_UINT32(address, reg1->address);
+  printRegister(reg1);
+}
+
+void testTableSetFromRegister() {
+  assignString(key1, "blip1", 5);
+  Value value = INT_VAL(1);
+  uint32_t address = 0xFF;
+  loadVariable(reg1, key1, value, address);
+
+  tableSetFromRegister(testTable, reg1);
+  Entry insertedEntry = testTable->entries[key1->hash % 8];
+  TEST_ASSERT_EQUAL_STRING(reg1->varName, insertedEntry.key);
+  TEST_ASSERT_TRUE(valuesEqual(reg1->varValue, insertedEntry.value));
+  TEST_ASSERT_EQUAL_UINT32(reg1->address, insertedEntry.address);
+  printRegister(reg1);
 }
