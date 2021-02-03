@@ -82,7 +82,9 @@ void showTableState(Table* table) {
   printf("=== Global Variables Hash Table ===\n");
   for (int i = 0 ; i < table->capacity ; i++) {
     if (!IS_NIL(table->entries[i].value)) {
-      printf("[%2i] - Variable named %8s at address %u\n", i, table->entries[i].key->chars, table->entries[i].address);
+      printf("[%2i] - Variable named %8s with value '", i, table->entries[i].key->chars);
+      printValue(table->entries[i].value);
+      printf("' at address %u\n", table->entries[i].address);
     }
   }
   printf("=== --------------------------- ===\n");

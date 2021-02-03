@@ -394,9 +394,9 @@ static int decrementTopTempRegister() {
 static Register* loadGlob(String* name) {
   /* test if the top temp reg == top glob reg */
   Register* workingRegister = compiler->topGlobRegister;
-  int topRegNumber  = compiler->topTempRegister->number;
+  int topTempNumber  = compiler->topTempRegister->number;
   int topGlobNumber = compiler->topGlobRegister->number;
-  if (topRegNumber == topGlobNumber) {
+  if (topTempNumber == topGlobNumber) {
     /* Check if the pointer reached the top */
     if (topGlobNumber == REG_NUMBER) {
       error("No more registers available for global allocation.");
@@ -404,7 +404,6 @@ static Register* loadGlob(String* name) {
       bool nearEnd = (topGlobNumber + 1 == REG_NUMBER);
       workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
       printRegister(workingRegister);
-      // printf("%u\n",workingRegister->address);
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
       tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue, workingRegister->address);
@@ -499,12 +498,16 @@ static void leftHandSide(Instruction* instruction) {
       /* Check if the value is found in the registers */
       if (foundReg == NULL) {
         /* Go to the table and store the value in a register */
-        Register* loadedReg = loadGlob(globKey);
+        Register* loadedReg = initRegister(0);
+        loadedReg = loadGlob(globKey);
+        printf("LOADED REGISTER\n");
+        printRegister(loadedReg);
         instruction->ra   = loadedReg->number;
         instruction->addr = loadedReg->address;
       } else {
         /* Set the resolved register to ra */
         instruction->ra = foundReg->number;
+        instruction->addr = foundReg->address;
       }
       printf("LHS: Setting resolved register %u as a global!\n", instruction->ra);
     }
@@ -542,7 +545,7 @@ static void rightHandSide(Instruction* instruction) {
         /* If not found, raise an error (a rvalue temp should be in a register) */
         error("Temporary variable on the right side of an assignment should be defined.");
       } else {
-        /* Set the resolved register to ra */
+        /* Set the resolved register to rb */
         instruction->rb = foundReg->number;
       }
       /* Shift the temporary head down */
@@ -559,9 +562,11 @@ static void rightHandSide(Instruction* instruction) {
         /* Go to the table and store the value in a register */
         Register* loadedReg = loadGlob(globKey);
         instruction->rb = loadedReg->number;
+        instruction->addr = loadedReg->address;
       } else {
         /* Set the resolved register to rb */
         instruction->rb = foundReg->number;
+        instruction->addr = foundReg->address;
       }
       printf("RHS: Setting resolved register %u as a global!\n", instruction->rb);
     }

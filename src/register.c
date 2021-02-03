@@ -18,7 +18,9 @@ void freeRegister(Register* reg) {
 }
 
 void printRegister(Register* reg) {
-  printf("Register number %d containing variable named %s at address %u\n", reg->number, reg->varName->chars, reg->address);
+  printf("Register number %d containing variable named %s with value '", reg->number, reg->varName->chars);
+  printValue(reg->varValue);
+  printf("' at address %u\n", reg->address);
 }
 
 void loadVariable(Register* reg, String* varName, Value* varValue, uint32_t* varAddress) {
