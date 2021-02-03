@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
 #include "compiler.h"
@@ -72,6 +71,7 @@ int main(int argc, char* argv[]) {
     initCompiler();
     char* source = readFile(argv[1]);
     compile(source);
+    freeCompiler();
   } else if (argc == 3) {
     scanFile(argv[2]);
   } else {

@@ -415,7 +415,7 @@ static Register* loadGlob(String* name) {
       /* Load the new entry in the table */
       tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
       workingRegister->varName = name;
-      // printf("%u\n", workingRegister->address);
+      printf("%u\n", workingRegister->address);
       /* Emit a load with the variable in the to use */
       Instruction* loadInstruction = initInstruction();
       uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, workingRegister->address);
@@ -747,7 +747,7 @@ bool compile(char* source) {
 
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
-    showTableState(compiler->globals);
+    // showTableState(compiler->globals);
     process();
   }
   showTableState(compiler->globals);
