@@ -25,14 +25,16 @@ void testRegisterInitialization() {
   TEST_ASSERT_EQUAL(NULL, reg->varName);
   TEST_ASSERT_TRUE(valuesEqual(NIL_VAL, reg->varValue));
   TEST_ASSERT_EQUAL_INT(3, reg->number);
+  TEST_ASSERT_EQUAL_UINT32(0, reg->address);
 }
 
-/* Loading values
-============== */
-
-/* Load variable */
-void testRegisterLoadVariable() {
-  loadVariable(reg, key, BOOL_VAL(false));
+/* Variable loading */
+void testVariableLoading() {
+  Value value = INT_VAL(1);
+  uint32_t address = 0xFF;
+  loadVariable(reg, key, &value, &address);
   TEST_ASSERT_TRUE(stringsEqual(key, reg->varName));
-  TEST_ASSERT_TRUE(valuesEqual(BOOL_VAL(false), reg->varValue));
+  TEST_ASSERT_TRUE(valuesEqual(INT_VAL(1), reg->varValue));
+  TEST_ASSERT_EQUAL_INT(3, reg->number);
+  TEST_ASSERT_EQUAL_UINT32(0xFF, reg->address);
 }

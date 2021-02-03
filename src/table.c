@@ -87,6 +87,7 @@ static void adjustCapacity(Table* table, int capacity) {
   for (int i = 0; i < capacity; i++) {
     entries[i].key = NULL;
     entries[i].value = NIL_VAL;
+    entries[i].address = 0;
   }
 
   /* Clear the tombstone count */
@@ -101,6 +102,7 @@ static void adjustCapacity(Table* table, int capacity) {
     Entry* dest = findEntry(entries, capacity, entry->key);
     dest->key = entry->key;
     dest->value = entry->value;
+    dest->address = entry->address;
     table->count++; /* Increment if non-tombstone */
   }
 
@@ -150,7 +152,6 @@ bool tableGet(Table* table, String* key, Value* value, uint32_t* address) {
 
   *value   = entry->value;
   *address = entry->address;
-  printf("%u\n", *address); 
   return true;
 }
 

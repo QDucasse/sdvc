@@ -19,5 +19,9 @@ typedef struct {
 Register* initRegister(int number);
 /* Free a given register */
 void freeRegister(Register* reg);
+/* Variable loading */
+void loadVariable(Register* reg, String* varName, Value* varValue, uint32_t* varAddress);
+/* Printing utility */
+void printRegister(Register* reg);
 
 #endif

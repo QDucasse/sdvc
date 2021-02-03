@@ -403,21 +403,24 @@ static Register* loadGlob(String* name) {
     } else {
       bool nearEnd = (topGlobNumber + 1 == REG_NUMBER);
       workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
+      printRegister(workingRegister);
+      // printf("%u\n",workingRegister->address);
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
       tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue, workingRegister->address);
       /* Emit a store with the variable in the register */
-      printf("%u\n",workingRegister->address);
       Instruction* storeInstruction = initInstruction();
       uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, workingRegister->number, workingRegister->address);
+      disassembleInstruction(bitStoreInstruction);
       writeChunk(compiler->chunk, bitStoreInstruction);
       /* Load the new entry in the table */
       tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
       workingRegister->varName = name;
-      printf("%u\n", workingRegister->address);
+      // printf("%u\n", workingRegister->address);
       /* Emit a load with the variable in the to use */
       Instruction* loadInstruction = initInstruction();
       uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, workingRegister->number, workingRegister->address);
+      disassembleInstruction(bitLoadInstruction);
       writeChunk(compiler->chunk, bitLoadInstruction);
       /* Shift the pointer head back up */
       if (!nearEnd) compiler->topGlobRegister = &compiler->registers[topGlobNumber];
@@ -737,11 +740,12 @@ bool compile(char* source) {
     globalDeclaration();
   }
 
-  showTableState(compiler->globals);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
+    showTableState(compiler->globals);
     process();
   }
+  showTableState(compiler->globals);
   disassembleChunk(compiler->chunk);
   return parser.hadError;
 }

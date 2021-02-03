@@ -1,5 +1,6 @@
 #include "unity.h"
 #include "mmemory.h"
+#include "register.h"
 #include "sstring.h"
 #include "table.h"
 #include "table.c"
@@ -11,6 +12,7 @@ static String* key1;
 static String* key2;
 static Entry* entry1;
 static Entry* entry2;
+static Register* reg1;
 
 /* Setup and teardown routine */
 void setUp() {
@@ -19,6 +21,7 @@ void setUp() {
   key2 = initString();
   entry1 = initEntry();
   entry2 = initEntry();
+  reg1 = initRegister(3);
 }
 void tearDown() {
   freeTable(testTable);
@@ -26,6 +29,7 @@ void tearDown() {
   freeString(key2);
   freeEntry(entry1);
   freeEntry(entry2);
+  freeRegister(reg1);
 }
 
 /* Initialization
@@ -44,14 +48,15 @@ void testFindEntry() {
   Entry testEntries[8];
   assignString(key1, "blip1", 5);
   assignString(key2, "blip2", 5);
-  assignEntry(entry1, key1, INT_VAL(1));
-  assignEntry(entry2, key2, INT_VAL(2));
+  assignEntry(entry1, key1, INT_VAL(1), 0xF);
+  assignEntry(entry2, key2, INT_VAL(2), 0xFF);
   uint32_t index1 = entry1->key->hash % 8;
   uint32_t index2 = entry2->key->hash % 8;
   testEntries[index1] = *entry1;
   testEntries[index2] = *entry2;
   Entry* outEntry = findEntry(testEntries, 8, key1);
   TEST_ASSERT_EQUAL_STRING(entry1->key->chars, outEntry->key->chars);
+  TEST_ASSERT_EQUAL_UINT32(entry1->address, outEntry->address);
   TEST_ASSERT_TRUE(valuesEqual(entry1->value, outEntry->value));
 }
 
@@ -70,27 +75,65 @@ void testAdjustCapacityOnCreation() {
 void testTableSet() {
   assignString(key1, "blip1", 5);
   Value value = INT_VAL(1);
-  assignEntry(entry1, key1, value);
-  tableSet(testTable, key1, value);
+  uint32_t address = 0xFF;
+  assignEntry(entry1, key1, value, address);
+  tableSet(testTable, key1, value, address);
   TEST_ASSERT_EQUAL_INT(8, testTable->capacity);
   Entry insertedEntry = testTable->entries[key1->hash % 8];
   TEST_ASSERT_EQUAL_STRING(key1, insertedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(value, insertedEntry.value));
+  TEST_ASSERT_EQUAL_UINT32(address, insertedEntry.address);
+}
+
+void testTableSetFromRegister() {
+  /* Register setup */
+  assignString(key1, "blip1", 5);
+  Value value = INT_VAL(1);
+  uint32_t address = 0xFF;
+  loadVariable(reg1, key1, &value, &address);
+  /* Table setup */
+  assignEntry(entry1, key1, value, address);
+  tableSet(testTable, reg1->varName, reg1->varValue, reg1->address);
+  TEST_ASSERT_EQUAL_INT(8, testTable->capacity);
+  Entry insertedEntry = testTable->entries[key1->hash % 8];
+  TEST_ASSERT_EQUAL_STRING(key1, insertedEntry.key);
+  TEST_ASSERT_TRUE(valuesEqual(value, insertedEntry.value));
+  TEST_ASSERT_EQUAL_UINT32(address, insertedEntry.address);
 }
 
 void testTableGet() {
+  Value outValue = NIL_VAL;
+  uint32_t outAddress = 0;
+  /* Find value with no entry */
+  bool notFound = tableGet(testTable, key1, &outValue, &outAddress);
+  TEST_ASSERT_FALSE(notFound);
+
+  /* Register setup */
   assignString(key1, "blip1", 5);
   Value value = INT_VAL(1);
-  assignEntry(entry1, key1, value);
-  Value outValue = NIL_VAL;
+  uint32_t address = 0xFF;
 
+  /* Find value with entry */
+  tableSet(testTable, key1, value, 0xF);
+  bool found = tableGet(testTable, key1, &reg1->varValue, &reg1->address);
+  TEST_ASSERT_TRUE(found);
+  TEST_ASSERT_TRUE(valuesEqual(INT_VAL(1), reg1->varValue));
+  TEST_ASSERT_EQUAL_UINT32(0xF, reg1->address);
+}
+
+void testTableGetInRegister() {
+  assignString(key1, "blip1", 5);
+  Value value = INT_VAL(1);
+  assignEntry(entry1, key1, value, 0xF);
+  Value outValue = NIL_VAL;
+  uint32_t outAddress = 0;
   /* Find value with no entry */
-  bool notFound = tableGet(testTable, key1, &outValue);
+  bool notFound = tableGet(testTable, key1, &outValue, &outAddress);
   TEST_ASSERT_FALSE(notFound);
 
   /* Find value with entry */
-  tableSet(testTable, key1, value);
-  bool found = tableGet(testTable, key1, &outValue);
+  tableSet(testTable, key1, value, 0xF);
+  bool found = tableGet(testTable, key1, &outValue, &outAddress);
   TEST_ASSERT_TRUE(found);
 }
 
@@ -98,14 +141,14 @@ void testTableDelete() {
   assignString(key1, "blip1", 5);
   assignString(key2, "blip2", 5);
   Value value = INT_VAL(1);
-  assignEntry(entry1, key1, value);
+  assignEntry(entry1, key1, value, 0xF);
 
   /* Delete in empty table */
   bool notFound = tableDelete(testTable, key1);
   TEST_ASSERT_FALSE(notFound);
 
   /* Delete unknown value*/
-  tableSet(testTable, key1, value);
+  tableSet(testTable, key1, value, 0xFF);
   notFound = tableDelete(testTable, key2);
   TEST_ASSERT_FALSE(notFound);
 

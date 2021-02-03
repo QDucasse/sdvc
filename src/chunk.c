@@ -147,9 +147,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
     /* Adding address */
     convertedInstruction |= instruction->addr;
   }
-
   return convertedInstruction;
-
 }
 
 /* Instruction filling
