@@ -2,6 +2,8 @@
 #include "chunk.h"
 #include "disassembler.h"
 #include "mmemory.h"
+#include "register.h"
+#include "value.h"
 
 
 static Chunk* testChunk;

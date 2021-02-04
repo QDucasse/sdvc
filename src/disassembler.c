@@ -62,7 +62,7 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
     unsigned int ra   = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
     unsigned int imma = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
-    unsigned int addr = (bitInstruction & 0x3FFFFFF);           // 0000 0000 0011 1111 1111 1111 1111 1111
+    unsigned int addr = (bitInstruction & 0x3FFFFF);            // 0000 0000 0011 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
       case LOAD_REG: printf(" OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", loadConfigs[cfg_mask].name, rd, ra); break;
@@ -94,9 +94,9 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
   printf("=== Register states ===\n");
   for (int i = 0 ; i < REG_NUMBER ; i++) {
     if (!(registers[i].varName == NULL)) {
-      printf("[%2i] - Variable named %8s at address %u", i, registers[i].varName->chars, registers[i].address);
+      printf("[%2i] - Variable named %8s", i, registers[i].varName->chars);
     } else {
-      printf("[%2i] - Empty                           ", i);
+      printf("[%2i] - Empty                  ", i);
     }
 
     if (i == topTempRegister->number && i == topGlobRegister->number) {

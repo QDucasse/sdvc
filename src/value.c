@@ -21,6 +21,7 @@ void printValue(Value value) {
   }
 }
 
+
 /* Compare values first by comparing type then the actual values */
 bool valuesEqual(Value a, Value b) {
   if (a.type != b.type) return false;

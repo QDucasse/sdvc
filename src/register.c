@@ -12,6 +12,7 @@ Register* initRegister(int number) {
   return reg;
 }
 
+
 /* Empty register */
 void emptyRegister(Register* reg) {
   reg->varName = NULL;
@@ -19,17 +20,20 @@ void emptyRegister(Register* reg) {
   reg->address = 0;
 }
 
+
 /* Free a given register */
 void freeRegister(Register* reg) {
   FREE(reg);
 }
 
+/* Textual representation of a given register */
 void printRegister(Register* reg) {
   printf("Register number %d containing variable named %s with value '", reg->number, reg->varName->chars);
   printValue(reg->varValue);
   printf("' at address %u\n", reg->address);
 }
 
+/* Load a variable in a given register */
 void loadVariable(Register* reg, String* varName, Value varValue, uint32_t varAddress) {
   reg->varName = varName;
   reg->varValue = varValue;

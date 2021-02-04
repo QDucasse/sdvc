@@ -18,6 +18,7 @@ Entry* initEntry() {
   return entry;
 }
 
+
 /* Assign actual values to the entry */
 void assignEntry(Entry* entry, String* key, Value value, uint32_t address) {
   entry->key = key;
@@ -25,10 +26,12 @@ void assignEntry(Entry* entry, String* key, Value value, uint32_t address) {
   entry->address = address;
 }
 
+
 /* Free the memory of an entry */
 void freeEntry(Entry* entry) {
   FREE(entry);
 }
+
 
 /* Initialize the hash table */
 Table* initTable() {
@@ -40,11 +43,13 @@ Table* initTable() {
   return table;
 }
 
+
 /* Free the hash table */
 void freeTable(Table* table) {
   FREE(table->entries);
   FREE(table);
 }
+
 
 /* ==================================
   FIND AN ENTRY IN ARRAY OF ENTRIES
@@ -67,7 +72,7 @@ static Entry* findEntry(Entry* entries, int capacity, String* key) {
         /* Tombstone found */
         if (tombstone == NULL) tombstone = entry;
       }
-    } else if (entry->key == key) {
+    } else if (stringsEqual(entry->key, key)) {
       /* Key found */
       return entry;
     }
@@ -76,6 +81,7 @@ static Entry* findEntry(Entry* entries, int capacity, String* key) {
     index = (index + 1) % capacity;
   }
 }
+
 
 /* ==================================
           SIZE OPERATIONS
@@ -112,6 +118,7 @@ static void adjustCapacity(Table* table, int capacity) {
   table->capacity = capacity;
 }
 
+
 /* ==================================
       TABLE ENTRY MANIPULATION
 ====================================*/
@@ -133,6 +140,7 @@ void tableSet(Table* table, String* key, Value value, uint32_t address) {
   entry->address = address;
 }
 
+
 /* Copy the content of a hash table into another */
 void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
@@ -142,6 +150,7 @@ void tableAddAll(Table* from, Table* to) {
     }
   }
 }
+
 
 /* Get an entry for a given key and store the value in the corresponding pointers */
 bool tableGet(Table* table, String* key, Value* value, uint32_t* address) {
@@ -155,6 +164,7 @@ bool tableGet(Table* table, String* key, Value* value, uint32_t* address) {
   *address = entry->address;
   return true;
 }
+
 
 /* Delete an entry for a given key */
 bool tableDelete(Table* table, String* key) {

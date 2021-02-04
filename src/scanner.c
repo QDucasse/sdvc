@@ -24,6 +24,7 @@ void initScanner(char* source) {
   scanner.line = 1;
 }
 
+
 /* ==================================
           CHARACTER TESTS
 ====================================*/
@@ -33,21 +34,25 @@ static bool isAtEnd() {
   return *scanner.current == '\0';
 }
 
+
 /* Check if the current character is a letter */
 static bool isAlpha(char c) {
   return (c >= 'a' && c <= 'z') ||
          (c >= 'A' && c <= 'Z');
 }
 
+
 /* Check if the current character is a digit */
 static bool isDigit(char c) {
   return c >= '0' && c <= '9';
 }
 
+
 /* Check if the current character is either an underscore or a dot (as accepted in the language) */
 static bool isIDPunctuation(char c) {
   return c == '_' || c == '.';
 }
+
 
 /* ==================================
             SCAN HELPERS
@@ -59,16 +64,19 @@ static char advance() {
   return scanner.current[-1];
 }
 
+
 /* Return the current scanned character */
 static char peek() {
   return *scanner.current;
 }
+
 
 /* Return the character next to the currently scanned one */
 static char peekNext() {
   if (isAtEnd()) return '\0';
   return scanner.current[1];
 }
+
 
 /* Check that the current character is the expected */
 static bool match(char expected) {
@@ -78,6 +86,7 @@ static bool match(char expected) {
   scanner.current++;
   return true;
 }
+
 
 /* Skip all whitspace characters */
 static void skipWhitespace() {
@@ -110,6 +119,7 @@ static void skipWhitespace() {
   }
 }
 
+
 /* ==================================
           TOKEN CREATION
 ====================================*/
@@ -125,6 +135,7 @@ static Token makeToken(TokenType type) {
   return token;
 }
 
+
 /* Create an error token with a message and the line */
 static Token errorToken(char* message) {
   Token token;
@@ -135,6 +146,7 @@ static Token errorToken(char* message) {
 
   return token;
 }
+
 
 /* ==================================
       TOKEN TYPE IDENTIFICATION
@@ -151,6 +163,7 @@ static TokenType checkKeyword(int start, int length, const char* rest, TokenType
   }
   return TOKEN_IDENTIFIER;
 }
+
 
 /* Define the identifier type, by comparing it to keywords */
 static TokenType identifierType() {
@@ -190,12 +203,14 @@ static TokenType identifierType() {
   return TOKEN_IDENTIFIER;
 }
 
+
 /* Create an identifier token */
 static Token identifier() {
   /* Numbers are also allowed after the first letter */
   while (isAlpha(peek()) || isDigit(peek()) || isIDPunctuation(peek())) advance();
   return makeToken(identifierType());
 }
+
 
 /* Create a number token */
 static Token number() {
@@ -210,6 +225,7 @@ static Token number() {
   while(isDigit(peek())) advance();
   return makeToken(TOKEN_NUMBER);
 }
+
 
 /* ==================================
           SCANNING ROUTINE
@@ -259,6 +275,7 @@ Token scanToken() {
 
   return errorToken("Unexpected character.");
 }
+
 
 /* ==================================
            TOKEN PRINTING

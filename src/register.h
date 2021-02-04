@@ -5,7 +5,7 @@
 #include "sstring.h"
 #include "value.h"
 
-#define REG_NUMBER 16
+#define REG_NUMBER 6
 
 /* Register structure */
 typedef struct {

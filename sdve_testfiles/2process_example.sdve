@@ -1,0 +1,19 @@
+state {a(0), b(1)} P1.state = 0;
+state {a(0), b(1)} P2.state = 0;
+	process P1
+		guardblock
+			temp bool t_0 = P1.state == 1,
+			temp bool t_1 = t_0 and true;
+
+		guardcondition t_1;
+		effect
+			P1.state = 1;
+
+	process P2
+		guardblock
+			temp bool t_2 = P2.state == 1,
+			temp bool t_3 = t_2 and true;
+
+		guardcondition t_3;
+		effect
+			P2.state = 1;

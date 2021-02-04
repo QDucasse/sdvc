@@ -20,6 +20,7 @@ static uint32_t hashString(const char* key, int length) {
   return hash;
 }
 
+
 /* Initialize a string */
 String* initString() {
   /* Allocate the string in memory */
@@ -30,11 +31,13 @@ String* initString() {
   return string;
 }
 
+
 /* Free an allocated string */
 void freeString(String* string) {
   FREE(string->chars);
   FREE(string);
 }
+
 
 /* Assign a given character array to the string */
 void assignString(String* string, char* key, int length) {
@@ -48,6 +51,7 @@ void assignString(String* string, char* key, int length) {
   uint32_t hash = hashString(key, length);
   string->hash   = hash;
 }
+
 
 /* String comparison */
 bool stringsEqual(String* a, String* b) {

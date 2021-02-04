@@ -51,16 +51,19 @@ static bool prefix(const char *pre, const char *str) {
   return strncmp(pre, str, strlen(pre)) == 0;
 }
 
+
 /* Determines if an identifier is a global or a temporary */
 static bool isTemp(char* name) {
   return prefix("t_", name);
 }
+
 
 /* Determines if an identifier is a global or a temporary */
 static bool isTempToken(Token* tokenIdentifier) {
   char* name = tokenIdentifier->start;
   return isTemp(name);
 }
+
 
 /* Determines if the given token is a binary operator */
 static bool isBinOp(Token* tokenOperator) {
@@ -70,6 +73,7 @@ static bool isBinOp(Token* tokenOperator) {
          type == TOKEN_EQUAL_EQUAL || type == TOKEN_GREATER || type == TOKEN_GREATER_EQUAL ||
          type == TOKEN_LESS || type == TOKEN_LESS_EQUAL || type == TOKEN_AND || type == TOKEN_OR;
 }
+
 
 /* ==================================
       ALLOCATION - DEALLOCATION
@@ -88,6 +92,7 @@ void initCompiler() {
   compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
 }
 
+
 /* Compiler destruction */
 void freeCompiler() {
   freeChunk(compiler->chunk);
@@ -95,6 +100,7 @@ void freeCompiler() {
   FREE(compiler->registers);
   FREE(compiler);
 }
+
 
 /* ==================================
            ERROR HANDLING
@@ -119,6 +125,7 @@ static void synchronize() {
     }
   }
 }
+
 
 /* Notifies the error with a message */
 static void errorAt(Token* token, const char* message) {
@@ -145,15 +152,18 @@ static void errorAt(Token* token, const char* message) {
   parser.hadError = true;
 }
 
+
 /* Notifies an error in the token just processed */
 static void error(const char* message) {
   errorAt(&parser.previous, message);
 }
 
+
 /* Notifies an error in the current token */
 static void errorAtCurrent(const char* message) {
   errorAt(&parser.current, message);
 }
+
 
 /* ==================================
         FRONT END - PARSING
@@ -177,6 +187,7 @@ static void advance() {
   }
 }
 
+
 /* Expects the next token to be of a given type, else errors with given message */
 static void consume(TokenType type, const char* message) {
   if (parser.current.type == type) {
@@ -186,10 +197,12 @@ static void consume(TokenType type, const char* message) {
   errorAtCurrent(message);
 }
 
+
 /* Checks that the current token is of a given type */
 static bool check(TokenType type) {
   return parser.current.type == type;
 }
+
 
 /* checks if the current token is of a given type */
 static bool match(TokenType type) {
@@ -199,6 +212,7 @@ static bool match(TokenType type) {
   advance();
   return true;
 }
+
 
 /* Jump handling
 ============= */
@@ -250,6 +264,7 @@ static String* globalName() {
   return varName;
 }
 
+
 /* Process bool global variable */
 static void globalBoolDeclaration() {
   /* Process name and '=' */
@@ -269,6 +284,7 @@ static void globalBoolDeclaration() {
   compiler->globals->currentAddress += size;
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
+
 
 /* Process bool global variable */
 static void globalByteDeclaration() {
@@ -292,6 +308,7 @@ static void globalByteDeclaration() {
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
 
+
 /* Process int global variable */
 static void globalIntDeclaration() {
   /* Process name and '=' */
@@ -313,6 +330,7 @@ static void globalIntDeclaration() {
   compiler->globals->currentAddress += size;
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
+
 
 /* Process state global variable */
 static void globalStateDeclaration() {
@@ -351,6 +369,7 @@ static void globalStateDeclaration() {
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
 }
 
+
 /* Declaration of a global variable */
 static void globalDeclaration() {
   /* Consume type */
@@ -367,6 +386,7 @@ static void globalDeclaration() {
   }
 }
 
+
 /* Register utilities
 ================== */
 
@@ -378,11 +398,13 @@ static int incrementTopTempRegister() {
   }
   compiler->topTempRegister = &compiler->registers[topTempNumber + 1];
   if (topTempNumber == compiler->topGlobRegister->number) {
+    /* Emit store if the two stack pointers are pointing to the same register (Temporary has the priority) */
     compiler->topGlobRegister = &compiler->registers[topTempNumber + 1];
     writeStoreFromRegister(compiler->topGlobRegister, compiler->chunk);
   }
   return topTempNumber;
 }
+
 
 /* Shift the pointer down for the top register available for temporary variables */
 static int decrementTopTempRegister() {
@@ -390,6 +412,7 @@ static int decrementTopTempRegister() {
   compiler->topTempRegister = &compiler->registers[topTempNumber - 1];
   return topTempNumber;
 }
+
 
 /* Load a global variable with a given name to the corresponding register */
 static Register* loadGlob(String* name) {
@@ -403,21 +426,18 @@ static Register* loadGlob(String* name) {
       error("No more registers available for global allocation.");
     } else {
       bool nearEnd = (topGlobNumber + 1 == REG_NUMBER);
-      workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
+      // workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
+      workingRegister = nearEnd ? compiler->registers + sizeof(Register)*(topGlobNumber) : compiler->registers + sizeof(Register)*(topGlobNumber+1);
       printRegister(workingRegister);
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
       tableSetFromRegister(compiler->globals, workingRegister);
-      // tableSet(compiler->globals, workingRegister->varName, workingRegister->varValue, workingRegister->address);
       /* Emit a store with the variable in the register */
       writeStoreFromRegister(workingRegister, compiler->chunk);
       /* Load the new entry in the table */
       tableGetToRegister(compiler->globals, name, workingRegister);
-      // tableGet(compiler->globals, name, &workingRegister->varValue, &workingRegister->address);
-      // workingRegister->varName = name;
-      printf("%u\n", workingRegister->address);
       /* Emit a load with the variable in the to use */
-      writeLoadToRegister(workingRegister, compiler->chunk);
+      writeLoadFromRegister(workingRegister, compiler->chunk);
       /* Shift the pointer head back up */
       if (!nearEnd) compiler->topGlobRegister = &compiler->registers[topGlobNumber];
       /* Return the final register */
@@ -426,7 +446,7 @@ static Register* loadGlob(String* name) {
     /* Load the new entry in the table */
     tableGetToRegister(compiler->globals, name, workingRegister);
     /* Emit a load with the variable in the to use */
-    writeLoadToRegister(workingRegister, compiler->chunk);
+    writeLoadFromRegister(workingRegister, compiler->chunk);
     /* Check if the pointer reached the bottom of the stack */
     if (!(topGlobNumber == 0)) {
       /* Shift the pointer up */
@@ -435,6 +455,7 @@ static Register* loadGlob(String* name) {
   }
   return workingRegister;
 }
+
 
 /* Look for the register containing a given variable (NULL otherwise) */
 static Register* getRegFromVar(String* varName) {
@@ -446,6 +467,7 @@ static Register* getRegFromVar(String* varName) {
   }
   return NULL;
 }
+
 
 /* Assignments
 =========== */
@@ -464,6 +486,7 @@ static void immediateValueNumberOperand(bool isLeftSide, Instruction* instructio
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
 }
 
+
 /* Process an immediate value boolean operand */
 static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instruction) {
   /* Immediate boolean value */
@@ -477,6 +500,7 @@ static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instructi
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
 }
+
 
 /* Process a temporary variable operand */
 static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
@@ -505,6 +529,7 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
   decrementTopTempRegister();
   freeString(tempKey);
 }
+
 
 /* Process a global variable operand */
 static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
@@ -545,6 +570,7 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
   instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
 }
 
+
 /* Process an operand */
 static void operand(bool isLeftSide, Instruction* instruction) {
   if(check(TOKEN_NUMBER)) {
@@ -570,15 +596,18 @@ static void operand(bool isLeftSide, Instruction* instruction) {
   advance();
 }
 
+
 /* Process the left hand side of an expression */
 static void leftHandSide(Instruction* instruction) {
   operand(true, instruction);
 }
 
+
 /* Process the right hand side of an expression */
 static void rightHandSide(Instruction* instruction) {
   operand(false, instruction);
 }
+
 
 /* Process the binary operator and deduce the corresponding opcode */
 void operator(Instruction* instruction) {
@@ -590,6 +619,7 @@ void operator(Instruction* instruction) {
     error("Expected binary operator.");
   }
 }
+
 
 /* Process an expression */
 static void expression(Instruction* instruction) {
@@ -644,6 +674,7 @@ static void globalAssignment() {
   writeChunk(compiler->chunk, bitsInstruction);
 }
 
+
 /* Assign a value to a given temporary variable and store it in a register */
 static void tempAssignment() {
   /* Consume temp token, probably need to use it to access the hash table */
@@ -673,6 +704,7 @@ static void tempAssignment() {
   writeChunk(compiler->chunk, bitsInstruction);
 }
 
+
 /* Check variable name to determine if it is a temporary variable or not */
 static void assignment() {
   // showTableState(compiler->globals);
@@ -688,6 +720,7 @@ static void assignment() {
   if (parser.panicMode) synchronize();
 }
 
+
 /* Process
 ======= */
 
@@ -702,6 +735,7 @@ static void guardBlock() {
   consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
 }
 
+
 /* Process effect (sequnce of assignments) */
 static void effect() {
   consume(TOKEN_EFFECT, "Effect declaration should start with 'effect' identifier.");
@@ -713,6 +747,7 @@ static void effect() {
   consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
 }
 
+
 /* Process declaration */
 static void process() {
   /* Consume process token */
@@ -723,16 +758,14 @@ static void process() {
   guardBlock();
   /* Go through guardcondition */
   consume(TOKEN_GUARD_COND, "Guardcondition should begin with 'guardcondition' identifier.");
-  /* Emit jump to end of effect */
-  // int jmpEffect = emitJump();
   /* Process identifier */
   consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
+  /* Emit OP_EQ between true and the variable */
   consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
   /* Go through effect */
   effect();
-  /* Patch jump */
-  // patchJump(jmpEffect);
 }
+
 
 /* ==================================
           COMPILE ROUTINE
@@ -750,10 +783,12 @@ bool compile(char* source) {
     globalDeclaration();
   }
 
+
+  showTableState(compiler->globals);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
-    // showTableState(compiler->globals);
     process();
+    disassembleChunk(compiler->chunk);
   }
   showTableState(compiler->globals);
   disassembleChunk(compiler->chunk);

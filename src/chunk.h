@@ -88,6 +88,6 @@ uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned
 /* Write a store instruction from a register */
 void writeStoreFromRegister(Register* reg, Chunk* chunk);
 /* Write a load instruction from a register */
-void writeLoadToRegister(Register* reg, Chunk* chunk);
+void writeLoadFromRegister(Register* reg, Chunk* chunk);
 
 #endif

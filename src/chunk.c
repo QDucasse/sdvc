@@ -23,6 +23,7 @@ Chunk* initChunk() {
   return chunk;
 }
 
+
 /* Free the given chunk */
 void freeChunk(Chunk* chunk) {
   /* Free the instructions array */
@@ -30,6 +31,7 @@ void freeChunk(Chunk* chunk) {
   /* Free the actual structure */
   FREE(chunk);
 }
+
 
 /* Writing
 ======= */
@@ -49,6 +51,7 @@ void writeChunk(Chunk* chunk, uint32_t instruction) {
   chunk->instructions[chunk->count] = instruction;
   chunk->count++;
 }
+
 
 /* ==================================
       INSTRUCTION OPERATIONS
@@ -71,10 +74,12 @@ Instruction* initInstruction() {
   return instruction;
 }
 
+
 /* Free the given instruction */
 void freeInstruction(Instruction* instruction) {
   FREE(instruction);
 }
+
 
 /* Conversion from Instruction struct to uint32_t */
 uint32_t instructionToUint32(Instruction* instruction) {
@@ -152,6 +157,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
   return convertedInstruction;
 }
 
+
 /* Instruction filling
 =================== */
 
@@ -166,6 +172,7 @@ uint32_t binaryInstructionRR(Instruction* instruction, unsigned int op_code,
   return instructionToUint32(instruction);
 }
 
+
 /* Fill the instruction with information for RI then export to uint32 */
 uint32_t binaryInstructionRI(Instruction* instruction, unsigned int op_code,
                              unsigned int rd, unsigned int ra, unsigned int imm) {
@@ -176,6 +183,7 @@ uint32_t binaryInstructionRI(Instruction* instruction, unsigned int op_code,
   instruction->immb = imm;
   return instructionToUint32(instruction);
 }
+
 
 /* Fill the instruction with information for IR then export to uint32 */
 uint32_t binaryInstructionIR(Instruction* instruction, unsigned int op_code,
@@ -188,6 +196,7 @@ uint32_t binaryInstructionIR(Instruction* instruction, unsigned int op_code,
   return instructionToUint32(instruction);
 }
 
+
 /* Fill the instruction with information for II then export to uint32 */
 uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code,
                          unsigned int rd, unsigned int imma, unsigned int immb) {
@@ -199,6 +208,7 @@ uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code,
   return instructionToUint32(instruction);
 }
 
+
 /* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
 uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
                           unsigned int rd, unsigned int addr) {
@@ -208,6 +218,7 @@ uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
   return instructionToUint32(instruction);
 }
 
+
 /* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
 uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr) {
   instruction->op_code = OP_STORE;
@@ -215,6 +226,7 @@ uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned i
   instruction->addr = addr;
   return instructionToUint32(instruction);
 }
+
 
 /* LOAD instructions
 ================= */
@@ -228,6 +240,7 @@ uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned 
   return instructionToUint32(instruction);
 }
 
+
 /* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
 uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned int imma) {
   instruction->op_code = OP_LOAD;
@@ -236,6 +249,7 @@ uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned 
   instruction->imma = imma;
   return instructionToUint32(instruction);
 }
+
 
 /* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
 uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr) {
@@ -246,6 +260,7 @@ uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned
   return instructionToUint32(instruction);
 }
 
+
 /* Direct Write
 ============ */
 
@@ -253,17 +268,18 @@ uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned
 void writeStoreFromRegister(Register* reg, Chunk* chunk) {
   Instruction* storeInstruction = initInstruction();
   uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, reg->number, reg->address);
-  disassembleInstruction(bitStoreInstruction);
+  // disassembleInstruction(bitStoreInstruction);
   writeChunk(chunk, bitStoreInstruction);
   emptyRegister(reg);
   freeInstruction(storeInstruction);
 }
 
+
 /* Writes a load instruction from a register */
-void writeLoadToRegister(Register* reg, Chunk* chunk) {
+void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   Instruction* loadInstruction = initInstruction();
   uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address);
-  disassembleInstruction(bitLoadInstruction);
+  // disassembleInstruction(bitLoadInstruction);
   writeChunk(chunk, bitLoadInstruction);
   freeInstruction(loadInstruction);
 }
