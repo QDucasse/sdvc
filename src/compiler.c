@@ -280,9 +280,9 @@ static void globalBoolDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  uint32_t size = sizeof(bool);
-  compiler->globals->currentAddress += size;
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
+  /* Update the current size with the added bool */
+  compiler->globals->currentAddress += sizeof(bool);
 }
 
 
@@ -303,9 +303,9 @@ static void globalByteDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  uint32_t size = sizeof(uint8_t);
-  compiler->globals->currentAddress += size;
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
+  /* Update the current size with the added byte */
+  compiler->globals->currentAddress += sizeof(uint8_t);;
 }
 
 
@@ -326,9 +326,9 @@ static void globalIntDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  uint32_t size = sizeof(int);
-  compiler->globals->currentAddress += size;
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
+  /* Update the current size with the added int */
+  compiler->globals->currentAddress += sizeof(uint16_t);
 }
 
 
@@ -364,9 +364,9 @@ static void globalStateDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
-  uint32_t size = sizeof(int);
-  compiler->globals->currentAddress += size;
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
+  /* Update the current size with the added int */
+  compiler->globals->currentAddress += sizeof(int);
 }
 
 
@@ -426,9 +426,8 @@ static Register* loadGlob(String* name) {
       error("No more registers available for global allocation.");
     } else {
       bool nearEnd = (topGlobNumber + 1 == REG_NUMBER);
-      // workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
-      workingRegister = nearEnd ? compiler->registers + sizeof(Register)*(topGlobNumber) : compiler->registers + sizeof(Register)*(topGlobNumber+1);
-      printRegister(workingRegister);
+      workingRegister = nearEnd ? &compiler->registers[topGlobNumber] : &compiler->registers[topGlobNumber + 1];
+      // workingRegister = nearEnd ? compiler->registers + sizeof(Register)*(topGlobNumber) : compiler->registers + sizeof(Register)*(topGlobNumber+1);
       compiler->topGlobRegister = workingRegister;
       /* Store the old entry in the table */
       tableSetFromRegister(compiler->globals, workingRegister);

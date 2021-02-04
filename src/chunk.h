@@ -53,7 +53,8 @@ typedef struct {
   unsigned int rb: 4;       // Source register B
   unsigned int imma: 11;    // Immediate value A
   unsigned int immb: 11;    // Immediate value B
-  unsigned int addr: 22;    // Address
+  unsigned int addr: 24;    // Address
+  unsigned int type: 2;     // Type of the value to load/store (bool, byte, int or state)
 } Instruction;
 
 /* Initialize a given chunk */
@@ -84,7 +85,7 @@ uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned 
 /* Load from an immediate value */
 uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned int imma);
 /* Load from an address */
-uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr);
+uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr, unsigned int type);
 /* Write a store instruction from a register */
 void writeStoreFromRegister(Register* reg, Chunk* chunk);
 /* Write a load instruction from a register */

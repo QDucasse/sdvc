@@ -41,7 +41,6 @@ CodeNames loadConfigs[] = {
 void disassembleInstruction(uint32_t bitInstruction) {
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
   /* Test if the instruction is binary or not */
-  // printf("=== Disassembling instruction ===\n");
   if (op_code < 13) { // BINARY
     unsigned int rd       = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
@@ -58,24 +57,25 @@ void disassembleInstruction(uint32_t bitInstruction) {
       default: break; // Unreachable
     }
   } else if (op_code == OP_LOAD) {
-    unsigned int rd       = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+    unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
+    unsigned int rd       = (bitInstruction & 0xF00000) >> 20;  // 0000 0000 1111 0000 0000 0000 0000 0000
     unsigned int ra   = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
     unsigned int imma = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
-    unsigned int addr = (bitInstruction & 0x3FFFFF);            // 0000 0000 0011 1111 1111 1111 1111 1111
+    unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
-      case LOAD_REG: printf(" OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n", loadConfigs[cfg_mask].name, rd, ra); break;
-      case LOAD_IMM: printf(" OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n", loadConfigs[cfg_mask].name, rd, imma); break;
-      case LOAD_ADR: printf(" OP_LOAD - Config: %s - Rd: %2u - Addr: %5u\n", loadConfigs[cfg_mask].name, rd, addr); break;
+      case LOAD_REG: printf(CYN " OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, ra); break;
+      case LOAD_IMM: printf(CYN " OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, imma); break;
+      case LOAD_ADR: printf(CYN " OP_LOAD - Config: %s - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, addr, type); break;
       default: break; // Unreachable
     }
   } else { // UNARY STORE/JMP
-    unsigned int rd   = (bitInstruction & 0xF00000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
-    unsigned int addr = (bitInstruction & 0xFFFFF ) >> 20;        // 0000 0000 1111 1111 1111 1111 1111 1111
-    printf("%8s -                  - Rd: %2u - Addr: %u \n", codeNames[op_code].name, rd, addr);
+    unsigned int type = (bitInstruction & 0xC000000 ) >> 26;       // 0000 1100 0000 0000 0000 0000 0000 0000
+    unsigned int rd   = (bitInstruction & 0x3C00000 ) >> 22;       // 0000 0011 1100 0000 0000 0000 0000 0000
+    unsigned int addr = (bitInstruction & 0xFFFFFF );              // 0000 0000 1111 1111 1111 1111 1111 1111
+    printf(RED "%8s -                  - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, codeNames[op_code].name, rd, addr, type);
   }
-  // printf("=== ------------------------- ===\n\n");
 }
 
 void showTableState(Table* table) {

@@ -1,4 +1,5 @@
 state {a(0), b(1)} P1.state = 0;
+state {a(0), b(1)} P2.state = 0;
 int P1.x = 1;
 int P1.y = 2;
 int P2.z = 0;

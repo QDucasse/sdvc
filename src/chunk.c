@@ -57,6 +57,22 @@ void writeChunk(Chunk* chunk, uint32_t instruction) {
       INSTRUCTION OPERATIONS
 ====================================*/
 
+/* Value to bitmask config
+======================= */
+
+typedef struct {
+  ValueType type;
+  unsigned int cfg: 2;
+} TypeCfg;
+
+TypeCfg typeConfigs[] = {
+  [VAL_BOOL]  = {VAL_BOOL,  0b00},
+  [VAL_BYTE]  = {VAL_BYTE,  0b01},
+  [VAL_INT]   = {VAL_INT,   0b10},
+  [VAL_STATE] = {VAL_STATE, 0b11}
+};
+
+
 /* Initialization and conversion
 ============================= */
 
@@ -71,6 +87,7 @@ Instruction* initInstruction() {
   instruction->imma = 0;
   instruction->immb = 0;
   instruction->addr = 0;
+  instruction->type = 0;
   return instruction;
 }
 
@@ -130,8 +147,10 @@ uint32_t instructionToUint32(Instruction* instruction) {
     /* LOAD OPERATION */
     /* Adding config mask */
     convertedInstruction |= instruction->cfg_mask << 26;
+    /* Adding type information */
+    convertedInstruction |= instruction->type << 24;
     /* Adding destination register */
-    convertedInstruction |= instruction->rd << 22;
+    convertedInstruction |= instruction->type << 20;
     switch(instruction->cfg_mask) {
       case LOAD_REG:
         /* Adding Ra */
@@ -149,8 +168,10 @@ uint32_t instructionToUint32(Instruction* instruction) {
     }
   } else {
     /* STORE/JMP OPERATIONS */
+    /* Adding type information */
+    convertedInstruction |= instruction->type << 26;
     /* Adding destination register */
-    convertedInstruction |= instruction->rd << 24;
+    convertedInstruction |= instruction->rd << 22;
     /* Adding address */
     convertedInstruction |= instruction->addr;
   }
@@ -220,10 +241,11 @@ uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
 
 
 /* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
-uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr) {
+uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr, unsigned int type) {
   instruction->op_code = OP_STORE;
   instruction->rd = rd;
   instruction->addr = addr;
+  instruction->type = type;
   return instructionToUint32(instruction);
 }
 
@@ -252,11 +274,12 @@ uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned 
 
 
 /* Fill the instruction with a destination register and address for LOAD then export to uint32_t */
-uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr) {
+uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr, unsigned int type) {
   instruction->op_code = OP_LOAD;
   instruction->cfg_mask = LOAD_ADR;
   instruction->rd = rd;
   instruction->addr = addr;
+  instruction ->type = type;
   return instructionToUint32(instruction);
 }
 
@@ -266,19 +289,19 @@ uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned
 
 /* Writes a store instruction from a register */
 void writeStoreFromRegister(Register* reg, Chunk* chunk) {
-  Instruction* storeInstruction = initInstruction();
-  uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, reg->number, reg->address);
+  Instruction* strInstruction = initInstruction();
+  uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeConfigs[reg->varValue.type].cfg);
   // disassembleInstruction(bitStoreInstruction);
   writeChunk(chunk, bitStoreInstruction);
   emptyRegister(reg);
-  freeInstruction(storeInstruction);
+  freeInstruction(strInstruction);
 }
 
 
 /* Writes a load instruction from a register */
 void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   Instruction* loadInstruction = initInstruction();
-  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address);
+  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeConfigs[reg->varValue.type].cfg);
   // disassembleInstruction(bitLoadInstruction);
   writeChunk(chunk, bitLoadInstruction);
   freeInstruction(loadInstruction);
