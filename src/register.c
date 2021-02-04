@@ -12,6 +12,13 @@ Register* initRegister(int number) {
   return reg;
 }
 
+/* Empty register */
+void emptyRegister(Register* reg) {
+  reg->varName = NULL;
+  reg->varValue = NIL_VAL;
+  reg->address = 0;
+}
+
 /* Free a given register */
 void freeRegister(Register* reg) {
   FREE(reg);

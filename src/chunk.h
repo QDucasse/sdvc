@@ -3,6 +3,7 @@
 #define sdvu_instruction_h
 
 #include "common.h"
+#include "register.h"
 #include "value.h"
 
 /* OPCODE constants */
@@ -84,4 +85,9 @@ uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned 
 uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned int imma);
 /* Load from an address */
 uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr);
+/* Write a store instruction from a register */
+void writeStoreFromRegister(Register* reg, Chunk* chunk);
+/* Write a load instruction from a register */
+void writeLoadToRegister(Register* reg, Chunk* chunk);
+
 #endif

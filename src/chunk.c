@@ -2,7 +2,9 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "disassembler.h"
 #include "mmemory.h"
+#include "register.h"
 
 
 /* ==================================
@@ -242,4 +244,26 @@ uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned
   instruction->rd = rd;
   instruction->addr = addr;
   return instructionToUint32(instruction);
+}
+
+/* Direct Write
+============ */
+
+/* Writes a store instruction from a register */
+void writeStoreFromRegister(Register* reg, Chunk* chunk) {
+  Instruction* storeInstruction = initInstruction();
+  uint32_t bitStoreInstruction = unaryInstruction(storeInstruction, OP_STORE, reg->number, reg->address);
+  disassembleInstruction(bitStoreInstruction);
+  writeChunk(chunk, bitStoreInstruction);
+  emptyRegister(reg);
+  freeInstruction(storeInstruction);
+}
+
+/* Writes a load instruction from a register */
+void writeLoadToRegister(Register* reg, Chunk* chunk) {
+  Instruction* loadInstruction = initInstruction();
+  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address);
+  disassembleInstruction(bitLoadInstruction);
+  writeChunk(chunk, bitLoadInstruction);
+  freeInstruction(loadInstruction);
 }
