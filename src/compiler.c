@@ -490,10 +490,10 @@ static void immediateValueNumberOperand(bool isLeftSide, Instruction* instructio
 static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instruction) {
   /* Immediate boolean value */
   if (isLeftSide) {
-    instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 0 : 1; // Left side
+    instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Left side
     printf("LHS: Setting Immediate boolean value %u!\n", instruction->imma);
   } else {
-    instruction->immb = (unsigned int) check(TOKEN_TRUE) ? 0 : 1; // Right side
+    instruction->immb = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Right side
     printf("RHS: Setting Immediate boolean value %u!\n", instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
@@ -536,8 +536,7 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
   String* globKey = initString();
   assignString(globKey, parser.current.start, parser.current.length);
   /* Resolve register */
-  Register* foundReg = initRegister(0);
-  foundReg = getRegFromVar(globKey);
+  Register* foundReg = getRegFromVar(globKey);
   /* Check if the value is found in the registers */
   if (foundReg == NULL) {
     /* Go to the table and store the value in a register */
@@ -546,22 +545,18 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
     if (isLeftSide) {
       instruction->ra = loadedReg->number;
       printf("LHS: Setting resolved register %u as a global to load!\n", instruction->ra);
-      printRegister(loadedReg);
     } else {
       instruction->rb = loadedReg->number;
       printf("RHS: Setting resolved register %u as a global to load!\n", instruction->rb);
-      printRegister(loadedReg);
     }
     instruction->addr = loadedReg->address;
   } else {
     if (isLeftSide) {
       instruction->ra = foundReg->number;
       printf("LHS: Setting resolved register %u as a global found in the registers!\n", instruction->ra);
-      printRegister(foundReg);
     } else {
       instruction->rb = foundReg->number;
       printf("RHS: Setting resolved register %u as a global found in the registers!\n", instruction->rb);
-      printRegister(foundReg);
     }
     instruction->addr = foundReg->address;
   }
@@ -706,8 +701,6 @@ static void tempAssignment() {
 
 /* Check variable name to determine if it is a temporary variable or not */
 static void assignment() {
-  // showTableState(compiler->globals);
-  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
   if (check(TOKEN_TEMP)) {
     tempAssignment();
   } else if (check(TOKEN_IDENTIFIER)) {
@@ -717,6 +710,7 @@ static void assignment() {
   }
 
   if (parser.panicMode) synchronize();
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
 }
 
 
@@ -789,7 +783,5 @@ bool compile(char* source) {
     process();
     disassembleChunk(compiler->chunk);
   }
-  showTableState(compiler->globals);
-  disassembleChunk(compiler->chunk);
   return parser.hadError;
 }

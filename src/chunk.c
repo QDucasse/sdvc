@@ -150,7 +150,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
     /* Adding type information */
     convertedInstruction |= instruction->type << 24;
     /* Adding destination register */
-    convertedInstruction |= instruction->type << 20;
+    convertedInstruction |= instruction->rd << 20;
     switch(instruction->cfg_mask) {
       case LOAD_REG:
         /* Adding Ra */
