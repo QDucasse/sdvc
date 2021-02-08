@@ -811,7 +811,7 @@ bool compile(char* source) {
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
     process();
-    disassembleChunk(compiler->chunk);
   }
+  disassembleChunk(compiler->chunk);
   return parser.hadError;
 }

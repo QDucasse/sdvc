@@ -261,7 +261,7 @@ Token scanToken() {
     case '%': return makeToken(TOKEN_MODULO);
     /* Double character */
     case '!':
-      return makeToken(TOKEN_BANG_EQUAL);
+      if (match('=')) return makeToken(TOKEN_BANG_EQUAL);
     case '=':
       return makeToken(
           match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
