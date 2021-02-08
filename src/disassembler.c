@@ -59,22 +59,27 @@ void disassembleInstruction(uint32_t bitInstruction) {
   } else if (op_code == OP_LOAD) {
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
     unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
-    unsigned int rd       = (bitInstruction & 0xF00000) >> 20;  // 0000 0000 1111 0000 0000 0000 0000 0000
-    unsigned int ra   = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
-    unsigned int imma = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
+    unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+    unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
+    unsigned int imma = (bitInstruction & 0x007FF);             // 0000 0000 0000 0000 0000 0111 1111 1111
     unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
-      case LOAD_REG: printf(CYN " OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, ra); break;
-      case LOAD_IMM: printf(CYN " OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, imma); break;
-      case LOAD_ADR: printf(CYN " OP_LOAD - Config: %s - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, addr, type); break;
+      case LOAD_REG: printf(GRN " OP_LOAD - Config: %s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, ra); break;
+      case LOAD_IMM: printf(GRN " OP_LOAD - Config: %s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, imma); break;
+      case LOAD_ADR: printf(GRN " OP_LOAD - Config: %s - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, addr, type); break;
       default: break; // Unreachable
     }
-  } else { // UNARY STORE/JMP
+  } else if (op_code == OP_STORE) { // STORE
     unsigned int type = (bitInstruction & 0xC000000 ) >> 26;       // 0000 1100 0000 0000 0000 0000 0000 0000
     unsigned int rd   = (bitInstruction & 0x3C00000 ) >> 22;       // 0000 0011 1100 0000 0000 0000 0000 0000
-    unsigned int addr = (bitInstruction & 0xFFFFFF );              // 0000 0000 1111 1111 1111 1111 1111 1111
+    unsigned int addr = (bitInstruction & 0x03FFFFF );             // 0000 0000 0011 1111 1111 1111 1111 1111
     printf(RED "%8s -                  - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, codeNames[op_code].name, rd, addr, type);
+
+  } else if (op_code == OP_JMP) { // JMP
+    unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
+    unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
+    printf(YEL "%8s -                  - Rd: %2u - Addr: %5u\n" RESET, codeNames[op_code].name, rd, addr);
   }
 }
 

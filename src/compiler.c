@@ -213,42 +213,20 @@ static bool match(TokenType type) {
   return true;
 }
 
-
-/* Jump handling
-============= */
-
-// /* Emit a jump */
-// static int emitJump() {
-//   /* OP Code for JMP and placeholder for the jump address, size 28-bits */
-//   uint32_t instruction = (OP_JMP << 28) | 0xfffffff;
-//   writeChunk(compiler->chunk, instruction);
-//   /* Return the index of the placeholder */
-//   return compiler->chunk->count - 1;
-// }
-//
-// /* */
-// static void patchJump(int offset) {
-//   /* -1 to adjust the jump offset itself */
-//   int jump = compiler->chunk->count - offset - 1;
-//
-//   if (jump > 0xfffffff) {
-//     error("Too much code to jump over.");
-//   }
-//   /* Replace the operand at the given location with the jump offset */
-//   compiler->chunk->instructions[offset] = (jump >> 28) & 0xfffffff;
-// }
-
-
-
 /* ==================================
       BACK END - INSTRUCTIONS
 =================================== */
 
-/* Declarations
-============ */
+/* Chunk Utilities
+=============== */
 
-/* Globals
-======= */
+/* Utility to increment the PC */
+static void incrementPC() {
+  compiler->pc += 4;
+}
+
+/* Globals Declarations
+==================== */
 
 /* Process global name */
 static String* globalName() {
@@ -401,6 +379,7 @@ static int incrementTopTempRegister() {
     /* Emit store if the two stack pointers are pointing to the same register (Temporary has the priority) */
     compiler->topGlobRegister = &compiler->registers[topTempNumber + 1];
     writeStoreFromRegister(compiler->topGlobRegister, compiler->chunk);
+    incrementPC();
   }
   return topTempNumber;
 }
@@ -433,10 +412,12 @@ static Register* loadGlob(String* name) {
       tableSetFromRegister(compiler->globals, workingRegister);
       /* Emit a store with the variable in the register */
       writeStoreFromRegister(workingRegister, compiler->chunk);
+      incrementPC();
       /* Load the new entry in the table */
       tableGetToRegister(compiler->globals, name, workingRegister);
       /* Emit a load with the variable in the to use */
       writeLoadFromRegister(workingRegister, compiler->chunk);
+      incrementPC();
       /* Shift the pointer head back up */
       if (!nearEnd) compiler->topGlobRegister = &compiler->registers[topGlobNumber];
       /* Return the final register */
@@ -446,6 +427,7 @@ static Register* loadGlob(String* name) {
     tableGetToRegister(compiler->globals, name, workingRegister);
     /* Emit a load with the variable in the to use */
     writeLoadFromRegister(workingRegister, compiler->chunk);
+    incrementPC();
     /* Check if the pointer reached the bottom of the stack */
     if (!(topGlobNumber == 0)) {
       /* Shift the pointer up */
@@ -666,6 +648,7 @@ static void globalAssignment() {
   uint32_t bitsInstruction = instructionToUint32(instruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
 }
 
 
@@ -696,6 +679,7 @@ static void tempAssignment() {
   uint32_t bitsInstruction = instructionToUint32(instruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
 }
 
 
@@ -728,6 +712,31 @@ static void guardBlock() {
   consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
 }
 
+/* Process guardblock (sequnce of assignments) */
+static int guardCondition() {
+  consume(TOKEN_GUARD_COND, "Guardcondition should begin with 'guardcondition' identifier.");
+  /* Process identifier */
+  consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
+  /* Store the name of the variable in a string */
+  String* tempTest = initString();
+  assignString(tempTest, parser.previous.start, parser.previous.length);
+  /* Resolve register */
+  Register* foundReg = getRegFromVar(tempTest);
+  /* Check if the value is found in the registers */
+  if (foundReg == NULL) {
+    /* If not found, raise an error (a rvalue temp should be in a register) */
+    error("Temporary variable on the right side of an assignment should be defined.");
+  } else {
+    /* Emit a JMP with a placeholder */
+    Instruction* jmpInstr = initInstruction();
+    uint32_t bitJmpInstr = jumpInstruction(jmpInstr, foundReg->number, 0x000000);
+    writeChunk(compiler->chunk, bitJmpInstr);
+    incrementPC();
+  }
+  decrementTopTempRegister();
+  consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
+  return compiler->chunk->count;
+}
 
 /* Process effect (sequnce of assignments) */
 static void effect() {
@@ -738,8 +747,31 @@ static void effect() {
     assignment();
   }
   consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
+
+  /* Emit the different stores for the stored global variables */
+  for (int i = compiler->topGlobRegister->number ; i < REG_NUMBER ; i++) {
+    writeStoreFromRegister(&compiler->registers[i], compiler->chunk);
+    incrementPC();
+  }
 }
 
+/* Process end of a process */
+static void endProcess(int jmpSrc) {
+  /* Emit a reset jump instruction */
+  Instruction* rstJump = initInstruction();
+  uint32_t bitRstJump = resetJump(rstJump);
+  writeChunk(compiler->chunk, bitRstJump);
+  compiler->pc += 4;
+  /* Patch the jump from guardcondition */
+  printf("Backpatching Jump from: %d\n", jmpSrc);
+  uint32_t oldInstr = compiler->chunk->instructions[jmpSrc-1];
+  compiler->chunk->instructions[jmpSrc-1] = (oldInstr & 0xFF000000) | (compiler->pc);
+  /* Reset PC */
+  compiler->pc = 0;
+  /* Reset top glob and temp registers */
+  compiler->topTempRegister = &compiler->registers[0];
+  compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
+}
 
 /* Process declaration */
 static void process() {
@@ -749,14 +781,12 @@ static void process() {
   consume(TOKEN_IDENTIFIER, "Process should be given a name.");
   /* Go through guardblock */
   guardBlock();
-  /* Go through guardcondition */
-  consume(TOKEN_GUARD_COND, "Guardcondition should begin with 'guardcondition' identifier.");
-  /* Process identifier */
-  consume(TOKEN_IDENTIFIER, "Guardcondition should hold a variable to be tested.");
-  /* Emit OP_EQ between true and the variable */
-  consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
+  /* Go through guardcondition, store the index of the jmp instruction */
+  int jmpSrc = guardCondition();
   /* Go through effect */
   effect();
+  /* Finalization operations */
+  endProcess(jmpSrc);
 }
 
 

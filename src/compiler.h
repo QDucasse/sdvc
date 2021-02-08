@@ -20,6 +20,7 @@ typedef struct {
   Register* registers;       /* Array of registers behaving like a stack */
   Register* topTempRegister; /* Pointer to the first register available for temporary variables */
   Register* topGlobRegister; /* Pointer to the first register available for global variables */
+  uint32_t pc;    /* Program counter */
 } Compiler;
 
 /* Compiler singleton */

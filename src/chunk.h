@@ -78,8 +78,12 @@ uint32_t binaryInstructionRI(Instruction* instruction, unsigned int op_code, uns
 uint32_t binaryInstructionIR(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int imm, unsigned int rb);
 /* Binary instruction of form Immediate Register */
 uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int imma, unsigned int immb);
-/* Unary instruction STORE/JMP */
-uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code, unsigned int rd, unsigned int addr);
+/* Store Instruction */
+uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr, unsigned int type);
+/* Jump Instruction */
+uint32_t jumpInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr);
+/* Emit reset jump */
+uint32_t resetJump(Instruction* instruction);
 /* Load from a register */
 uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned int ra);
 /* Load from an immediate value */

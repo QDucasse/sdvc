@@ -166,12 +166,19 @@ uint32_t instructionToUint32(Instruction* instruction) {
         break;
       default: break;// Unreachable
     }
-  } else {
-    /* STORE/JMP OPERATIONS */
+  } else if (instruction->op_code == OP_STORE) {
+    /* STORE OPERATION */
     /* Adding type information */
     convertedInstruction |= instruction->type << 26;
     /* Adding destination register */
     convertedInstruction |= instruction->rd << 22;
+    /* Adding address */
+    convertedInstruction |= instruction->addr;
+
+  } else if (instruction->op_code == OP_JMP) {
+    /* JMP OPERATION */
+    /* Adding destination register (register holding value to test here) */
+    convertedInstruction |= instruction->rd << 24;
     /* Adding address */
     convertedInstruction |= instruction->addr;
   }
@@ -229,23 +236,28 @@ uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code,
   return instructionToUint32(instruction);
 }
 
-
-/* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
-uint32_t unaryInstruction(Instruction* instruction, unsigned int op_code,
-                          unsigned int rd, unsigned int addr) {
-  instruction->op_code = op_code;
-  instruction->rd = rd;
-  instruction->addr = addr;
-  return instructionToUint32(instruction);
-}
-
-
-/* Fill the instruction with a destination register and address for STORE or JMP then export to uint32_t */
+/* Fill the instruction with a destination register and address for STORE then export to uint32_t */
 uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr, unsigned int type) {
   instruction->op_code = OP_STORE;
   instruction->rd = rd;
   instruction->addr = addr;
   instruction->type = type;
+  return instructionToUint32(instruction);
+}
+
+/* Fill the instruction with a destination register to test and address for JMP then export to uint32_t */
+uint32_t jumpInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr) {
+  instruction->op_code = OP_JMP;
+  instruction->rd = rd;
+  instruction->addr = addr;
+  return instructionToUint32(instruction);
+}
+
+/* Emit reset jump */
+uint32_t resetJump(Instruction* instruction) {
+  instruction->op_code = OP_JMP;
+  instruction->rd = 0;
+  instruction->addr = 0;
   return instructionToUint32(instruction);
 }
 
