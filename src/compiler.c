@@ -24,6 +24,12 @@ typedef struct {
 /* Parser singleton */
 static Parser parser;
 
+/* Array infos */
+typedef struct {
+  String* name; // Name
+  bool isArray; // Is an array
+  int length;   // Length of an array if it is an array declaration
+} GlobalName;
 
 /* Binary Operator Table */
 int binopTable[] = {
@@ -51,19 +57,16 @@ static bool prefix(const char *pre, const char *str) {
   return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-
 /* Determines if an identifier is a global or a temporary */
 static bool isTemp(char* name) {
   return prefix("t_", name);
 }
-
 
 /* Determines if an identifier is a global or a temporary */
 static bool isTempToken(Token* tokenIdentifier) {
   char* name = tokenIdentifier->start;
   return isTemp(name);
 }
-
 
 /* Determines if the given token is a binary operator */
 static bool isBinOp(Token* tokenOperator) {
@@ -225,28 +228,10 @@ static void incrementPC() {
   compiler->pc += 4;
 }
 
-/* Globals Declarations
-==================== */
+/* Values
+====== */
 
-/* Process global name */
-static String* globalName() {
-  String* varName = initString();
-  /* Consume name */
-  consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
-  assignString(varName, parser.previous.start, parser.previous.length);
-  if (isTemp(varName->chars)) {
-    error("Variable names starting with 't_' are reserved for temporary variables.");
-  }
-  /* Process value */
-  consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
-  return varName;
-}
-
-
-/* Process bool global variable */
-static void globalBoolDeclaration() {
-  /* Process name and '=' */
-  String* varName = globalName();
+static void boolVal(String* varName) {
   /* Process Value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_TRUE)) {
@@ -256,41 +241,31 @@ static void globalBoolDeclaration() {
   } else {
     error("Boolean variable must be initialized with either 'true' or 'false'.");
   }
-  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added bool */
   compiler->globals->currentAddress += sizeof(bool);
 }
 
-
-/* Process bool global variable */
-static void globalByteDeclaration() {
-  /* Process name and '=' */
-  String* varName = globalName();
-  /* Process Value */
+static void byteVal(String* varName) {
+  /* Process the actual value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER)) {
     double value = strtod(parser.previous.start, NULL);
     if ((value < 0) || (value > 255)) {
       error("Byte variable must be initialized with a number between 0 and 255.");
     }
-    varValue = INT_VAL(value);
+    varValue = BYTE_VAL(value);
   } else {
     error("Wrong type, byte variable must be initialized with a number between 0 and 255.");
   }
-  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added byte */
-  compiler->globals->currentAddress += sizeof(uint8_t);;
+  compiler->globals->currentAddress += sizeof(uint8_t);
 }
 
-
-/* Process int global variable */
-static void globalIntDeclaration() {
-  /* Process name and '=' */
-  String* varName = globalName();
+static void intVal(String* varName) {
   /* Process Value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER) || match(TOKEN_MINUS)) {
@@ -302,11 +277,103 @@ static void globalIntDeclaration() {
   } else {
     error("Wrong type, an int variable must be initialized with a number between -32768 and 32767.");
   }
-  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
   compiler->globals->currentAddress += sizeof(uint16_t);
+}
+
+/* Globals Declarations
+==================== */
+
+/* Process name for array access */
+static String* processArrayAccess(String* varName, int i) {
+  String* arrayAccessVarName = initString();
+  assignString(arrayAccessVarName, varName->chars, varName->length);
+  /* Process actual name */
+  char buf[32] = "";
+  snprintf(buf, 16, "%s[%d]",arrayAccessVarName->chars, i);
+  assignString(arrayAccessVarName, buf, 32);
+  return arrayAccessVarName;
+}
+
+/* Process global name */
+static GlobalName* globalName() {
+  String* varName = initString();
+  int length = 0;
+  /* Consume name */
+  consume(TOKEN_IDENTIFIER, "Expecting name after type in global declaration.");
+  assignString(varName, parser.previous.start, parser.previous.length);
+  if (isTemp(varName->chars)) {
+    error("Variable names starting with 't_' are reserved for temporary variables.");
+  }
+  /* Check for array definition */
+  if (match(TOKEN_LEFT_SQBRACKET)) {
+    if (check(TOKEN_NUMBER)) {
+      length = strtod(parser.current.start, NULL);
+    } else {
+      error("Array definition should have an index.");
+    }
+  }
+  consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
+  return &((GlobalName) {.name = varName, .isArray = (length != 0), .length = length});
+}
+
+
+/* Process bool global variable */
+static void globalBoolDeclaration() {
+  /* Process name and '=' */
+  GlobalName* globName = globalName();
+  /* Test if the identifer is an array definition */
+  if (!globName->isArray) { // Simple value
+    /* Process Value */
+    boolVal(globName->name);
+  } else { // Array access
+    consume(TOKEN_LEFT_BRACE, "Expecting '{' before array initialization.");
+    for (int i = 0 ; i < globName->length ; i++) {
+      boolVal(processArrayAccess(globName->name, i));
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
+  }
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+}
+
+
+/* Process bool global variable */
+static void globalByteDeclaration() {
+  /* Process name and '=' */
+  GlobalName* globName = globalName();
+  /* Test if the identifer is an array definition */
+  if (!globName->isArray) { // Simple value
+    /* Process Value */
+    byteVal(globName->name);
+  } else { // Array access
+    consume(TOKEN_LEFT_BRACE, "Expecting '{' before array initialization.");
+    for (int i = 0 ; i < globName->length ; i++) {
+      byteVal(processArrayAccess(globName->name, i));
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
+  }
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+}
+
+
+/* Process int global variable */
+static void globalIntDeclaration() {
+  /* Process name and '=' */
+  GlobalName* globName = globalName();
+  /* Test if the identifer is an array definition */
+  if (!globName->isArray) { // Simple value
+    /* Process Value */
+    intVal(globName->name);
+  } else { // Array access
+    consume(TOKEN_LEFT_BRACE, "Expecting '{' before array initialization.");
+    for (int i = 0 ; i < globName->length ; i++) {
+      intVal(processArrayAccess(globName->name, i));
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
+  }
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
 
 
@@ -328,7 +395,8 @@ static void globalStateDeclaration() {
     error("Missing ',' between states.");
   }
   /* Process name and '=' */
-  String* varName = globalName();
+  GlobalName* globName = globalName();
+  String* varName = globName->name;
   /* Process Value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER)) {
@@ -340,11 +408,11 @@ static void globalStateDeclaration() {
   } else {
     error("Wrong type, an int variable must be initialized with a number between -32768 and 32767.");
   }
-  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
   compiler->globals->currentAddress += sizeof(int);
+  consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
 
 

@@ -48,7 +48,8 @@ static bool isDigit(char c) {
 }
 
 
-/* Check if the current character is either an underscore or a dot (as accepted in the language) */
+/* Check if the current character is either an underscore or a dot (as accepted in the language).
+   It can also be an array such as a.x[1] */
 static bool isIDPunctuation(char c) {
   return c == '_' || c == '.';
 }
@@ -249,6 +250,8 @@ Token scanToken() {
     /* Single character */
     case '(': return makeToken(TOKEN_LEFT_PAREN);
     case ')': return makeToken(TOKEN_RIGHT_PAREN);
+    case '[': return makeToken(TOKEN_LEFT_SQBRACKET);
+    case ']': return makeToken(TOKEN_RIGHT_SQBRACKET);
     case '{': return makeToken(TOKEN_LEFT_BRACE);
     case '}': return makeToken(TOKEN_RIGHT_BRACE);
     case ';': return makeToken(TOKEN_SEMICOLON);
@@ -284,6 +287,7 @@ Token scanToken() {
 static const char* TokenNames[] = {
  "TOKEN_LEFT_PAREN", "TOKEN_RIGHT_PAREN",
  "TOKEN_LEFT_BRACE", "TOKEN_RIGHT_BRACE",
+ "TOKEN_LEFT_SQBRACKET", "TOKEN_RIGHT_SQBRACKET",
  "TOKEN_COMMA", "TOKEN_DOT", "TOKEN_MINUS",
  "TOKEN_PLUS", "TOKEN_SEMICOLON", "TOKEN_SLASH",
  "TOKEN_STAR", "TOKEN_MODULO",
