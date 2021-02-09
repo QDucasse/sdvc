@@ -24,13 +24,6 @@ typedef struct {
 /* Parser singleton */
 static Parser parser;
 
-/* Array infos */
-typedef struct {
-  String* name; // Name
-  bool isArray; // Is an array
-  int length;   // Length of an array if it is an array declaration
-} GlobalName;
-
 /* Binary Operator Table */
 int binopTable[] = {
   [TOKEN_MINUS]         = OP_SUB,
@@ -47,6 +40,21 @@ int binopTable[] = {
   [TOKEN_AND]           = OP_AND,
   [TOKEN_OR]            = OP_OR
 };
+
+/* Array infos */
+typedef struct {
+  String* name; // Name
+  bool isArray; // Is an array
+  int length;   // Length of an array if it is an array declaration
+} GlobalName;
+
+static GlobalName* initGlobalName() {
+  GlobalName* globalName = ALLOCATE_OBJ(GlobalName);
+  globalName->name = NULL;
+  globalName->isArray = false;
+  globalName->length = 0;
+  return globalName;
+}
 
 /* ==================================
           NAME PROCESSING
@@ -231,7 +239,7 @@ static void incrementPC() {
 /* Values
 ====== */
 
-static void boolVal(String* varName) {
+static void boolVal(String* varName, int length) {
   /* Process Value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_TRUE)) {
@@ -244,10 +252,10 @@ static void boolVal(String* varName) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added bool */
-  compiler->globals->currentAddress += sizeof(bool);
+  compiler->globals->currentAddress += sizeof(bool) * length;
 }
 
-static void byteVal(String* varName) {
+static void byteVal(String* varName, int length) {
   /* Process the actual value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER)) {
@@ -262,10 +270,10 @@ static void byteVal(String* varName) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added byte */
-  compiler->globals->currentAddress += sizeof(uint8_t);
+  compiler->globals->currentAddress += sizeof(uint8_t) * length;
 }
 
-static void intVal(String* varName) {
+static void intVal(String* varName, int length) {
   /* Process Value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER) || match(TOKEN_MINUS)) {
@@ -280,25 +288,14 @@ static void intVal(String* varName) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
-  compiler->globals->currentAddress += sizeof(uint16_t);
+  compiler->globals->currentAddress += sizeof(uint16_t) * length;
 }
 
 /* Globals Declarations
 ==================== */
 
-/* Process name for array access */
-static String* processArrayAccess(String* varName, int i) {
-  String* arrayAccessVarName = initString();
-  assignString(arrayAccessVarName, varName->chars, varName->length);
-  /* Process actual name */
-  char buf[32] = "";
-  snprintf(buf, 16, "%s[%d]",arrayAccessVarName->chars, i);
-  assignString(arrayAccessVarName, buf, 32);
-  return arrayAccessVarName;
-}
-
 /* Process global name */
-static GlobalName* globalName() {
+static void assignGlobalName(GlobalName* globName) {
   String* varName = initString();
   int length = 0;
   /* Consume name */
@@ -311,28 +308,31 @@ static GlobalName* globalName() {
   if (match(TOKEN_LEFT_SQBRACKET)) {
     if (check(TOKEN_NUMBER)) {
       length = strtod(parser.current.start, NULL);
+      advance();
     } else {
       error("Array definition should have an index.");
     }
+    consume (TOKEN_RIGHT_SQBRACKET, "Expecting ']' after array length.");
   }
   consume(TOKEN_EQUAL, "Expecting variable initialization with '='.");
-  return &((GlobalName) {.name = varName, .isArray = (length != 0), .length = length});
+  globName->name = varName;
+  globName->isArray = (length != 0);
+  globName->length = length;
 }
 
 
 /* Process bool global variable */
 static void globalBoolDeclaration() {
   /* Process name and '=' */
-  GlobalName* globName = globalName();
+  GlobalName* globName = initGlobalName();
+  assignGlobalName(globName);
   /* Test if the identifer is an array definition */
   if (!globName->isArray) { // Simple value
     /* Process Value */
-    boolVal(globName->name);
-  } else { // Array access
+    boolVal(globName->name, 1);
+  } else { // Array Declaration
     consume(TOKEN_LEFT_BRACE, "Expecting '{' before array initialization.");
-    for (int i = 0 ; i < globName->length ; i++) {
-      boolVal(processArrayAccess(globName->name, i));
-    }
+    boolVal(globName->name, globName->length);
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
@@ -342,15 +342,17 @@ static void globalBoolDeclaration() {
 /* Process bool global variable */
 static void globalByteDeclaration() {
   /* Process name and '=' */
-  GlobalName* globName = globalName();
+  GlobalName* globName = initGlobalName();
+  assignGlobalName(globName);
   /* Test if the identifer is an array definition */
   if (!globName->isArray) { // Simple value
     /* Process Value */
-    byteVal(globName->name);
-  } else { // Array access
+    byteVal(globName->name, 1);
+  } else { // Array Declaration
     consume(TOKEN_LEFT_BRACE, "Expecting '{' before array initialization.");
-    for (int i = 0 ; i < globName->length ; i++) {
-      byteVal(processArrayAccess(globName->name, i));
+    byteVal(globName->name, globName->length);
+    while (!check(TOKEN_RIGHT_BRACE)) {
+      advance();
     }
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
@@ -358,18 +360,21 @@ static void globalByteDeclaration() {
 }
 
 
+
 /* Process int global variable */
 static void globalIntDeclaration() {
   /* Process name and '=' */
-  GlobalName* globName = globalName();
+  GlobalName* globName = initGlobalName();
+  assignGlobalName(globName);
   /* Test if the identifer is an array definition */
   if (!globName->isArray) { // Simple value
     /* Process Value */
-    intVal(globName->name);
-  } else { // Array access
+    intVal(globName->name, 1);
+  } else { // Array Declaration Array access
     consume(TOKEN_LEFT_BRACE, "Expecting '{' before array initialization.");
-    for (int i = 0 ; i < globName->length ; i++) {
-      intVal(processArrayAccess(globName->name, i));
+    intVal(globName->name, globName->length);
+    while (!check(TOKEN_RIGHT_BRACE)) {
+      advance();
     }
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
@@ -395,7 +400,8 @@ static void globalStateDeclaration() {
     error("Missing ',' between states.");
   }
   /* Process name and '=' */
-  GlobalName* globName = globalName();
+  GlobalName* globName = initGlobalName();
+  assignGlobalName(globName);
   String* varName = globName->name;
   /* Process Value */
   Value varValue = NIL_VAL;
@@ -579,7 +585,6 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
   freeString(tempKey);
 }
 
-
 /* Process a global variable operand */
 static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
   /* LHS is a global */
@@ -689,13 +694,90 @@ static void expression(Instruction* instruction) {
 }
 
 
+/* Process the first part of the ADD and determines the base address of the global array */
+static void baseAddress(Instruction* addressAddInstruction, String* globKey) {
+  uint32_t addr = 0;
+  tableGetAddress(compiler->globals, globKey, &addr);
+  addressAddInstruction->imma = addr;
+}
+
+/* Process the index of an array access */
+static void index(Instruction* addressAddInstruction) {
+  if (check(TOKEN_NUMBER)) {
+    /* Array access of type:   array[2]  */
+    uint32_t offset = (unsigned int) strtol(parser.current.start, NULL, 0);
+    addressAddInstruction->immb     = offset;
+    addressAddInstruction->cfg_mask = CFG_II;
+  } else if (check(TOKEN_IDENTIFIER)) {
+    /* Variable */
+    String* varKey = initString();
+    assignString(varKey, parser.current.start, parser.current.length);
+    bool isTempVar = isTemp(varKey->chars);
+    /* Look for the variable in the registers */
+    Register* foundReg = getRegFromVar(varKey);
+    if (foundReg == NULL) { // Value not found
+      if (isTempVar) { // TEMP
+        error("Temporary variable should be defined before use.");
+      } else { // GLOB
+        Register* loadedReg = initRegister(0);
+        loadedReg = loadGlob(varKey);
+        addressAddInstruction->rb = loadedReg->number;
+      }
+    } else {
+      addressAddInstruction->rb = foundReg->number;
+    }
+    addressAddInstruction->cfg_mask = CFG_IR;
+    if (isTempVar) decrementTopTempRegister();
+  }
+}
+
+void writeTempAddressRegister(Instruction* instruction) {
+  /* Determine rd and shift pointer up */
+  String* tempAddressRegName = initString();
+  assignString(tempAddressRegName, "tempAddress", 11);
+  compiler->topTempRegister->varName = tempAddressRegName;
+  instruction->rd = incrementTopTempRegister();
+  /* Write add instruction */
+  uint32_t bitsInstruction = instructionToUint32(instruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+}
+
+/* Assign a value to an array element */
+static void globalArrayAccess(String* globKey) {
+  /* Consume the opening square bracket */
+  consume(TOKEN_LEFT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
+  Instruction* addressAddInstruction = initInstruction();
+  addressAddInstruction->op_code = OP_ADD;
+  /* Process the base address and index */
+  baseAddress(addressAddInstruction, globKey);
+  index(addressAddInstruction);
+  /* Write the different instructions */
+  /* Write the ADD instruction */
+  writeTempAddressRegister(addressAddInstruction);
+  /* Write the load instruction */
+  /* Consume the closing square bracket */
+  consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
+  /* Process expression */
+  Instruction* instruction = initInstruction();
+  expression(instruction);
+
+  /* Determine rd */
+
+  /* Write instruction */
+  uint32_t bitsInstruction = instructionToUint32(instruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
+
+  /* Write Store for the array element */
+
+}
+
 /* Assign a value to a global variable */
-static void globalAssignment() {
-  /* Consume identifier, probably need to use it to access the hash table */
-  consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
-  /* Store the name of the variable in a string */
-  String* globKey = initString();
-  assignString(globKey, parser.previous.start, parser.previous.length);
+static void globalAssignment(String* globKey) {
   /* Consume the equal token */
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
   /* Process expression */
@@ -742,7 +824,7 @@ static void tempAssignment() {
   expression(instruction);
   /* Determine rd and shift pointer up */
   compiler->topTempRegister->varName = tempKey;
-  instruction->rd = incrementTopTempRegister();;
+  instruction->rd = incrementTopTempRegister();
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
   disassembleInstruction(bitsInstruction);
@@ -756,7 +838,18 @@ static void assignment() {
   if (check(TOKEN_TEMP)) {
     tempAssignment();
   } else if (check(TOKEN_IDENTIFIER)) {
-    globalAssignment();
+    consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
+    /* Store the name of the variable in a string */
+    String* globKey = initString();
+    assignString(globKey, parser.previous.start, parser.previous.length);
+    /* Check if it is an array access or a simple assignment */
+    if (check(TOKEN_LEFT_SQBRACKET)) {
+      /* Array access */
+      globalArrayAccess(globKey);
+    } else {
+      /* Simple assignment */
+      globalAssignment(globKey);
+    }
   } else {
     error("An assignment should begin with either an identifier (global) or 'temp' (temporary).");
   }
@@ -817,7 +910,7 @@ static void effect() {
   consume(TOKEN_SEMICOLON, "End list of assignments in guardblock with ';'.");
 
   /* Emit the different stores for the stored global variables */
-  for (int i = compiler->topGlobRegister->number ; i < REG_NUMBER ; i++) {
+  for (int i = compiler->topGlobRegister->number + 1; i < REG_NUMBER ; i++) {
     writeStoreFromRegister(&compiler->registers[i], compiler->chunk);
     incrementPC();
   }

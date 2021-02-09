@@ -1,6 +1,7 @@
 state {a(0), b(1)} P1.state = 0;
 state {a(0), b(1)} P2.state = 0;
 int P1.x = 1;
+int blip[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int P1.y = 2;
 int P2.z = 0;
 int P2.w = 0;
@@ -11,6 +12,7 @@ int P2.w = 0;
 
 		guardcondition t_1;
 		effect
+			blip[5] = 1,
 			P1.state = 1;
 
 	process P2
