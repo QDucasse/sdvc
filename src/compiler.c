@@ -708,6 +708,7 @@ static void index(Instruction* addressAddInstruction) {
     uint32_t offset = (unsigned int) strtol(parser.current.start, NULL, 0);
     addressAddInstruction->immb     = offset;
     addressAddInstruction->cfg_mask = CFG_II;
+    advance();
   } else if (check(TOKEN_IDENTIFIER)) {
     /* Variable */
     String* varKey = initString();
@@ -760,6 +761,8 @@ static void globalArrayAccess(String* globKey) {
   /* Write the load instruction */
   /* Consume the closing square bracket */
   consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
+  consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
+  printf("blip\n");
   /* Process expression */
   Instruction* instruction = initInstruction();
   expression(instruction);
