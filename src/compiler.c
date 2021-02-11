@@ -523,6 +523,74 @@ static Register* getRegFromVar(String* varName) {
   return NULL;
 }
 
+/* Process the index of an array access */
+static Register* processAddress(String* globKey, bool isAssignment) {
+    /* Process Mul Operation */
+    Instruction* offsetMulInstruction = initInstruction();
+    offsetMulInstruction->op_code = OP_MUL;
+    /* Process base address and type */
+    uint32_t baseAddress = 0;
+    Value elementValue = NIL_VAL;
+    tableGet(compiler->globals, globKey, &elementValue, &baseAddress);
+    /* Add the size of the value as the left operand */
+    offsetMulInstruction->imma = elementValue.size;
+    /* Process offset */
+    if (check(TOKEN_NUMBER)) {
+        /* Array access of type:   array[2]  */
+        uint32_t offset = (unsigned int) strtol(parser.current.start, NULL, 0);
+        offsetMulInstruction->immb = offset;
+        offsetMulInstruction->cfg_mask = CFG_II;
+        advance();
+    } else if (check(TOKEN_IDENTIFIER)) {
+        /* Variable */
+        String* varKey = initString();
+        assignString(varKey, parser.current.start, parser.current.length);
+        bool isTempVar = isTemp(varKey->chars);
+        /* Look for the variable in the registers */
+        Register* foundReg = getRegFromVar(varKey);
+        if (foundReg == NULL) { // Value not found
+            if (isTempVar) { // TEMP
+                error("Temporary variable should be defined before use.");
+            } else { // GLOB
+                Register* loadedReg = loadGlob(varKey);
+                offsetMulInstruction->rb = loadedReg->number;
+            }
+        } else {
+            offsetMulInstruction->rb = foundReg->number;
+        }
+        offsetMulInstruction->cfg_mask = CFG_IR;
+        if (isTempVar) decrementTopTempRegister();
+        advance();
+    }
+
+    /* If the array access is an assignment -> special register, else use a temporary */
+    Register* targetRegister = isAssignment ? compiler->addressRegister : compiler->topTempRegister;
+    String* tempAddressRegName = initString();
+    assignString(tempAddressRegName, "t_address", 9);
+    targetRegister->varName = tempAddressRegName;
+    offsetMulInstruction->rd = targetRegister->number;
+    /* Write the actual instruction */
+    uint32_t bitsInstruction = instructionToUint32(offsetMulInstruction);
+    disassembleInstruction(bitsInstruction);
+    writeChunk(compiler->chunk, bitsInstruction);
+    incrementPC();
+    if (!isAssignment) incrementTopTempRegister();
+    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+
+    /* Process ADD operation */
+    Instruction* addAddressInstruction = initInstruction();
+    addAddressInstruction->op_code = OP_ADD;
+    addAddressInstruction->imma = baseAddress;
+    addAddressInstruction->rb = targetRegister->number;
+    addAddressInstruction->rd = targetRegister->number;
+    addAddressInstruction->cfg_mask = CFG_IR;
+    bitsInstruction = instructionToUint32(addAddressInstruction);
+    disassembleInstruction(bitsInstruction);
+    writeChunk(compiler->chunk, bitsInstruction);
+    incrementPC();
+
+    return targetRegister;
+}
 
 /* Assignments
 =========== */
@@ -539,8 +607,9 @@ static void immediateValueNumberOperand(bool isLeftSide, Instruction* instructio
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
+  /* Consume the operand */
+  advance();
 }
-
 
 /* Process an immediate value boolean operand */
 static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instruction) {
@@ -554,6 +623,8 @@ static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instructi
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
+  /* Consume the operand */
+  advance();
 }
 
 
@@ -583,13 +654,12 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
   /* Shift the temporary head down */
   decrementTopTempRegister();
   freeString(tempKey);
+  /* Consume the operand */
+  advance();
 }
 
 /* Process a global variable operand */
-static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
-  /* LHS is a global */
-  String* globKey = initString();
-  assignString(globKey, parser.current.start, parser.current.length);
+static void globVariableOperand(bool isLeftSide, Instruction* instruction, String* globKey) {
   /* Resolve register */
   Register* foundReg = getRegFromVar(globKey);
   /* Check if the value is found in the registers */
@@ -616,8 +686,50 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
   }
   /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
+  /* No need to consume the operand as it has already been processed in operand() */
 }
 
+/* Process a global array access as an operand */
+static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, String* globKey) {
+  /* Consume the opening square bracket */
+  consume(TOKEN_LEFT_SQBRACKET, "Expecting usage of an array access as operand to be defined as array[index] (left sqbracket missing).");
+  /* Process the index => Emit a mul instruction between offset and type of data */
+  /* Process the base address and add the index to it */
+  Register* addressRegister = processAddress(globKey, false);
+  Instruction* loadValueInstruction = initInstruction();
+  /* Setup register */
+  Register* loadedValueRegister = addressRegister; // Stay in the same register to load the value
+  String* tempValueRegName = initString();
+  assignString(tempValueRegName, "t_loaded_value", 14);
+  loadedValueRegister->varName = tempValueRegName;
+  /* Setup load instruction */
+  loadValueInstruction->op_code = OP_LOAD;
+  loadValueInstruction->rd = loadedValueRegister->number;
+  loadValueInstruction->ra = addressRegister->number;
+  loadValueInstruction->cfg_mask = LOAD_RAA;
+  incrementTopTempRegister();
+  /* Write the load instruction */
+  uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
+  /* Consume the closing square bracket */
+  consume(TOKEN_RIGHT_SQBRACKET, "Expecting usage of an array access as operand to be defined as array[index] (right sqbracket missing).");
+
+  /* Process expression */
+  /* Set the resolved register to the corresponding register */
+  if (isLeftSide) {
+    instruction->ra = loadedValueRegister->number;
+    printf("LHS: Setting resolved register %u as an array access!\n", (unsigned int) instruction->ra);
+  } else {
+    instruction->rb = loadedValueRegister->number;
+    printf("RHS: Setting resolved register %u as an array access!\n", (unsigned int) instruction->rb);
+  }
+  /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
+  instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
+  /* Shift the temporary head down */
+  decrementTopTempRegister();
+}
 
 /* Process an operand */
 static void operand(bool isLeftSide, Instruction* instruction) {
@@ -633,15 +745,23 @@ static void operand(bool isLeftSide, Instruction* instruction) {
       /* Temporary variable */
       tempVariableOperand(isLeftSide, instruction);
     } else {
-      /* Global variable */
-      globVariableOperand(isLeftSide, instruction);
+      consume(TOKEN_IDENTIFIER, "Variable assignment should have an identifier");
+      /* Store the name of the variable in a string */
+      String* globKey = initString();
+      assignString(globKey, parser.previous.start, parser.previous.length);
+      /* Check if it is an array access or a simple assignment */
+      if (check(TOKEN_LEFT_SQBRACKET)) {
+        /* Array access */
+        globalArrayAccessOperand(isLeftSide, instruction, globKey);
+      } else {
+        /* Simple assignment */
+        globVariableOperand(isLeftSide, instruction, globKey);
+      }
     }
   } else {
     /* Not a variable or an immediate value */
     error("An assignment needs the rvalue to be either a variable or immediate value.");
   }
-  /* Consume the operand */
-  advance();
 }
 
 
@@ -692,83 +812,19 @@ static void expression(Instruction* instruction) {
   }
 }
 
-/* Process the index of an array access */
-static Register* processAddress(String* globKey, bool isAssignment) {
-  /* Process Mul Operation */
-  Instruction* offsetMulInstruction = initInstruction();
-  offsetMulInstruction->op_code = OP_MUL;
-  /* Process base address and type */
-  uint32_t baseAddress = 0;
-  Value elementValue = NIL_VAL;
-  tableGet(compiler->globals, globKey, &elementValue, &baseAddress);
-  /* Add the size of the value as the left operand */
-  offsetMulInstruction->imma = elementValue.size;
-  /* Process offset */
-  if (check(TOKEN_NUMBER)) {
-    /* Array access of type:   array[2]  */
-    uint32_t offset = (unsigned int) strtol(parser.current.start, NULL, 0);
-    offsetMulInstruction->immb = offset;
-      offsetMulInstruction->cfg_mask = CFG_II;
-    advance();
-  } else if (check(TOKEN_IDENTIFIER)) {
-    /* Variable */
-    String* varKey = initString();
-    assignString(varKey, parser.current.start, parser.current.length);
-    bool isTempVar = isTemp(varKey->chars);
-    /* Look for the variable in the registers */
-    Register* foundReg = getRegFromVar(varKey);
-    if (foundReg == NULL) { // Value not found
-      if (isTempVar) { // TEMP
-        error("Temporary variable should be defined before use.");
-      } else { // GLOB
-        Register* loadedReg = loadGlob(varKey);
-        offsetMulInstruction->rb = loadedReg->number;
-      }
-    } else {
-        offsetMulInstruction->rb = foundReg->number;
-    }
-    offsetMulInstruction->cfg_mask = CFG_IR;
-    if (isTempVar) decrementTopTempRegister();
-  }
-
-  /* If the array access is an assignment -> special register, else use a temporary */
-  Register* targetRegister = isAssignment ? compiler->addressRegister : compiler->topTempRegister;
-  String* tempAddressRegName = initString();
-  assignString(tempAddressRegName, "tempAddress", 11);
-  targetRegister->varName = tempAddressRegName;
-  offsetMulInstruction->rd = targetRegister->number;
-  /* Write the actual instruction */
-  uint32_t bitsInstruction = instructionToUint32(offsetMulInstruction);
-  disassembleInstruction(bitsInstruction);
-  writeChunk(compiler->chunk, bitsInstruction);
-  incrementPC();
-  if (!isAssignment) incrementTopTempRegister();
-  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
-
-  /* Process ADD operation */
-  Instruction* addAddressInstruction = initInstruction();
-  addAddressInstruction->op_code = OP_ADD;
-  addAddressInstruction->imma = baseAddress;
-  addAddressInstruction->rb = targetRegister->number;
-  addAddressInstruction->rd = targetRegister->number;
-  addAddressInstruction->cfg_mask = CFG_IR;
-  bitsInstruction = instructionToUint32(addAddressInstruction);
-  disassembleInstruction(bitsInstruction);
-  writeChunk(compiler->chunk, bitsInstruction);
-  incrementPC();
-
-  return targetRegister;
-}
-
 /* Assign a value to an array element */
 static void globalArrayAccess(String* globKey) {
   /* Consume the opening square bracket */
-  consume(TOKEN_LEFT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
+  consume(TOKEN_LEFT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index] (left sqbracket missing).");
   /* Process the index => Emit a mul instruction between offset and type of data */
   /* Process the base address and add the index to it */
   Register* addressRegister = processAddress(globKey, true);
   Instruction* loadValueInstruction = initInstruction();
+  /* Setup register */
   Register* loadedValueRegister = compiler->topTempRegister;
+  String* tempValueRegName = initString();
+  assignString(tempValueRegName, "t_loaded_value", 14);
+  loadedValueRegister->varName = tempValueRegName;
   loadValueInstruction->op_code = OP_LOAD;
   loadValueInstruction->rd = loadedValueRegister->number;
   loadValueInstruction->ra = addressRegister->number;
@@ -780,7 +836,7 @@ static void globalArrayAccess(String* globKey) {
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Consume the closing square bracket */
-  consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
+  consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index] (right sqbracket missing).");
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
   /* Process expression */
   Instruction* expressionInstruction = initInstruction();
@@ -892,7 +948,7 @@ static void assignment() {
 /* Process
 ======= */
 
-/* Process guardblock (sequnce of assignments) */
+/* Process guardblock (sequence of assignments) */
 static void guardBlock() {
   consume(TOKEN_GUARD_BLOCK, "Guardblock should begin with 'guardblock' identifier.");
   assignment();
