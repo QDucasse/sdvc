@@ -34,8 +34,11 @@
 #define LOAD_REG 0b00
 #define LOAD_IMM 0b01
 #define LOAD_ADR 0b10
+#define LOAD_RAA 0b11
 
-
+/* Config Bitmasks for the STORE operation */
+#define STORE_ADR 0b00
+#define STORE_RAA 0b01
 
 /* Chunk of instructions definition */
 typedef struct {

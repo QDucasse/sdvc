@@ -153,6 +153,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
     convertedInstruction |= instruction->rd << 20;
     switch(instruction->cfg_mask) {
       case LOAD_REG:
+      case LOAD_RAA:
         /* Adding Ra */
         convertedInstruction |= instruction->ra;
         break;
@@ -168,13 +169,19 @@ uint32_t instructionToUint32(Instruction* instruction) {
     }
   } else if (instruction->op_code == OP_STORE) {
     /* STORE OPERATION */
+    convertedInstruction |= instruction->cfg_mask << 26;
     /* Adding type information */
-    convertedInstruction |= instruction->type << 26;
+    convertedInstruction |= instruction->type << 24;
     /* Adding destination register */
-    convertedInstruction |= instruction->rd << 22;
-    /* Adding address */
-    convertedInstruction |= instruction->addr;
-
+    convertedInstruction |= instruction->rd << 20;
+    switch(instruction->cfg_mask) {
+        case STORE_ADR:
+          /* Adding address */
+          convertedInstruction |= instruction->addr;
+        case STORE_RAA:
+          /* Adding register */
+          convertedInstruction |= instruction->ra;
+    }
   } else if (instruction->op_code == OP_JMP) {
     /* JMP OPERATION */
     /* Adding destination register (register holding value to test here) */
@@ -293,6 +300,16 @@ uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned
   instruction->addr = addr;
   instruction ->type = type;
   return instructionToUint32(instruction);
+}
+
+/* Fill the instruction with a destination register a register containing an address for LOAD then export to uint32_t */
+uint32_t loadInstructionRegAsAddr(Instruction* instruction, unsigned int rd, unsigned int ra, unsigned int type) {
+    instruction->op_code = OP_LOAD;
+    instruction->cfg_mask = LOAD_RAA;
+    instruction->rd = rd;
+    instruction->ra = ra;
+    instruction ->type = type;
+    return instructionToUint32(instruction);
 }
 
 

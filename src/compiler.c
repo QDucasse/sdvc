@@ -772,7 +772,7 @@ static void globalArrayAccess(String* globKey) {
   loadValueInstruction->op_code = OP_LOAD;
   loadValueInstruction->rd = loadedValueRegister->number;
   loadValueInstruction->ra = addressRegister->number;
-  loadValueInstruction->cfg_mask = LOAD_REG; // LOAD_REG_AS_ADDR to define
+  loadValueInstruction->cfg_mask = LOAD_RAA; // LOAD_REG_AS_ADDR to define
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
@@ -795,10 +795,10 @@ static void globalArrayAccess(String* globKey) {
 
   /* Write Store for the array element */
   Instruction* storeInstruction = initInstruction();
-  storeInstruction->op_code = OP_LOAD;
+  storeInstruction->op_code = OP_STORE;
   storeInstruction->rd = loadedValueRegister->number;
   storeInstruction->ra = addressRegister->number;
-  storeInstruction->cfg_mask = LOAD_REG; // STOREs_REG_AS_ADDR to define
+  storeInstruction->cfg_mask = STORE_RAA; // STOREs_REG_AS_ADDR to define
   bitsInstruction = instructionToUint32(storeInstruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
