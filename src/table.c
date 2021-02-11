@@ -165,18 +165,6 @@ bool tableGet(Table* table, String* key, Value* value, uint32_t* address) {
   return true;
 }
 
-/* Get an entry for a given key and store the value in the corresponding pointers */
-bool tableGetAddress(Table* table, String* key, uint32_t* address) {
-  /* The table is empty */
-  if(table->count == 0) return false;
-  /* Look for the entry corresponding to a given key */
-  Entry* entry = findEntry(table->entries, table->capacity, key);
-  if (entry->key == NULL) return false;
-
-  *address = entry->address;
-  return true;
-}
-
 /* Delete an entry for a given key */
 bool tableDelete(Table* table, String* key) {
   /* The table is empty */

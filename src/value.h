@@ -25,7 +25,9 @@ typedef struct {
     int number;
     State state;
   } as;
+  int size;
 } Value;
+
 
 /* Comparison Macros */
 #define IS_NIL(value)     ((value).type == VAL_NIL)
@@ -39,11 +41,11 @@ typedef struct {
 #define AS_INT(value)     ((value).as.number)
 #define AS_STATE(value)   ((value).as.state)
 /* C to Compiler Macro */
-#define NIL_VAL            ((Value){VAL_NIL,   {.number = 0}})
-#define BOOL_VAL(value)    ((Value){VAL_BOOL,  {.boolean = value}})
-#define BYTE_VAL(value)    ((Value){VAL_BYTE,  {.byte = value}})
-#define INT_VAL(value)     ((Value){VAL_INT,   {.number = value}})
-#define STATE_VAL(currentState, stateNumber) ((Value){VAL_STATE, {.state.currentState = currentState, .state.stateNumber = stateNumber}})
+#define NIL_VAL            ((Value){VAL_NIL,   {.number = 0}, 0})
+#define BOOL_VAL(value)    ((Value){VAL_BOOL,  {.boolean = value}, sizeof(bool)})
+#define BYTE_VAL(value)    ((Value){VAL_BYTE,  {.byte = value}, sizeof(uint8_t)})
+#define INT_VAL(value)     ((Value){VAL_INT,   {.number = value}, sizeof(uint16_t)})
+#define STATE_VAL(currentState, stateNumber) ((Value){VAL_STATE, {.state.currentState = currentState, .state.stateNumber = stateNumber}, sizeof(int)})
 
 bool valuesEqual(Value a, Value b);
 void printValue(Value value);

@@ -32,7 +32,6 @@ Table* initTable();
 void freeTable(Table* table);
 bool tableGet(Table* table, String* key, Value* value, uint32_t* address);
 void tableSet(Table* table, String* key, Value value, uint32_t address);
-bool tableGetAddress(Table* table, String* key, uint32_t* address);
 bool tableDelete(Table* table, String* key);
 void tableAddAll(Table* from, Table* to);
 void tableSetFromRegister(Table* table, Register* reg);

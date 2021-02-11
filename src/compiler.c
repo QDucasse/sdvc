@@ -101,6 +101,7 @@ void initCompiler() {
   }
   compiler->topTempRegister = &compiler->registers[0];
   compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
+  compiler->addressRegister = initRegister(REG_NUMBER);
 }
 
 
@@ -307,7 +308,7 @@ static void assignGlobalName(GlobalName* globName) {
   /* Check for array definition */
   if (match(TOKEN_LEFT_SQBRACKET)) {
     if (check(TOKEN_NUMBER)) {
-      length = strtod(parser.current.start, NULL);
+      length = (int) strtol(parser.current.start, NULL, 0);
       advance();
     } else {
       error("Array definition should have an index.");
@@ -358,7 +359,6 @@ static void globalByteDeclaration() {
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
-
 
 
 /* Process int global variable */
@@ -503,7 +503,7 @@ static Register* loadGlob(String* name) {
     writeLoadFromRegister(workingRegister, compiler->chunk);
     incrementPC();
     /* Check if the pointer reached the bottom of the stack */
-    if (!(topGlobNumber == 0)) {
+    if (topGlobNumber != 0) {
       /* Shift the pointer up */
       compiler->topGlobRegister = &compiler->registers[topGlobNumber-1];
     }
@@ -532,10 +532,10 @@ static void immediateValueNumberOperand(bool isLeftSide, Instruction* instructio
   /* Immediate Value */
   if (isLeftSide) {
     instruction->imma = (unsigned int) strtol(parser.current.start, NULL, 0); // Left side
-    printf("LHS: Setting Immediate value %u!\n", instruction->imma);
+    printf("LHS: Setting Immediate value %u!\n", (unsigned int) instruction->imma);
   } else {
     instruction->immb = (unsigned int) strtol(parser.current.start, NULL, 0); // Right side
-    printf("RHS: Setting Immediate value %u!\n", instruction->immb);
+    printf("RHS: Setting Immediate value %u!\n", (unsigned int) instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
@@ -547,10 +547,10 @@ static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instructi
   /* Immediate boolean value */
   if (isLeftSide) {
     instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Left side
-    printf("LHS: Setting Immediate boolean value %u!\n", instruction->imma);
+    printf("LHS: Setting Immediate boolean value %u!\n", (unsigned int) instruction->imma);
   } else {
     instruction->immb = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Right side
-    printf("RHS: Setting Immediate boolean value %u!\n", instruction->immb);
+    printf("RHS: Setting Immediate boolean value %u!\n", (unsigned int) instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
@@ -572,10 +572,10 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
     /* Set the resolved register to the corresponding register */
     if (isLeftSide) {
       instruction->ra = foundReg->number;
-      printf("LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
+      printf("LHS: Setting resolved register %u as a temporary!\n", (unsigned int) instruction->ra);
     } else {
       instruction->rb = foundReg->number;
-      printf("RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
+      printf("RHS: Setting resolved register %u as a temporary!\n", (unsigned int) instruction->rb);
     }
   }
   /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
@@ -595,23 +595,22 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction) {
   /* Check if the value is found in the registers */
   if (foundReg == NULL) {
     /* Go to the table and store the value in a register */
-    Register* loadedReg = initRegister(0);
-    loadedReg = loadGlob(globKey);
+    Register* loadedReg = loadGlob(globKey);
     if (isLeftSide) {
       instruction->ra = loadedReg->number;
-      printf("LHS: Setting resolved register %u as a global to load!\n", instruction->ra);
+      printf("LHS: Setting resolved register %u as a global to load!\n", (unsigned int) instruction->ra);
     } else {
       instruction->rb = loadedReg->number;
-      printf("RHS: Setting resolved register %u as a global to load!\n", instruction->rb);
+      printf("RHS: Setting resolved register %u as a global to load!\n", (unsigned int) instruction->rb);
     }
     instruction->addr = loadedReg->address;
   } else {
     if (isLeftSide) {
       instruction->ra = foundReg->number;
-      printf("LHS: Setting resolved register %u as a global found in the registers!\n", instruction->ra);
+      printf("LHS: Setting resolved register %u as a global found in the registers!\n", (unsigned int) instruction->ra);
     } else {
       instruction->rb = foundReg->number;
-      printf("RHS: Setting resolved register %u as a global found in the registers!\n", instruction->rb);
+      printf("RHS: Setting resolved register %u as a global found in the registers!\n", (unsigned int) instruction->rb);
     }
     instruction->addr = foundReg->address;
   }
@@ -684,7 +683,7 @@ static void expression(Instruction* instruction) {
   } else {
     instruction->op_code  = OP_LOAD;
     /* Convert the binary bitmask to the load version */
-    if ((instruction->cfg_mask == CFG_RR) || (instruction->cfg_mask == CFG_RI)) {
+    if (((unsigned int) instruction->cfg_mask == CFG_RR) || ((unsigned int) instruction->cfg_mask == CFG_RI)) {
       /* REG as the left-hand side */
       instruction->cfg_mask = LOAD_REG;
     } else {
@@ -693,21 +692,23 @@ static void expression(Instruction* instruction) {
   }
 }
 
-
-/* Process the first part of the ADD and determines the base address of the global array */
-static void baseAddress(Instruction* addressAddInstruction, String* globKey) {
-  uint32_t addr = 0;
-  tableGetAddress(compiler->globals, globKey, &addr);
-  addressAddInstruction->imma = addr;
-}
-
 /* Process the index of an array access */
-static void index(Instruction* addressAddInstruction) {
+static Register* processAddress(String* globKey, bool isAssignment) {
+  /* Process Mul Operation */
+  Instruction* offsetMulInstruction = initInstruction();
+  offsetMulInstruction->op_code = OP_MUL;
+  /* Process base address and type */
+  uint32_t baseAddress = 0;
+  Value elementValue = NIL_VAL;
+  tableGet(compiler->globals, globKey, &elementValue, &baseAddress);
+  /* Add the size of the value as the left operand */
+  offsetMulInstruction->imma = elementValue.size;
+  /* Process offset */
   if (check(TOKEN_NUMBER)) {
     /* Array access of type:   array[2]  */
     uint32_t offset = (unsigned int) strtol(parser.current.start, NULL, 0);
-    addressAddInstruction->immb     = offset;
-    addressAddInstruction->cfg_mask = CFG_II;
+    offsetMulInstruction->immb = offset;
+      offsetMulInstruction->cfg_mask = CFG_II;
     advance();
   } else if (check(TOKEN_IDENTIFIER)) {
     /* Variable */
@@ -720,63 +721,89 @@ static void index(Instruction* addressAddInstruction) {
       if (isTempVar) { // TEMP
         error("Temporary variable should be defined before use.");
       } else { // GLOB
-        Register* loadedReg = initRegister(0);
-        loadedReg = loadGlob(varKey);
-        addressAddInstruction->rb = loadedReg->number;
+        Register* loadedReg = loadGlob(varKey);
+        offsetMulInstruction->rb = loadedReg->number;
       }
     } else {
-      addressAddInstruction->rb = foundReg->number;
+        offsetMulInstruction->rb = foundReg->number;
     }
-    addressAddInstruction->cfg_mask = CFG_IR;
+    offsetMulInstruction->cfg_mask = CFG_IR;
     if (isTempVar) decrementTopTempRegister();
   }
-}
 
-void writeTempAddressRegister(Instruction* instruction) {
-  /* Determine rd and shift pointer up */
+  /* If the array access is an assignment -> special register, else use a temporary */
+  Register* targetRegister = isAssignment ? compiler->addressRegister : compiler->topTempRegister;
   String* tempAddressRegName = initString();
   assignString(tempAddressRegName, "tempAddress", 11);
-  compiler->topTempRegister->varName = tempAddressRegName;
-  instruction->rd = incrementTopTempRegister();
-  /* Write add instruction */
-  uint32_t bitsInstruction = instructionToUint32(instruction);
+  targetRegister->varName = tempAddressRegName;
+  offsetMulInstruction->rd = targetRegister->number;
+  /* Write the actual instruction */
+  uint32_t bitsInstruction = instructionToUint32(offsetMulInstruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+  if (!isAssignment) incrementTopTempRegister();
   showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+
+  /* Process ADD operation */
+  Instruction* addAddressInstruction = initInstruction();
+  addAddressInstruction->op_code = OP_ADD;
+  addAddressInstruction->imma = baseAddress;
+  addAddressInstruction->rb = targetRegister->number;
+  addAddressInstruction->rd = targetRegister->number;
+  addAddressInstruction->cfg_mask = CFG_IR;
+  bitsInstruction = instructionToUint32(addAddressInstruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
+
+  return targetRegister;
 }
 
 /* Assign a value to an array element */
 static void globalArrayAccess(String* globKey) {
   /* Consume the opening square bracket */
   consume(TOKEN_LEFT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
-  Instruction* addressAddInstruction = initInstruction();
-  addressAddInstruction->op_code = OP_ADD;
-  /* Process the base address and index */
-  baseAddress(addressAddInstruction, globKey);
-  index(addressAddInstruction);
-  /* Write the different instructions */
-  /* Write the ADD instruction */
-  writeTempAddressRegister(addressAddInstruction);
+  /* Process the index => Emit a mul instruction between offset and type of data */
+  /* Process the base address and add the index to it */
+  Register* addressRegister = processAddress(globKey, true);
+  Instruction* loadValueInstruction = initInstruction();
+  Register* loadedValueRegister = compiler->topTempRegister;
+  loadValueInstruction->op_code = OP_LOAD;
+  loadValueInstruction->rd = loadedValueRegister->number;
+  loadValueInstruction->ra = addressRegister->number;
+  loadValueInstruction->cfg_mask = LOAD_REG; // LOAD_REG_AS_ADDR to define
+  incrementTopTempRegister();
   /* Write the load instruction */
+  uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
   /* Consume the closing square bracket */
   consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index].");
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
-  printf("blip\n");
   /* Process expression */
-  Instruction* instruction = initInstruction();
-  expression(instruction);
+  Instruction* expressionInstruction = initInstruction();
+  expression(expressionInstruction);
 
   /* Determine rd */
-
-  /* Write instruction */
-  uint32_t bitsInstruction = instructionToUint32(instruction);
+  expressionInstruction->rd = loadedValueRegister->number;
+  bitsInstruction = instructionToUint32(expressionInstruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
 
   /* Write Store for the array element */
-
+  Instruction* storeInstruction = initInstruction();
+  storeInstruction->op_code = OP_LOAD;
+  storeInstruction->rd = loadedValueRegister->number;
+  storeInstruction->ra = addressRegister->number;
+  storeInstruction->cfg_mask = LOAD_REG; // STOREs_REG_AS_ADDR to define
+  bitsInstruction = instructionToUint32(storeInstruction);
+  disassembleInstruction(bitsInstruction);
+  writeChunk(compiler->chunk, bitsInstruction);
+  incrementPC();
+  decrementTopTempRegister(); // Loaded value processed
 }
 
 /* Assign a value to a global variable */
