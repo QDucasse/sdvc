@@ -805,6 +805,7 @@ static bool expression(Instruction* instruction) {
   /* If find token NOT setup an a bool flag */
   bool NOTinExpression = false;
   if (check(TOKEN_NOT)) {
+      printf("blip\n");
       advance();
       NOTinExpression = true;
   }
@@ -947,7 +948,7 @@ static void tempAssignment() {
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
   /* Process expression */
   Instruction* instruction = initInstruction();
-  expression(instruction);
+  bool negated = expression(instruction);
   /* Determine rd and shift pointer up */
   compiler->topTempRegister->varName = tempKey;
   instruction->rd = incrementTopTempRegister();
@@ -956,6 +957,14 @@ static void tempAssignment() {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+  /* Write not instruction */
+  if (negated) {
+    Instruction* notInstr = initInstruction();
+    uint32_t bitsNotInstruction = notInstruction(notInstr, instruction->rd);
+    disassembleInstruction(bitsNotInstruction);
+    writeChunk(compiler->chunk,bitsNotInstruction);
+    incrementPC();
+  }
 }
 
 
