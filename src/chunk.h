@@ -19,7 +19,7 @@
 #define OP_GT    0b1001
 #define OP_GTEQ  0b1010
 #define OP_EQ    0b1011
-#define OP_NEQ   0b1100
+#define OP_NOT   0b1100
 #define OP_JMP   0b1101
 #define OP_STORE 0b1110
 #define OP_LOAD  0b1111

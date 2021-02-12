@@ -1,47 +1,49 @@
 #include "chunk.h"
 #include "disassembler.h"
 
-typedef struct {
-  int code;
-  char* name;
-} CodeNames;
-
-CodeNames codeNames[] = {
-  [OP_ADD]   = {OP_ADD, "OP_ADD"},
-  [OP_SUB]   = {OP_SUB, "OP_SUB"},
-  [OP_MUL]   = {OP_MUL, "OP_MUL"},
-  [OP_DIV]   = {OP_DIV, "OP_DIV"},
-  [OP_MOD]   = {OP_MOD, "OP_MOD"},
-  [OP_AND]   = {OP_AND, "OP_AND"},
-  [OP_OR]    = {OP_OR, "OP_OR"},
-  [OP_LT]    = {OP_LT, "OP_LT"},
-  [OP_LTEQ]  = {OP_LTEQ, "OP_LTEQ"},
-  [OP_GT]    = {OP_GT, "OP_GT"},
-  [OP_GTEQ]  = {OP_GTEQ, "OP_GTEQ"},
-  [OP_EQ]    = {OP_EQ, "OP_EQ"},
-  [OP_NEQ]   = {OP_NEQ, "OP_NEQ"},
-  [OP_JMP]   = {OP_JMP, "OP_JMP"},
-  [OP_STORE] = {OP_STORE, "OP_STORE"},
-  [OP_LOAD]  = {OP_LOAD, "OP_LOAD"}
+char* codeNames[] = {
+  [OP_ADD]   = "OP_ADD",
+  [OP_SUB]   = "OP_SUB",
+  [OP_MUL]   = "OP_MUL",
+  [OP_DIV]   = "OP_DIV",
+  [OP_MOD]   = "OP_MOD",
+  [OP_AND]   = "OP_AND",
+  [OP_OR]    = "OP_OR",
+  [OP_LT]    = "OP_LT",
+  [OP_LTEQ]  = "OP_LTEQ",
+  [OP_GT]    = "OP_GT",
+  [OP_GTEQ]  = "OP_GTEQ",
+  [OP_EQ]    = "OP_EQ",
+  [OP_NOT]   = "OP_NOT",
+  [OP_JMP]   = "OP_JMP",
+  [OP_STORE] = "OP_STORE",
+  [OP_LOAD]  = "OP_LOAD"
 };
 
-CodeNames binConfigs[] = {
-  [CFG_RR]   = {CFG_RR, "CFG_RR"},
-  [CFG_RI]   = {CFG_RI, "CFG_RI"},
-  [CFG_IR]   = {CFG_IR, "CFG_IR"},
-  [CFG_II]   = {CFG_II, "CFG_II"}
+char* binConfigs[] = {
+  [CFG_RR]   = "CFG_RR",
+  [CFG_RI]   = "CFG_RI",
+  [CFG_IR]   = "CFG_IR",
+  [CFG_II]   = "CFG_II"
 };
 
-CodeNames loadConfigs[] = {
-  [LOAD_REG] = {LOAD_REG, "LOAD_REG"},
-  [LOAD_IMM] = {LOAD_IMM, "LOAD_IMM"},
-  [LOAD_ADR] = {LOAD_ADR, "LOAD_ADR"},
-  [LOAD_RAA] = {LOAD_RAA, "LOAD_RAA"}
+char* typeConfigs[] = {
+  [VAL_BOOL]  = "VAL_BOL",
+  [VAL_BYTE]  = "VAL_BYT",
+  [VAL_INT]   = "VAL_INT",
+  [VAL_STATE] = "VAL_STA"
 };
 
-CodeNames storeConfigs[] = {
-  [STORE_ADR] = {STORE_ADR, "STORE_ADR"},
-  [STORE_RAA] = {STORE_RAA, "STORE_RAA"}
+char* loadConfigs[] = {
+  [LOAD_REG] = "LOAD_REG",
+  [LOAD_IMM] = "LOAD_IMM",
+  [LOAD_ADR] = "LOAD_ADR",
+  [LOAD_RAA] = "LOAD_RAA"
+};
+
+char* storeConfigs[] = {
+  [STORE_ADR] = "STORE_ADR",
+  [STORE_RAA] = "STORE_RAA"
 };
 
 void disassembleInstruction(uint32_t bitInstruction) {
@@ -56,10 +58,10 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
 
     switch (cfg_mask) {
-      case CFG_RR: printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code].name, binConfigs[cfg_mask].name, rd, ra, rb); break;
-      case CFG_RI: printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code].name, binConfigs[cfg_mask].name, rd, ra, immb); break;
-      case CFG_IR: printf("%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code].name, binConfigs[cfg_mask].name, rd, imma, rb); break;
-      case CFG_II: printf("%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code].name, binConfigs[cfg_mask].name, rd, imma, immb); break;
+      case CFG_RR: printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, ra, rb); break;
+      case CFG_RI: printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, ra, immb); break;
+      case CFG_IR: printf("%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, imma, rb); break;
+      case CFG_II: printf("%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, imma, immb); break;
       default: break; // Unreachable
     }
   } else if (op_code == OP_LOAD) {
@@ -71,10 +73,10 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
 
     switch (cfg_mask) {
-      case LOAD_REG: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, ra); break;
-      case LOAD_IMM: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, imma); break;
-      case LOAD_ADR: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, addr, type); break;
-      case LOAD_RAA: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5u\n" RESET, loadConfigs[cfg_mask].name, rd, ra, type); break;
+      case LOAD_REG: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask], rd, ra); break;
+      case LOAD_IMM: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask], rd, imma); break;
+      case LOAD_ADR: printf(GRN " OP_LOAD - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
+      case LOAD_RAA: printf(CYN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
       default: break; // Unreachable
     }
   } else if (op_code == OP_STORE) { // STORE
@@ -84,14 +86,15 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
     unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
     switch(cfg_mask) {
-      case STORE_ADR: printf(RED "OP_STORE - Config: %9s - Rd: %2u - Addr: %5u - Type: %5u\n" RESET, storeConfigs[cfg_mask].name, rd, addr, type); break;
-      case STORE_RAA: printf(RED "OP_STORE - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5u\n" RESET, storeConfigs[cfg_mask].name, rd, ra, type); break;
+      case STORE_ADR: printf(RED "OP_STORE - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
+      case STORE_RAA: printf(MAG "OP_STORE - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
+      default: break;
     }
 
   } else if (op_code == OP_JMP) { // JMP
     unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
     unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
-    printf(YEL "%8s -                   - Rd: %2u - Addr: %5u\n" RESET, codeNames[op_code].name, rd, addr);
+    printf(YEL "%8s -                   - Rd: %2u - Addr: %5u\n" RESET, codeNames[op_code], rd, addr);
   }
 }
 

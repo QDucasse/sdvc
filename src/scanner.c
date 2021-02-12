@@ -175,6 +175,7 @@ static TokenType identifierType() {
         switch (scanner.start[1]) {
           case 'o': return checkKeyword(2, 2, "ol", TOKEN_BOOL);       // bool
           case 'y': return checkKeyword(2, 2, "te", TOKEN_BYTE);       // byte
+          default: break; // Unreachable
         }
       }
     case 'e': return checkKeyword(1, 5, "ffect", TOKEN_EFFECT);        // effect
@@ -186,6 +187,7 @@ static TokenType identifierType() {
           case 'B': return checkKeyword(6, 4, "lock", TOKEN_GUARD_BLOCK);     // guardblock
           case 'c':
           case 'C': return checkKeyword(6, 8, "ondition", TOKEN_GUARD_COND);  // guardcondition
+          default: break; // Unreachable
         }
       }
     case 'i': return checkKeyword(1, 2, "nt", TOKEN_INT);              // int
@@ -198,8 +200,10 @@ static TokenType identifierType() {
           case 'e': return checkKeyword(2, 2, "mp", TOKEN_TEMP);       // temp
           case 'r': return checkKeyword(2, 2, "ue", TOKEN_TRUE);       // true
           case 'u': return checkKeyword(2, 3, "ple", TOKEN_TUPLE);     // tuple
+          default: break; // Unreachable
         }
       }
+    default: break; // Unreachable
   }
   return TOKEN_IDENTIFIER;
 }
@@ -274,6 +278,7 @@ Token scanToken() {
     case '>':
       return makeToken(
           match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+    default: break;
   }
 
   return errorToken("Unexpected character.");

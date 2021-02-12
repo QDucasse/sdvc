@@ -65,7 +65,7 @@ typedef struct {
   unsigned int cfg: 2;
 } TypeCfg;
 
-TypeCfg typeConfigs[] = {
+TypeCfg typeCodes[] = {
   [VAL_BOOL]  = {VAL_BOOL,  0b00},
   [VAL_BYTE]  = {VAL_BYTE,  0b01},
   [VAL_INT]   = {VAL_INT,   0b10},
@@ -102,92 +102,108 @@ void freeInstruction(Instruction* instruction) {
 uint32_t instructionToUint32(Instruction* instruction) {
   /* Adding op code to the instruction*/
   uint32_t convertedInstruction = instruction->op_code << 28;
-  bool isBinary = instruction->op_code < 13;
-  if (isBinary) {
-    /* BINARY OPERATIONS */
-    /* Adding config mask */
-    convertedInstruction |= instruction->cfg_mask << 26;
-    /* Adding destination register */
-    convertedInstruction |= instruction->rd << 22;
-    /* Using the bitmask to choose the configuration */
-    switch(instruction->cfg_mask) {
+  switch(instruction->op_code) {
+      /* LOAD OPERATION
+      ============== */
+      case OP_LOAD: {
+          /* LOAD OPERATION */
+          /* Adding config mask */
+          convertedInstruction |= instruction->cfg_mask << 26;
+          /* Adding type information */
+          convertedInstruction |= instruction->type << 24;
+          /* Adding destination register */
+          convertedInstruction |= instruction->rd << 20;
+          switch (instruction->cfg_mask) {
+              case LOAD_REG:
+              case LOAD_RAA:
+                  /* Adding Ra */
+                  convertedInstruction |= instruction->ra;
+                  break;
+              case LOAD_IMM:
+                  /* Adding Imma */
+                  convertedInstruction |= instruction->imma;
+                  break;
+              case LOAD_ADR:
+                  /* Adding address */
+                  convertedInstruction |= instruction->addr;
+                  break;
+              default:
+                  break;// Unreachable
+          }
+      }
 
-      case CFG_RR:
-        /* Adding Ra */
-        convertedInstruction |= instruction->ra << 11;
-        /* Adding Rb */
-        convertedInstruction |= instruction->rb;
-        break;
+      /* STORE OPERATION
+      =============== */
+      case OP_STORE: {
+          /* STORE OPERATION */
+          convertedInstruction |= instruction->cfg_mask << 26;
+          /* Adding type information */
+          convertedInstruction |= instruction->type << 24;
+          /* Adding destination register */
+          convertedInstruction |= instruction->rd << 20;
+          switch (instruction->cfg_mask) {
+              case STORE_ADR:
+                  /* Adding address */
+                  convertedInstruction |= instruction->addr;
+              case STORE_RAA:
+                  /* Adding register */
+                  convertedInstruction |= instruction->ra;
+              default:
+                  break; // Unreachable
+          }
+      }
 
-      case CFG_RI:
-        /* Adding Ra */
-        convertedInstruction |= instruction->ra << 11;
-        /* Adding ImmB */
-        convertedInstruction |= instruction->immb;
-        break;
-
-      case CFG_IR:
-        /* Adding ImmA */
-        convertedInstruction |= instruction->imma << 11;
-        /* Adding Rb */
-        convertedInstruction |= instruction->rb;
-        break;
-
-      case CFG_II:
-        /* Adding ImmA */
-        convertedInstruction |= instruction->imma << 11;
-        /* Adding ImmB */
-        convertedInstruction |= instruction->immb;
-        break;
-
-      default: break; // Unreachable
-    }
-
-  } else if (instruction->op_code == OP_LOAD) {
-    /* LOAD OPERATION */
-    /* Adding config mask */
-    convertedInstruction |= instruction->cfg_mask << 26;
-    /* Adding type information */
-    convertedInstruction |= instruction->type << 24;
-    /* Adding destination register */
-    convertedInstruction |= instruction->rd << 20;
-    switch(instruction->cfg_mask) {
-      case LOAD_REG:
-      case LOAD_RAA:
-        /* Adding Ra */
-        convertedInstruction |= instruction->ra;
-        break;
-      case LOAD_IMM:
-      /* Adding Imma */
-        convertedInstruction |= instruction->imma;
-        break;
-      case LOAD_ADR:
-      /* Adding address */
-        convertedInstruction |= instruction->addr;
-        break;
-      default: break;// Unreachable
-    }
-  } else if (instruction->op_code == OP_STORE) {
-    /* STORE OPERATION */
-    convertedInstruction |= instruction->cfg_mask << 26;
-    /* Adding type information */
-    convertedInstruction |= instruction->type << 24;
-    /* Adding destination register */
-    convertedInstruction |= instruction->rd << 20;
-    switch(instruction->cfg_mask) {
-        case STORE_ADR:
+      /* JUMP OPERATION
+      ============== */
+      case OP_JMP: {
+          /* JMP OPERATION */
+          /* Adding destination register (register holding value to test here) */
+          convertedInstruction |= instruction->rd << 24;
           /* Adding address */
           convertedInstruction |= instruction->addr;
-        case STORE_RAA:
-          /* Adding register */
-          convertedInstruction |= instruction->ra;
-    }
-  } else if (instruction->op_code == OP_JMP) {
-    /* JMP OPERATION */
-    /* Adding destination register (register holding value to test here) */
-    convertedInstruction |= instruction->rd << 24;
-    /* Adding address */
-    convertedInstruction |= instruction->addr;
+      }
+
+      /* BINARY OPERATION
+      ================ */
+      default: {
+          /* BINARY OPERATIONS */
+          /* Adding config mask */
+          convertedInstruction |= instruction->cfg_mask << 26;
+          /* Adding destination register */
+          convertedInstruction |= instruction->rd << 22;
+          /* Using the bitmask to choose the configuration */
+          switch (instruction->cfg_mask) {
+            case CFG_RR:
+                /* Adding Ra */
+                convertedInstruction |= instruction->ra << 11;
+                /* Adding Rb */
+                convertedInstruction |= instruction->rb;
+                break;
+
+            case CFG_RI:
+                /* Adding Ra */
+                convertedInstruction |= instruction->ra << 11;
+                /* Adding ImmB */
+                convertedInstruction |= instruction->immb;
+                break;
+
+            case CFG_IR:
+                /* Adding ImmA */
+                convertedInstruction |= instruction->imma << 11;
+                /* Adding Rb */
+                convertedInstruction |= instruction->rb;
+                break;
+
+            case CFG_II:
+                /* Adding ImmA */
+                convertedInstruction |= instruction->imma << 11;
+                /* Adding ImmB */
+                convertedInstruction |= instruction->immb;
+                break;
+            default:
+                break; // Unreachable
+          }
+      }
   }
   return convertedInstruction;
 }
@@ -319,8 +335,7 @@ uint32_t loadInstructionRegAsAddr(Instruction* instruction, unsigned int rd, uns
 /* Writes a store instruction from a register */
 void writeStoreFromRegister(Register* reg, Chunk* chunk) {
   Instruction* strInstruction = initInstruction();
-  uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeConfigs[reg->varValue.type].cfg);
-  // disassembleInstruction(bitStoreInstruction);
+  uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeCodes[reg->varValue.type].cfg);
   writeChunk(chunk, bitStoreInstruction);
   emptyRegister(reg);
   freeInstruction(strInstruction);
@@ -330,8 +345,7 @@ void writeStoreFromRegister(Register* reg, Chunk* chunk) {
 /* Writes a load instruction from a register */
 void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   Instruction* loadInstruction = initInstruction();
-  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeConfigs[reg->varValue.type].cfg);
-  // disassembleInstruction(bitLoadInstruction);
+  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeCodes[reg->varValue.type].cfg);
   writeChunk(chunk, bitLoadInstruction);
   freeInstruction(loadInstruction);
 }

@@ -24,21 +24,26 @@ typedef struct {
 /* Parser singleton */
 static Parser parser;
 
+typedef struct {
+  int op_code;
+  bool isNegated;
+} BinaryOperatorConfig;
+
 /* Binary Operator Table */
-int binopTable[] = {
-  [TOKEN_MINUS]         = OP_SUB,
-  [TOKEN_PLUS]          = OP_ADD,
-  [TOKEN_SLASH]         = OP_DIV,
-  [TOKEN_STAR]          = OP_MUL,
-  [TOKEN_MODULO]        = OP_MOD,
-  [TOKEN_BANG_EQUAL]    = OP_NEQ,
-  [TOKEN_EQUAL_EQUAL]   = OP_EQ,
-  [TOKEN_GREATER]       = OP_GT,
-  [TOKEN_GREATER_EQUAL] = OP_GTEQ,
-  [TOKEN_LESS]          = OP_LT,
-  [TOKEN_LESS_EQUAL]    = OP_LTEQ,
-  [TOKEN_AND]           = OP_AND,
-  [TOKEN_OR]            = OP_OR
+BinaryOperatorConfig binopTable[] = {
+  [TOKEN_MINUS]         = {OP_SUB, false},
+  [TOKEN_PLUS]          = {OP_ADD, false},
+  [TOKEN_SLASH]         = {OP_DIV, false},
+  [TOKEN_STAR]          = {OP_MUL, false},
+  [TOKEN_MODULO]        = {OP_MOD, false},
+  [TOKEN_BANG_EQUAL]    = {OP_EQ, true},
+  [TOKEN_EQUAL_EQUAL]   = {OP_EQ, false},
+  [TOKEN_GREATER]       = {OP_GT, false},
+  [TOKEN_GREATER_EQUAL] = {OP_LT, true},
+  [TOKEN_LESS]          = {OP_LT, false},
+  [TOKEN_LESS_EQUAL]    = {OP_GT, true},
+  [TOKEN_AND]           = {OP_AND, false},
+  [TOKEN_OR]            = {OP_OR, false}
 };
 
 /* Array infos */
@@ -600,10 +605,10 @@ static void immediateValueNumberOperand(bool isLeftSide, Instruction* instructio
   /* Immediate Value */
   if (isLeftSide) {
     instruction->imma = (unsigned int) strtol(parser.current.start, NULL, 0); // Left side
-    printf("LHS: Setting Immediate value %u!\n", (unsigned int) instruction->imma);
+    printf("LHS: Setting Immediate value %u!\n", instruction->imma);
   } else {
     instruction->immb = (unsigned int) strtol(parser.current.start, NULL, 0); // Right side
-    printf("RHS: Setting Immediate value %u!\n", (unsigned int) instruction->immb);
+    printf("RHS: Setting Immediate value %u!\n", instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
@@ -616,10 +621,10 @@ static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instructi
   /* Immediate boolean value */
   if (isLeftSide) {
     instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Left side
-    printf("LHS: Setting Immediate boolean value %u!\n", (unsigned int) instruction->imma);
+    printf("LHS: Setting Immediate boolean value %u!\n", instruction->imma);
   } else {
     instruction->immb = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Right side
-    printf("RHS: Setting Immediate boolean value %u!\n", (unsigned int) instruction->immb);
+    printf("RHS: Setting Immediate boolean value %u!\n", instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
@@ -643,10 +648,10 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
     /* Set the resolved register to the corresponding register */
     if (isLeftSide) {
       instruction->ra = foundReg->number;
-      printf("LHS: Setting resolved register %u as a temporary!\n", (unsigned int) instruction->ra);
+      printf("LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
     } else {
       instruction->rb = foundReg->number;
-      printf("RHS: Setting resolved register %u as a temporary!\n", (unsigned int) instruction->rb);
+      printf("RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
     }
   }
   /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
@@ -668,19 +673,19 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction, Strin
     Register* loadedReg = loadGlob(globKey);
     if (isLeftSide) {
       instruction->ra = loadedReg->number;
-      printf("LHS: Setting resolved register %u as a global to load!\n", (unsigned int) instruction->ra);
+      printf("LHS: Setting resolved register %u as a global to load!\n", instruction->ra);
     } else {
       instruction->rb = loadedReg->number;
-      printf("RHS: Setting resolved register %u as a global to load!\n", (unsigned int) instruction->rb);
+      printf("RHS: Setting resolved register %u as a global to load!\n", instruction->rb);
     }
     instruction->addr = loadedReg->address;
   } else {
     if (isLeftSide) {
       instruction->ra = foundReg->number;
-      printf("LHS: Setting resolved register %u as a global found in the registers!\n", (unsigned int) instruction->ra);
+      printf("LHS: Setting resolved register %u as a global found in the registers!\n", instruction->ra);
     } else {
       instruction->rb = foundReg->number;
-      printf("RHS: Setting resolved register %u as a global found in the registers!\n", (unsigned int) instruction->rb);
+      printf("RHS: Setting resolved register %u as a global found in the registers!\n", instruction->rb);
     }
     instruction->addr = foundReg->address;
   }
@@ -720,10 +725,10 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   /* Set the resolved register to the corresponding register */
   if (isLeftSide) {
     instruction->ra = loadedValueRegister->number;
-    printf("LHS: Setting resolved register %u as an array access!\n", (unsigned int) instruction->ra);
+    printf("LHS: Setting resolved register %u as an array access!\n", instruction->ra);
   } else {
     instruction->rb = loadedValueRegister->number;
-    printf("RHS: Setting resolved register %u as an array access!\n", (unsigned int) instruction->rb);
+    printf("RHS: Setting resolved register %u as an array access!\n", instruction->rb);
   }
   /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
@@ -781,7 +786,11 @@ static void rightHandSide(Instruction* instruction) {
 void operator(Instruction* instruction) {
   /* Consume operator */
   if (isBinOp(&parser.current)) {
-    instruction->op_code = binopTable[parser.current.type];
+    BinaryOperatorConfig binopCfg = binopTable[parser.current.type];
+    instruction->op_code = binopCfg.op_code;
+    if (binopCfg.isNegated) {
+        // Emit Not instruction
+    }
     advance();
   } else {
     error("Expected binary operator.");
@@ -803,7 +812,7 @@ static void expression(Instruction* instruction) {
   } else {
     instruction->op_code  = OP_LOAD;
     /* Convert the binary bitmask to the load version */
-    if (((unsigned int) instruction->cfg_mask == CFG_RR) || ((unsigned int) instruction->cfg_mask == CFG_RI)) {
+    if ((instruction->cfg_mask == CFG_RR) || (instruction->cfg_mask == CFG_RI)) {
       /* REG as the left-hand side */
       instruction->cfg_mask = LOAD_REG;
     } else {
