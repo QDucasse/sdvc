@@ -594,6 +594,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
 
+    targetRegister->varValue.type = elementValue.type;
     return targetRegister;
 }
 
@@ -712,6 +713,7 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   loadValueInstruction->rd = loadedValueRegister->number;
   loadValueInstruction->ra = addressRegister->number;
   loadValueInstruction->cfg_mask = LOAD_RAA;
+  loadValueInstruction->type = typeCfg(addressRegister->varValue.type);
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
@@ -783,32 +785,39 @@ static void rightHandSide(Instruction* instruction) {
 
 
 /* Process the binary operator and deduce the corresponding opcode */
-void operator(Instruction* instruction) {
+bool operator(Instruction* instruction) {
   /* Consume operator */
   if (isBinOp(&parser.current)) {
     BinaryOperatorConfig binopCfg = binopTable[parser.current.type];
     instruction->op_code = binopCfg.op_code;
-    if (binopCfg.isNegated) {
-        // Emit Not instruction
-    }
+    /* Consume operator */
     advance();
+    return binopCfg.isNegated;
   } else {
     error("Expected binary operator.");
   }
+  return false;
 }
 
 
 /* Process an expression */
-static void expression(Instruction* instruction) {
+static bool expression(Instruction* instruction) {
+  /* If find token NOT setup an a bool flag */
+  bool NOTinExpression = false;
+  if (check(TOKEN_NOT)) {
+      advance();
+      NOTinExpression = true;
+  }
+
   /* Consume left hand side of expression */
   leftHandSide(instruction);
 
   if (!(check(TOKEN_SEMICOLON) || check(TOKEN_COMMA))) {
     /* Consume operator */
-    operator(instruction);
+    bool isNegated = operator(instruction);
     /* Consume right hand side of expression */
     rightHandSide(instruction);
-    /* Resolve rd and write it in the instruction */
+    return isNegated;
   } else {
     instruction->op_code  = OP_LOAD;
     /* Convert the binary bitmask to the load version */
@@ -819,6 +828,7 @@ static void expression(Instruction* instruction) {
       instruction->cfg_mask = LOAD_IMM;
     }
   }
+  return NOTinExpression;
 }
 
 /* Assign a value to an array element */
@@ -830,6 +840,7 @@ static void globalArrayAccess(String* globKey) {
   Register* addressRegister = processAddress(globKey, true);
   Instruction* loadValueInstruction = initInstruction();
   /* Setup register */
+  unsigned int typeCode = typeCfg(addressRegister->varValue.type);
   Register* loadedValueRegister = compiler->topTempRegister;
   String* tempValueRegName = initString();
   assignString(tempValueRegName, "t_loaded_value", 14);
@@ -838,6 +849,7 @@ static void globalArrayAccess(String* globKey) {
   loadValueInstruction->rd = loadedValueRegister->number;
   loadValueInstruction->ra = addressRegister->number;
   loadValueInstruction->cfg_mask = LOAD_RAA; // LOAD_REG_AS_ADDR to define
+  loadValueInstruction->type = typeCode;
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
@@ -849,7 +861,7 @@ static void globalArrayAccess(String* globKey) {
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
   /* Process expression */
   Instruction* expressionInstruction = initInstruction();
-  expression(expressionInstruction);
+  bool negated = expression(expressionInstruction);
 
   /* Determine rd */
   expressionInstruction->rd = loadedValueRegister->number;
@@ -858,12 +870,23 @@ static void globalArrayAccess(String* globKey) {
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
 
+  /* Write not instruction */
+  if (negated) {
+    Instruction* notInstr = initInstruction();
+    uint32_t bitsNotInstruction = notInstruction(notInstr, expressionInstruction->rd);
+    disassembleInstruction(bitsNotInstruction);
+    writeChunk(compiler->chunk,bitsNotInstruction);
+    incrementPC();
+  }
+
   /* Write Store for the array element */
   Instruction* storeInstruction = initInstruction();
   storeInstruction->op_code = OP_STORE;
+  printRegister(loadedValueRegister);
   storeInstruction->rd = loadedValueRegister->number;
   storeInstruction->ra = addressRegister->number;
   storeInstruction->cfg_mask = STORE_RAA; // STOREs_REG_AS_ADDR to define
+  storeInstruction->type = typeCode;
   bitsInstruction = instructionToUint32(storeInstruction);
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
@@ -877,7 +900,7 @@ static void globalAssignment(String* globKey) {
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
   /* Process expression */
   Instruction* instruction = initInstruction();
-  expression(instruction);
+  bool negated = expression(instruction);
   /* Determine rd */
   Register* foundReg = getRegFromVar(globKey);
   /* If the register is NULL -> Store the value into a new one */
@@ -894,6 +917,14 @@ static void globalAssignment(String* globKey) {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+  /* Write not instruction */
+  if (negated) {
+    Instruction* notInstr = initInstruction();
+    uint32_t bitsNotInstruction = notInstruction(notInstr, instruction->rd);
+    disassembleInstruction(bitsNotInstruction);
+    writeChunk(compiler->chunk,bitsNotInstruction);
+    incrementPC();
+  }
 }
 
 

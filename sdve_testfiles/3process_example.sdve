@@ -8,7 +8,7 @@ int P2.w = 0;
 	process P1
 		guardblock
 			temp bool t_0 = P1.state == 1,
-			temp bool t_1 = t_0 and true;
+			temp bool t_1 = not t_0;
 
 		guardcondition t_1;
 		effect

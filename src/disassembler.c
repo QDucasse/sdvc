@@ -10,9 +10,7 @@ char* codeNames[] = {
   [OP_AND]   = "OP_AND",
   [OP_OR]    = "OP_OR",
   [OP_LT]    = "OP_LT",
-  [OP_LTEQ]  = "OP_LTEQ",
   [OP_GT]    = "OP_GT",
-  [OP_GTEQ]  = "OP_GTEQ",
   [OP_EQ]    = "OP_EQ",
   [OP_NOT]   = "OP_NOT",
   [OP_JMP]   = "OP_JMP",
@@ -49,21 +47,38 @@ char* storeConfigs[] = {
 void disassembleInstruction(uint32_t bitInstruction) {
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
   /* Test if the instruction is binary or not */
-  if (op_code < 13) { // BINARY
-    unsigned int rd       = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
-    unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
-    unsigned int ra   = (bitInstruction & 0x7800) >> 11;        // 0000 0000 0000 0000 0111 1000 0000 0000
-    unsigned int rb   = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
-    unsigned int imma = (bitInstruction & 0x3FF800) >> 11;      // 0000 0000 0011 1111 1111 1000 0000 0000
-    unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
+  if (op_code < OP_NOT) { // BINARY
+      unsigned int rd = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
+      unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+      unsigned int ra = (bitInstruction & 0x7800) >> 11;        // 0000 0000 0000 0000 0111 1000 0000 0000
+      unsigned int rb = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
+      unsigned int imma = (bitInstruction & 0x3FF800) >> 11;      // 0000 0000 0011 1111 1111 1000 0000 0000
+      unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
 
-    switch (cfg_mask) {
-      case CFG_RR: printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, ra, rb); break;
-      case CFG_RI: printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, ra, immb); break;
-      case CFG_IR: printf("%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, imma, rb); break;
-      case CFG_II: printf("%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask], rd, imma, immb); break;
-      default: break; // Unreachable
-    }
+      switch (cfg_mask) {
+          case CFG_RR:
+              printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                     rd, ra, rb);
+              break;
+          case CFG_RI:
+              printf("%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                     rd, ra, immb);
+              break;
+          case CFG_IR:
+              printf("%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                     rd, imma, rb);
+              break;
+          case CFG_II:
+              printf("%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                     rd, imma, immb);
+              break;
+          default:
+              break; // Unreachable
+      }
+  } else if (op_code == OP_NOT) {
+    unsigned int rd   = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+    unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
+    printf(WHT "OP_LOAD -                 - Rd: %2u - Ra: %2u\n" RESET, rd, ra);
   } else if (op_code == OP_LOAD) {
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
     unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
@@ -90,7 +105,6 @@ void disassembleInstruction(uint32_t bitInstruction) {
       case STORE_RAA: printf(MAG "OP_STORE - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
       default: break;
     }
-
   } else if (op_code == OP_JMP) { // JMP
     unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
     unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111

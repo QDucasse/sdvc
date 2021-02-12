@@ -15,14 +15,12 @@
 #define OP_AND   0b0101
 #define OP_OR    0b0110
 #define OP_LT    0b0111
-#define OP_LTEQ  0b1000
-#define OP_GT    0b1001
-#define OP_GTEQ  0b1010
-#define OP_EQ    0b1011
-#define OP_NOT   0b1100
-#define OP_JMP   0b1101
-#define OP_STORE 0b1110
-#define OP_LOAD  0b1111
+#define OP_GT    0b1000
+#define OP_EQ    0b1001
+#define OP_NOT   0b1010
+#define OP_JMP   0b1011
+#define OP_STORE 0b1100
+#define OP_LOAD  0b1101
 
 /* CONFIG bitmasks for binary operations */
 #define CFG_RR  0b00
@@ -67,6 +65,8 @@ void freeChunk(Chunk* chunk);
 /* Write an instruction to the given chunk */
 void writeChunk(Chunk* chunk, uint32_t);
 
+unsigned int typeCfg(ValueType type);
+
 /* Initialization struct initialization */
 Instruction* initInstruction();
 /* Free the given instruction */
@@ -93,6 +93,8 @@ uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned 
 uint32_t loadInstructionImm(Instruction* instruction, unsigned int rd, unsigned int imma);
 /* Load from an address */
 uint32_t loadInstructionAddr(Instruction* instruction, unsigned int rd, unsigned int addr, unsigned int type);
+/* Not instruction */
+uint32_t notInstruction(Instruction* instruction, unsigned int rd);
 /* Write a store instruction from a register */
 void writeStoreFromRegister(Register* reg, Chunk* chunk);
 /* Write a load instruction from a register */

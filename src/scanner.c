@@ -191,6 +191,7 @@ static TokenType identifierType() {
         }
       }
     case 'i': return checkKeyword(1, 2, "nt", TOKEN_INT);              // int
+    case 'n': return checkKeyword(1, 2, "ot", TOKEN_NOT);              // not
     case 'o': return checkKeyword(1, 1, "r", TOKEN_OR);                // or
     case 'p': return checkKeyword(1, 6, "rocess", TOKEN_PROCESS);      // process
     case 's': return checkKeyword(1, 4, "tate", TOKEN_STATE);          // type

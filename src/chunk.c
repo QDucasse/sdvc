@@ -55,23 +55,17 @@ void writeChunk(Chunk* chunk, uint32_t instruction) {
 
 /* ==================================
       INSTRUCTION OPERATIONS
-====================================*/
+================================== */
 
-/* Value to bitmask config
-======================= */
-
-typedef struct {
-  ValueType type;
-  unsigned int cfg: 2;
-} TypeCfg;
-
-TypeCfg typeCodes[] = {
-  [VAL_BOOL]  = {VAL_BOOL,  0b00},
-  [VAL_BYTE]  = {VAL_BYTE,  0b01},
-  [VAL_INT]   = {VAL_INT,   0b10},
-  [VAL_STATE] = {VAL_STATE, 0b11}
-};
-
+unsigned int typeCfg(ValueType type) {
+    unsigned int typeCodes[] = {
+      [VAL_BOOL]  = 0b00,
+      [VAL_BYTE]  = 0b01,
+      [VAL_INT]   = 0b10,
+      [VAL_STATE] = 0b11
+    };
+    return typeCodes[type];
+}
 
 /* Initialization and conversion
 ============================= */
@@ -163,6 +157,15 @@ uint32_t instructionToUint32(Instruction* instruction) {
           convertedInstruction |= instruction->addr;
       }
 
+      /* NOT OPERATION
+      ============= */
+      case OP_NOT: {
+          /* JMP OPERATION */
+          /* Adding destination register (register holding value to test here) */
+          convertedInstruction |= instruction->rd << 24;
+          /* Adding address */
+          convertedInstruction |= instruction->ra;
+      }
       /* BINARY OPERATION
       ================ */
       default: {
@@ -328,6 +331,12 @@ uint32_t loadInstructionRegAsAddr(Instruction* instruction, unsigned int rd, uns
     return instructionToUint32(instruction);
 }
 
+uint32_t notInstruction(Instruction* instruction, unsigned int rd) {
+    instruction->op_code = OP_NOT;
+    instruction->rd = rd;
+    instruction->ra = rd;
+    return instructionToUint32(instruction);
+}
 
 /* Direct Write
 ============ */
@@ -335,7 +344,7 @@ uint32_t loadInstructionRegAsAddr(Instruction* instruction, unsigned int rd, uns
 /* Writes a store instruction from a register */
 void writeStoreFromRegister(Register* reg, Chunk* chunk) {
   Instruction* strInstruction = initInstruction();
-  uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeCodes[reg->varValue.type].cfg);
+  uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
   writeChunk(chunk, bitStoreInstruction);
   emptyRegister(reg);
   freeInstruction(strInstruction);
@@ -345,7 +354,7 @@ void writeStoreFromRegister(Register* reg, Chunk* chunk) {
 /* Writes a load instruction from a register */
 void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   Instruction* loadInstruction = initInstruction();
-  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeCodes[reg->varValue.type].cfg);
+  uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
   writeChunk(chunk, bitLoadInstruction);
   freeInstruction(loadInstruction);
 }
