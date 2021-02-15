@@ -220,6 +220,8 @@ static Token identifier() {
 
 /* Create a number token */
 static Token number() {
+  /* Consume the negative part */
+  if (peek() == '-') advance();
   /* Consume the integer part */
   while(isDigit(peek())) advance();
   /* Look for a decimal part */
@@ -249,6 +251,7 @@ Token scanToken() {
   /* Identifier */
   if (isAlpha(c)) return identifier();
   /* Digit */
+  if (c == '-'  && isDigit(peek())) return number();
   if (isDigit(c)) return number();
 
   switch (c) {

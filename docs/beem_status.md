@@ -1,0 +1,61 @@
+SDVU status when run against the experiments of the BEEM Benchmark.
+
+| Experiment Name   | Status              |
+| ----------------- | ------------------- |
+| adding            | OK                  |
+| anderson          | OK                  |
+| at                | OK                  |
+| bakery            | OK                  |
+| blocks            | array[array[index]] |
+| bopdp             | OK                  |
+| bridge            | OK                  |
+| brp               | OK                  |
+| brp2              | OK                  |
+| cambridge         | OK                  |
+| collision         | OK                  |
+| cyclic_scheduler  | OK                  |
+| driving_phils     | array[array[index]] |
+| elevator          | OK                  |
+| elevator2         | OK                  |
+| elevator_planning | OK                  |
+| exit              | OK                  |
+| extinction        | OK                  |
+| firewire_link     | OK                  |
+| firewire_tree     | OK                  |
+| fischer           | OK                  |
+| frogs             | OK                  |
+| gear              | OK                  |
+| hanoi             | OK                  |
+| iprotocol         | OK                  |
+| krebs             | OK                  |
+| lamport           | OK                  |
+| lamport_nonatomic | OK                  |
+| lann              | OK                  |
+| leader_election   | OK                  |
+| leader_filters    | OK                  |
+| lifts             | OK                  |
+| loyd              | To inspect          |
+| lup               | OK                  |
+| mcs               | array[array[index]] |
+| msmie             | OK                  |
+| needham           | OK                  |
+| peg_solitaire     | OK                  |
+| peterson          | OK                  |
+| pgm_protocol      | OK                  |
+| phils             | OK                  |
+| plc               | OK                  |
+| pouring           | OK                  |
+| production_cell   | OK                  |
+| protocols         | OK                  |
+| public_subscribe  | OK                  |
+| reader_writer     | OK                  |
+| resistance        | OK                  |
+| rether            | OK                  |
+| rushhour          | OK                  |
+| schedule_world    | OK                  |
+| sokoban           | OK                  |
+| sorter            | OK                  |
+| synapse           | SHL operator        |
+| szymanski         | OK                  |
+| telephony         | OK                  |
+| train-gate        | OK                  |

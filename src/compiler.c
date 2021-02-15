@@ -736,6 +736,7 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
   /* Shift the temporary head down */
   decrementTopTempRegister();
+  decrementTopTempRegister();
 }
 
 /* Process an operand */
