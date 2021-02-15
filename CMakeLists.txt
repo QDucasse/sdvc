@@ -4,4 +4,4 @@ SET(CMAKE_C_FLAGS "-std=c99 -Wall -Werror -Wno-unused-parameter")
 
 include_directories(src)
 file(GLOB SRC_FILES src/*.c)
-add_executable(sdvu ${SRC_FILES})
+add_executable(sdvc ${SRC_FILES})
