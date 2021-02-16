@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "chunk.h"
 #include "disassembler.h"
 
@@ -49,6 +52,10 @@ void initDisassembler(bool verbose, FILE* outstream) {
   disassembler = ALLOCATE_OBJ(Disassembler);
   disassembler->verbose = verbose;
   disassembler->outstream = outstream;
+}
+
+void freeDisassembler() {
+  FREE(disassembler);
 }
 
 void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler) {
@@ -172,4 +179,17 @@ void disassembleChunk(Chunk* chunk, Disassembler* disassembler) {
     disassembleInstruction(chunk->instructions[i], disassembler);
   }
   fprintf(outstream, "=== ----------------------------- ===\n");
+}
+
+void disassembleBinary(const char* path, Disassembler* disassembler) {
+  /* Create buffer to read into */
+  uint32_t buf;
+  /* Open the file to read */
+  FILE* file = fopen(path, "r");
+  if (file == NULL) exit(64);
+  /* Loop over, fill the buffer then disassemble */
+  while (fread(&buf, sizeof(buf), 1, file) == 1) {
+      disassembleInstruction(buf, disassembler);
+  }
+  fclose(file);
 }

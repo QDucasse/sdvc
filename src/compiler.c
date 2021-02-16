@@ -1089,9 +1089,7 @@ static void process() {
 /* ==================================
           COMPILE ROUTINE
 =================================== */
-bool compile(char* source, FILE* writeOutstream, FILE* logOutstream, bool verbose) {
-  /* Initialize disassembler */
-  initDisassembler(verbose, logOutstream);
+bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler) {
   /* Initialize scanner */
   initScanner(source);
   advance(); // Move to the first token
@@ -1110,5 +1108,9 @@ bool compile(char* source, FILE* writeOutstream, FILE* logOutstream, bool verbos
     process();
   }
   disassembleChunk(compiler->chunk, disassembler);
+
+  /* Write the output */
+  fwrite(compiler->chunk->instructions, sizeof(uint32_t), sizeof(uint32_t)*compiler->chunk->count, writeOutstream);
+
   return parser.hadError;
 }

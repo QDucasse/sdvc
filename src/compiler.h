@@ -2,6 +2,7 @@
 #define sdvu_compiler_h
 
 #include "chunk.h"
+#include "disassembler.h"
 #include "mmemory.h"
 #include "register.h"
 #include "scanner.h"
@@ -32,6 +33,6 @@ void initCompiler();
 void freeCompiler();
 
 /* Compile routine */
-bool compile(char* source, FILE* writeOutstream, FILE* logOutstream, bool verbose);
+bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler);
 
 #endif

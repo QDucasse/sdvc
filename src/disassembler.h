@@ -23,9 +23,11 @@ typedef struct {
 Disassembler* disassembler;
 
 void initDisassembler(bool verbose, FILE* outstream);
+void freeDisassembler();
 void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler);
 void showTableState(Table* table, Disassembler* disassembler);
 void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister, Disassembler* disassembler);
 void disassembleChunk(Chunk* chunk, Disassembler* disassembler);
+void disassembleBinary(const char* fileContent, Disassembler* disassembler);
 
 #endif

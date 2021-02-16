@@ -71,17 +71,27 @@ static void scanFile(const char* path, FILE* outstream) {
 
 /* Compiler a given file */
 static void compileFile(const char* path, FILE* writeOutstream, FILE* logOutstream, bool verbose) {
-  initCompiler();
+  /* Read file */
   char* source = readFile(path);
-  compile(source, writeOutstream, logOutstream, verbose);
+  /* Setup disassembler */
+  initDisassembler(verbose, logOutstream);
+  /* Setup compiler */
+  initCompiler();
+  compile(source, writeOutstream, disassembler);
+  /* Free resources */
   freeCompiler();
+  freeDisassembler();
   free(source);
 }
 
 /* Disassemble a given file */
 static void disassembleFile(const char* path, FILE* logOutstream, bool verbose) {
-  char* source = readFile(path);
-  free(source);
+  /* Setup disassembler */
+  initDisassembler(verbose, logOutstream);
+  /* Disassemble binary file */
+  disassembleBinary(path, disassembler);
+  /* Free resources */
+  freeDisassembler();
 }
 
 /* ==================================
@@ -122,6 +132,8 @@ int main(int argc, char *argv[]) {
       mode = DISASSEMBLE_MODE;
       disassembleTarget = argv[optind + 1];
       optind++;
+      /* Force verbose to true */
+      verbose = true;
       break;
     }
     case 's': {
@@ -136,7 +148,7 @@ int main(int argc, char *argv[]) {
       break;
     }
     case 'o': {
-      writeOutstream = fopen(argv[optind + 1], "a");
+      writeOutstream = fopen(argv[optind + 1], "w");
       optind++;
       break;
     }

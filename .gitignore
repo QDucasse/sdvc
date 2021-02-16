@@ -27,3 +27,9 @@ _deps
 # Executable
 sdvc
 sdvc.cbp
+
+# Binaries
+bin/
+
+# Logs
+log/
