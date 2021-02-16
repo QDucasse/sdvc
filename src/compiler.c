@@ -1110,7 +1110,7 @@ bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler) {
   disassembleChunk(compiler->chunk, disassembler);
 
   /* Write the output */
-  fwrite(compiler->chunk->instructions, sizeof(uint32_t), sizeof(uint32_t)*compiler->chunk->count, writeOutstream);
+  fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
 
   return parser.hadError;
 }
