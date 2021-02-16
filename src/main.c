@@ -5,6 +5,8 @@
 #include "compiler.h"
 #include "scanner.h"
 
+FILE* outstream;
+
 /* ==================================
           EXECUTION METHODS
 ====================================*/
@@ -51,7 +53,7 @@ static char* readFile(const char* path) {
 ======= */
 
 /* Scan a given file */
-static void scanFile(const char* path, FILE* outstream, bool verbose) {
+static void scanFile(const char* path, FILE* outstream) {
   char* source = readFile(path);
   initScanner(source);
   Token token;
@@ -70,7 +72,7 @@ static void scanFile(const char* path, FILE* outstream, bool verbose) {
 static void compileFile(const char* path, FILE* outstream, bool verbose) {
   initCompiler();
   char* source = readFile(path);
-  compile(source);
+  compile(source, outstream, verbose);
   freeCompiler();
   free(source);
 }
@@ -94,7 +96,7 @@ int main(int argc, char *argv[])
   char* disassembleTarget = NULL;
   char* scanTarget = NULL;
   /* Default output stream */
-  FILE* outstream = stdout;
+  outstream = stdout;
 
   /* Modes */
   enum {
@@ -124,7 +126,7 @@ int main(int argc, char *argv[])
       break;
     }
     case 'o': {
-      outstream = (FILE*) argv[optind + 1];
+      outstream = fopen(argv[optind + 1], "w");
       break;
     }
     case 'v': verbose = true; break;
@@ -136,9 +138,9 @@ int main(int argc, char *argv[])
 
   /* Using arguments */
   switch (mode) {
-    case COMPILE_MODE:     compileFile(compileTarget, outstream, verbose);         break;
+    case COMPILE_MODE:     compileFile(compileTarget, outstream, verbose); break;
     case DISASSEMBLE_MODE: disassembleFile(disassembleTarget, outstream, verbose); break;
-    case SCAN_MODE:        scanFile(disassembleTarget, outstream, verbose);        break;
+    case SCAN_MODE:        scanFile(scanTarget, outstream); break;
     case ERROR_MODE: {
       fprintf(stderr, "Usage: %s [-cds] [file...]\n", argv[0]);
       exit(64);
@@ -146,4 +148,6 @@ int main(int argc, char *argv[])
     }
     default: break; // Unreachable
   }
+  /* Close file if used instead of stdout */
+  if (outstream != stdout) fclose(outstream);
 }

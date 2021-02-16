@@ -1090,7 +1090,7 @@ static void process() {
 /* ==================================
           COMPILE ROUTINE
 =================================== */
-bool compile(char* source) {
+bool compile(char* source, FILE* outstream, bool verbose) {
   /* Initialize scanner */
   initScanner(source);
   advance(); // Move to the first token
@@ -1102,13 +1102,12 @@ bool compile(char* source) {
   while(!check(TOKEN_PROCESS)) {
     globalDeclaration();
   }
-
-
-  showTableState(compiler->globals);
+  /* Show the table state if the verbose option is checked */
+  if (verbose) showTableState(compiler->globals, outstream);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
     process();
   }
-  disassembleChunk(compiler->chunk);
+  disassembleChunk(compiler->chunk, outstream);
   return parser.hadError;
 }

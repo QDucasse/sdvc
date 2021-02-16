@@ -44,7 +44,7 @@ char* storeConfigs[] = {
   [STORE_RAA] = "STORE_RAA"
 };
 
-void disassembleInstruction(uint32_t bitInstruction) {
+void disassembleInstruction(uint32_t bitInstruction, FILE* outstream) {
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
   /* Test if the instruction is binary or not */
   if (op_code < OP_NOT) { // BINARY
@@ -146,10 +146,10 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
   printf("=== --------------- ===\n");
 }
 
-void disassembleChunk(Chunk* chunk) {
+void disassembleChunk(Chunk* chunk, FILE* outstream) {
   printf("=== Disassembling resulting chunk ===\n");
   for (int i = 0 ; i < chunk->capacity ; i++) {
-    disassembleInstruction(chunk->instructions[i]);
+    disassembleInstruction(chunk->instructions[i], outstream);
   }
   printf("=== ----------------------------- ===\n");
 }
