@@ -27,10 +27,10 @@ void freeRegister(Register* reg) {
 }
 
 /* Textual representation of a given register */
-void printRegister(Register* reg) {
-  printf("Register number %d containing variable named %s with value '", reg->number, reg->varName->chars);
-  printValue(reg->varValue);
-  printf("' at address %u\n", reg->address);
+void fprintRegister(FILE* outstream, Register* reg) {
+  fprintf(outstream, "Register number %d containing variable named %s with value '", reg->number, reg->varName->chars);
+  fprintValue(outstream, reg->varValue);
+  fprintf(outstream, "' at address %u\n", reg->address);
 }
 
 /* Load a variable in a given register */

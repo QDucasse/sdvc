@@ -32,6 +32,6 @@ void initCompiler();
 void freeCompiler();
 
 /* Compile routine */
-bool compile(char* source);
+bool compile(char* source, FILE* writeOutstream, FILE* logOutstream, bool verbose);
 
 #endif

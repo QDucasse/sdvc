@@ -24,6 +24,6 @@ void freeRegister(Register* reg);
 /* Variable loading */
 void loadVariable(Register* reg, String* varName, Value varValue, uint32_t varAddress);
 /* Printing utility */
-void printRegister(Register* reg);
+void fprintRegister(FILE* outstream, Register* reg);
 
 #endif

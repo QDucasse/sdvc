@@ -12,6 +12,7 @@
 #include "table.h"
 #include "value.h"
 
+extern Disassembler* disassembler;
 
 /* Parser structure */
 typedef struct {
@@ -576,11 +577,11 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     offsetMulInstruction->rd = targetRegister->number;
     /* Write the actual instruction */
     uint32_t bitsInstruction = instructionToUint32(offsetMulInstruction);
-    disassembleInstruction(bitsInstruction);
+    disassembleInstruction(bitsInstruction, disassembler);
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
     if (!isAssignment) incrementTopTempRegister();
-    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, disassembler);
 
     /* Process ADD operation */
     Instruction* addAddressInstruction = initInstruction();
@@ -590,7 +591,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     addAddressInstruction->rd = targetRegister->number;
     addAddressInstruction->cfg_mask = CFG_IR;
     bitsInstruction = instructionToUint32(addAddressInstruction);
-    disassembleInstruction(bitsInstruction);
+    disassembleInstruction(bitsInstruction, disassembler);
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
 
@@ -606,10 +607,10 @@ static void immediateValueNumberOperand(bool isLeftSide, Instruction* instructio
   /* Immediate Value */
   if (isLeftSide) {
     instruction->imma = (unsigned int) strtol(parser.current.start, NULL, 0); // Left side
-    printf("LHS: Setting Immediate value %u!\n", instruction->imma);
+    if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting Immediate value %u!\n", instruction->imma);
   } else {
     instruction->immb = (unsigned int) strtol(parser.current.start, NULL, 0); // Right side
-    printf("RHS: Setting Immediate value %u!\n", instruction->immb);
+    if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting Immediate value %u!\n", instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
@@ -622,10 +623,10 @@ static void immediateValueBooleanOperand(bool isLeftSide, Instruction* instructi
   /* Immediate boolean value */
   if (isLeftSide) {
     instruction->imma = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Left side
-    printf("LHS: Setting Immediate boolean value %u!\n", instruction->imma);
+    if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting Immediate boolean value %u!\n", instruction->imma);
   } else {
     instruction->immb = (unsigned int) check(TOKEN_TRUE) ? 1 : 0; // Right side
-    printf("RHS: Setting Immediate boolean value %u!\n", instruction->immb);
+    if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting Immediate boolean value %u!\n", instruction->immb);
   }
   /* Set corresponding cfg bit to 1 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b1 << 1 : 0b1;
@@ -649,10 +650,10 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
     /* Set the resolved register to the corresponding register */
     if (isLeftSide) {
       instruction->ra = foundReg->number;
-      printf("LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
+      if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting resolved register %u as a temporary!\n", instruction->ra);
     } else {
       instruction->rb = foundReg->number;
-      printf("RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
+      if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting resolved register %u as a temporary!\n", instruction->rb);
     }
   }
   /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
@@ -674,19 +675,19 @@ static void globVariableOperand(bool isLeftSide, Instruction* instruction, Strin
     Register* loadedReg = loadGlob(globKey);
     if (isLeftSide) {
       instruction->ra = loadedReg->number;
-      printf("LHS: Setting resolved register %u as a global to load!\n", instruction->ra);
+      if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting resolved register %u as a global to load!\n", instruction->ra);
     } else {
       instruction->rb = loadedReg->number;
-      printf("RHS: Setting resolved register %u as a global to load!\n", instruction->rb);
+      if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting resolved register %u as a global to load!\n", instruction->rb);
     }
     instruction->addr = loadedReg->address;
   } else {
     if (isLeftSide) {
       instruction->ra = foundReg->number;
-      printf("LHS: Setting resolved register %u as a global found in the registers!\n", instruction->ra);
+      if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting resolved register %u as a global found in the registers!\n", instruction->ra);
     } else {
       instruction->rb = foundReg->number;
-      printf("RHS: Setting resolved register %u as a global found in the registers!\n", instruction->rb);
+      if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting resolved register %u as a global found in the registers!\n", instruction->rb);
     }
     instruction->addr = foundReg->address;
   }
@@ -717,7 +718,7 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
-  disassembleInstruction(bitsInstruction);
+  disassembleInstruction(bitsInstruction, disassembler);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Consume the closing square bracket */
@@ -727,10 +728,10 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   /* Set the resolved register to the corresponding register */
   if (isLeftSide) {
     instruction->ra = loadedValueRegister->number;
-    printf("LHS: Setting resolved register %u as an array access!\n", instruction->ra);
+    if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting resolved register %u as an array access!\n", instruction->ra);
   } else {
     instruction->rb = loadedValueRegister->number;
-    printf("RHS: Setting resolved register %u as an array access!\n", instruction->rb);
+    if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting resolved register %u as an array access!\n", instruction->rb);
   }
   /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
   instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
@@ -806,7 +807,6 @@ static bool expression(Instruction* instruction) {
   /* If find token NOT setup an a bool flag */
   bool NOTinExpression = false;
   if (check(TOKEN_NOT)) {
-      printf("blip\n");
       advance();
       NOTinExpression = true;
   }
@@ -855,7 +855,7 @@ static void globalArrayAccess(String* globKey) {
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
-  disassembleInstruction(bitsInstruction);
+  disassembleInstruction(bitsInstruction, disassembler);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Consume the closing square bracket */
@@ -868,7 +868,7 @@ static void globalArrayAccess(String* globKey) {
   /* Determine rd */
   expressionInstruction->rd = loadedValueRegister->number;
   bitsInstruction = instructionToUint32(expressionInstruction);
-  disassembleInstruction(bitsInstruction);
+  disassembleInstruction(bitsInstruction, disassembler);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
 
@@ -876,7 +876,7 @@ static void globalArrayAccess(String* globKey) {
   if (negated) {
     Instruction* notInstr = initInstruction();
     uint32_t bitsNotInstruction = notInstruction(notInstr, expressionInstruction->rd);
-    disassembleInstruction(bitsNotInstruction);
+    disassembleInstruction(bitsNotInstruction, disassembler);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
   }
@@ -884,13 +884,12 @@ static void globalArrayAccess(String* globKey) {
   /* Write Store for the array element */
   Instruction* storeInstruction = initInstruction();
   storeInstruction->op_code = OP_STORE;
-  printRegister(loadedValueRegister);
   storeInstruction->rd = loadedValueRegister->number;
   storeInstruction->ra = addressRegister->number;
   storeInstruction->cfg_mask = STORE_RAA; // STOREs_REG_AS_ADDR to define
   storeInstruction->type = typeCode;
   bitsInstruction = instructionToUint32(storeInstruction);
-  disassembleInstruction(bitsInstruction);
+  disassembleInstruction(bitsInstruction, disassembler);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   decrementTopTempRegister(); // Loaded value processed
@@ -916,14 +915,14 @@ static void globalAssignment(String* globKey) {
   }
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
-  disassembleInstruction(bitsInstruction);
+  disassembleInstruction(bitsInstruction, disassembler);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Write not instruction */
   if (negated) {
     Instruction* notInstr = initInstruction();
     uint32_t bitsNotInstruction = notInstruction(notInstr, instruction->rd);
-    disassembleInstruction(bitsNotInstruction);
+    disassembleInstruction(bitsNotInstruction, disassembler);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
   }
@@ -955,14 +954,14 @@ static void tempAssignment() {
   instruction->rd = incrementTopTempRegister();
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
-  disassembleInstruction(bitsInstruction);
+  disassembleInstruction(bitsInstruction, disassembler);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Write not instruction */
   if (negated) {
     Instruction* notInstr = initInstruction();
     uint32_t bitsNotInstruction = notInstruction(notInstr, instruction->rd);
-    disassembleInstruction(bitsNotInstruction);
+    disassembleInstruction(bitsNotInstruction, disassembler);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
   }
@@ -991,7 +990,7 @@ static void assignment() {
   }
 
   if (parser.panicMode) synchronize();
-  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, disassembler);
 }
 
 
@@ -1060,7 +1059,7 @@ static void endProcess(int jmpSrc) {
   writeChunk(compiler->chunk, bitRstJump);
   compiler->pc += 4;
   /* Patch the jump from guardcondition */
-  printf("Backpatching Jump from: %d\n", jmpSrc);
+  if (disassembler->verbose) fprintf(disassembler->outstream, "Backpatching Jump from: %d\n", jmpSrc);
   uint32_t oldInstr = compiler->chunk->instructions[jmpSrc-1];
   compiler->chunk->instructions[jmpSrc-1] = (oldInstr & 0xFF000000) | (compiler->pc);
   /* Reset PC */
@@ -1090,7 +1089,9 @@ static void process() {
 /* ==================================
           COMPILE ROUTINE
 =================================== */
-bool compile(char* source, FILE* outstream, bool verbose) {
+bool compile(char* source, FILE* writeOutstream, FILE* logOutstream, bool verbose) {
+  /* Initialize disassembler */
+  initDisassembler(verbose, logOutstream);
   /* Initialize scanner */
   initScanner(source);
   advance(); // Move to the first token
@@ -1103,11 +1104,11 @@ bool compile(char* source, FILE* outstream, bool verbose) {
     globalDeclaration();
   }
   /* Show the table state if the verbose option is checked */
-  if (verbose) showTableState(compiler->globals, outstream);
+  showTableState(compiler->globals, disassembler);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
     process();
   }
-  disassembleChunk(compiler->chunk, outstream);
+  disassembleChunk(compiler->chunk, disassembler);
   return parser.hadError;
 }

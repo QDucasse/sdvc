@@ -138,7 +138,7 @@ void testTableGetToRegister() {
   TEST_ASSERT_EQUAL_STRING(key1, reg1->varName);
   TEST_ASSERT_TRUE(valuesEqual(value, reg1->varValue));
   TEST_ASSERT_EQUAL_UINT32(address, reg1->address);
-  printRegister(reg1);
+  fprintRegister(reg1);
 }
 
 void testTableSetFromRegister() {
@@ -152,5 +152,5 @@ void testTableSetFromRegister() {
   TEST_ASSERT_EQUAL_STRING(reg1->varName, insertedEntry.key);
   TEST_ASSERT_TRUE(valuesEqual(reg1->varValue, insertedEntry.value));
   TEST_ASSERT_EQUAL_UINT32(reg1->address, insertedEntry.address);
-  printRegister(reg1);
+  fprintRegister(reg1);
 }

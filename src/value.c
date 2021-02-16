@@ -9,15 +9,15 @@
 =================================== */
 
 /* Print Value */
-void printValue(Value value) {
+void fprintValue(FILE* outstream, Value value) {
   switch (value.type) {
-    case VAL_NIL: printf("nil"); break;
+    case VAL_NIL: fprintf(outstream, "nil"); break;
     case VAL_BOOL:
-      printf(AS_BOOL(value) ? "true" : "false");
+      fprintf(outstream, AS_BOOL(value) ? "true" : "false");
       break;
-    case VAL_BYTE: printf("%u", AS_BYTE(value)); break;
-    case VAL_INT: printf("%d", AS_INT(value)); break;
-    case VAL_STATE: printf("state %d out of %d", AS_STATE(value).currentState, AS_STATE(value).stateNumber); break;
+    case VAL_BYTE: fprintf(outstream, "%u", AS_BYTE(value)); break;
+    case VAL_INT: fprintf(outstream, "%d", AS_INT(value)); break;
+    case VAL_STATE: fprintf(outstream, "state %d out of %d", AS_STATE(value).currentState, AS_STATE(value).stateNumber); break;
   }
 }
 

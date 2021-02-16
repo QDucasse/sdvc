@@ -15,10 +15,17 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
-void disassembleInstruction(uint32_t bitInstruction);
-void showTableState(Table* table);
-void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister);
-void disassembleChunk(Chunk* chunk);
+typedef struct {
+  bool verbose;
+  FILE* outstream;
+} Disassembler;
 
+Disassembler* disassembler;
+
+void initDisassembler(bool verbose, FILE* outstream);
+void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler);
+void showTableState(Table* table, Disassembler* disassembler);
+void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister, Disassembler* disassembler);
+void disassembleChunk(Chunk* chunk, Disassembler* disassembler);
 
 #endif

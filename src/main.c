@@ -5,7 +5,8 @@
 #include "compiler.h"
 #include "scanner.h"
 
-FILE* outstream;
+FILE* logOutstream;
+FILE* writeOutstream;
 
 /* ==================================
           EXECUTION METHODS
@@ -59,7 +60,7 @@ static void scanFile(const char* path, FILE* outstream) {
   Token token;
   for (;;) {
     token = scanToken();
-    printToken(token);
+    fprintToken(outstream, token);
     if (token.type == TOKEN_EOF) {
       fprintf(outstream, "File scanned\n");
       break;
@@ -69,16 +70,16 @@ static void scanFile(const char* path, FILE* outstream) {
 }
 
 /* Compiler a given file */
-static void compileFile(const char* path, FILE* outstream, bool verbose) {
+static void compileFile(const char* path, FILE* writeOutstream, FILE* logOutstream, bool verbose) {
   initCompiler();
   char* source = readFile(path);
-  compile(source, outstream, verbose);
+  compile(source, writeOutstream, logOutstream, verbose);
   freeCompiler();
   free(source);
 }
 
 /* Disassemble a given file */
-static void disassembleFile(const char* path, FILE* outstream, bool verbose) {
+static void disassembleFile(const char* path, FILE* logOutstream, bool verbose) {
   char* source = readFile(path);
   free(source);
 }
@@ -87,16 +88,17 @@ static void disassembleFile(const char* path, FILE* outstream, bool verbose) {
                MAIN
 ====================================*/
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   /* Default values */
   bool verbose = false;
   /* Default string values */
   char* compileTarget = NULL;
   char* disassembleTarget = NULL;
   char* scanTarget = NULL;
+  /* Default write output stream */
+  writeOutstream = stdout;
   /* Default output stream */
-  outstream = stdout;
+  logOutstream = stdout;
 
   /* Modes */
   enum {
@@ -113,34 +115,43 @@ int main(int argc, char *argv[])
     case 'c': {
       mode = COMPILE_MODE;
       compileTarget = argv[optind + 1];
+      optind++;
       break;
     }
     case 'd': {
       mode = DISASSEMBLE_MODE;
       disassembleTarget = argv[optind + 1];
+      optind++;
       break;
     }
     case 's': {
       mode = SCAN_MODE;
       scanTarget = argv[optind + 1];
+      optind++;
+      break;
+    }
+    case 'l': {
+      logOutstream = fopen(argv[optind + 1], "a");
+      optind++;
       break;
     }
     case 'o': {
-      outstream = fopen(argv[optind + 1], "w");
+      writeOutstream = fopen(argv[optind + 1], "a");
+      optind++;
       break;
     }
     case 'v': verbose = true; break;
     default:
-      fprintf(stderr, "Usage: %s [-cds] [file...]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-cdlosv] [file...]\n", argv[0]);
       exit(64);
     }
   }
 
   /* Using arguments */
   switch (mode) {
-    case COMPILE_MODE:     compileFile(compileTarget, outstream, verbose); break;
-    case DISASSEMBLE_MODE: disassembleFile(disassembleTarget, outstream, verbose); break;
-    case SCAN_MODE:        scanFile(scanTarget, outstream); break;
+    case COMPILE_MODE:     compileFile(compileTarget, writeOutstream, logOutstream, verbose); break;
+    case DISASSEMBLE_MODE: disassembleFile(disassembleTarget, logOutstream, verbose); break;
+    case SCAN_MODE:        scanFile(scanTarget, logOutstream); break;
     case ERROR_MODE: {
       fprintf(stderr, "Usage: %s [-cds] [file...]\n", argv[0]);
       exit(64);
@@ -149,5 +160,6 @@ int main(int argc, char *argv[])
     default: break; // Unreachable
   }
   /* Close file if used instead of stdout */
-  if (outstream != stdout) fclose(outstream);
+  if (logOutstream != stdout) fclose(logOutstream);
+  if (writeOutstream != stdout) fclose(writeOutstream);
 }

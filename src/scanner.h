@@ -43,6 +43,6 @@ typedef struct {
 
 void initScanner(char* source);
 Token scanToken();
-void printToken(Token token);
+void fprintToken(FILE* outstream, Token token);
 
 #endif

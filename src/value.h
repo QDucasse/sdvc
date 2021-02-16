@@ -48,6 +48,6 @@ typedef struct {
 #define STATE_VAL(currentState, stateNumber) ((Value){VAL_STATE, {.state.currentState = currentState, .state.stateNumber = stateNumber}, sizeof(int)})
 
 bool valuesEqual(Value a, Value b);
-void printValue(Value value);
+void fprintValue(FILE* outstream, Value value);
 
 #endif

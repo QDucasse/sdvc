@@ -318,6 +318,6 @@ static const char* TokenNames[] = {
 };
 
 /* Print the name of the current token */
-void printToken(Token token) {
-  printf("%s\n", TokenNames[token.type]);
+void fprintToken(FILE* outstream, Token token) {
+  fprintf(outstream, "%s\n", TokenNames[token.type]);
 }
