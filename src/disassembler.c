@@ -63,36 +63,7 @@ void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler)
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
-  /* Test if the instruction is binary or not */
-  if (op_code < OP_NOT) { // BINARY
-      unsigned int rd = (bitInstruction & 0x3C00000) >> 22; // 0000 0011 1100 0000 0000 0000 0000 0000
-      unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
-      unsigned int ra = (bitInstruction & 0x7800) >> 11;        // 0000 0000 0000 0000 0111 1000 0000 0000
-      unsigned int rb = (bitInstruction & 0xF);                 // 0000 0000 0000 0000 0000 0000 0000 1111
-      unsigned int imma = (bitInstruction & 0x3FF800) >> 11;      // 0000 0000 0011 1111 1111 1000 0000 0000
-      unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
-
-      switch (cfg_mask) {
-          case CFG_RR:
-              fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                     rd, ra, rb);
-              break;
-          case CFG_RI:
-              fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                     rd, ra, immb);
-              break;
-          case CFG_IR:
-              fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                     rd, imma, rb);
-              break;
-          case CFG_II:
-              fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                     rd, imma, immb);
-              break;
-          default:
-              break; // Unreachable
-      }
-  } else if (op_code == OP_NOT) {
+  if (op_code == OP_NOT) {
     unsigned int rd   = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
     unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
     fprintf(outstream, WHT "  OP_NOT -                   - Rd: %2u -   Ra: %5u\n" RESET, rd, ra);
@@ -126,7 +97,35 @@ void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler)
     unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
     unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
     fprintf(outstream, YEL "%8s -                   - Rd: %2u - Addr: %5u\n" RESET, codeNames[op_code], rd, addr);
-  }
+  } else { // BINARY
+        unsigned int rd = (bitInstruction & 0x3C00000) >> 22;       // 0000 0011 1100 0000 0000 0000 0000 0000
+        unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+        unsigned int ra = (bitInstruction & 0x7800) >> 11;          // 0000 0000 0000 0000 0111 1000 0000 0000
+        unsigned int rb = (bitInstruction & 0xF);                   // 0000 0000 0000 0000 0000 0000 0000 1111
+        unsigned int imma = (bitInstruction & 0x3FF800) >> 11;      // 0000 0000 0011 1111 1111 1000 0000 0000
+        unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
+
+        switch (cfg_mask) {
+            case CFG_RR:
+                fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                       rd, ra, rb);
+                break;
+            case CFG_RI:
+                fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                       rd, ra, immb);
+                break;
+            case CFG_IR:
+                fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                       rd, imma, rb);
+                break;
+            case CFG_II:
+                fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+                       rd, imma, immb);
+                break;
+            default:
+                break; // Unreachable
+        }
+    }
 }
 
 /* Prints the table state if the verbose option is checked */

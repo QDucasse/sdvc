@@ -1,19 +1,19 @@
 state {a(0), b(1)} P1.state = 0;
 state {a(0), b(1)} P2.state = 0;
 int P1.x = 1;
-int blip[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int P1.y = 2;
 int P2.z = 0;
 int P2.w = 0;
 	process P1
 		guardblock
 			temp bool t_0 = P1.state == 1,
-			temp bool t_1 = not t_0;
+			temp bool t_1 = t_0 and array[0];
 
 		guardcondition t_1;
 		effect
-			blip[5] = 1,
-			P1.state = 1;
+			P1.state = 1,
+			array[5] = 1;
 
 	process P2
 		guardblock

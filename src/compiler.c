@@ -1111,6 +1111,6 @@ bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler) {
 
   /* Write the output */
   fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
-
+  fprintf(disassembler->outstream, "Compilation completed. Total number of instructions: %u\n", compiler->chunk->count);
   return parser.hadError;
 }
