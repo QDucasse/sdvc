@@ -124,6 +124,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
               default:
                   break;// Unreachable
           }
+          break;
       }
 
       /* STORE OPERATION
@@ -145,6 +146,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
               default:
                   break; // Unreachable
           }
+          break;
       }
 
       /* JUMP OPERATION
@@ -155,6 +157,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
           convertedInstruction |= instruction->rd << 24;
           /* Adding address */
           convertedInstruction |= instruction->addr;
+          break;
       }
 
       /* NOT OPERATION
@@ -165,6 +168,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
           convertedInstruction |= instruction->rd << 24;
           /* Adding address */
           convertedInstruction |= instruction->ra;
+          break;
       }
       /* BINARY OPERATION
       ================ */
@@ -206,6 +210,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
             default:
                 break; // Unreachable
           }
+          break;
       }
   }
   return convertedInstruction;
@@ -345,6 +350,7 @@ uint32_t notInstruction(Instruction* instruction, unsigned int rd) {
 void writeStoreFromRegister(Register* reg, Chunk* chunk) {
   Instruction* strInstruction = initInstruction();
   uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
+  disassembleInstruction(bitStoreInstruction);
   writeChunk(chunk, bitStoreInstruction);
   emptyRegister(reg);
 }
@@ -354,5 +360,6 @@ void writeStoreFromRegister(Register* reg, Chunk* chunk) {
 void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   Instruction* loadInstruction = initInstruction();
   uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
+  disassembleInstruction(bitLoadInstruction);
   writeChunk(chunk, bitLoadInstruction);
 }

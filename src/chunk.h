@@ -1,6 +1,6 @@
 
-#ifndef sdvu_instruction_h
-#define sdvu_instruction_h
+#ifndef sdvu_chunk_h
+#define sdvu_chunk_h
 
 #include "common.h"
 #include "register.h"

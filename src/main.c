@@ -70,14 +70,14 @@ static void scanFile(const char* path, FILE* outstream) {
 }
 
 /* Compiler a given file */
-static void compileFile(const char* path, FILE* writeOutstream, FILE* logOutstream, bool verbose) {
+static void compileFile(const char* path, bool verbose) {
   /* Read file */
   char* source = readFile(path);
   /* Setup disassembler */
   initDisassembler(verbose, logOutstream);
   /* Setup compiler */
   initCompiler();
-  compile(source, writeOutstream, disassembler);
+  compile(source, writeOutstream);
   /* Free resources */
   freeCompiler();
   freeDisassembler();
@@ -85,11 +85,11 @@ static void compileFile(const char* path, FILE* writeOutstream, FILE* logOutstre
 }
 
 /* Disassemble a given file */
-static void disassembleFile(const char* path, FILE* logOutstream, bool verbose) {
+static void disassembleFile(const char* path, bool verbose) {
   /* Setup disassembler */
   initDisassembler(verbose, logOutstream);
   /* Disassemble binary file */
-  disassembleBinary(path, disassembler);
+  disassembleBinary(path);
   /* Free resources */
   freeDisassembler();
 }
@@ -161,8 +161,8 @@ int main(int argc, char *argv[]) {
 
   /* Using arguments */
   switch (mode) {
-    case COMPILE_MODE:     compileFile(compileTarget, writeOutstream, logOutstream, verbose); break;
-    case DISASSEMBLE_MODE: disassembleFile(disassembleTarget, logOutstream, verbose); break;
+    case COMPILE_MODE:     compileFile(compileTarget, verbose); break;
+    case DISASSEMBLE_MODE: disassembleFile(disassembleTarget, verbose); break;
     case SCAN_MODE:        scanFile(scanTarget, logOutstream); break;
     case ERROR_MODE: {
       fprintf(stderr, "Usage: %s [-cds] [file...]\n", argv[0]);

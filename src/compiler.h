@@ -33,6 +33,6 @@ void initCompiler();
 void freeCompiler();
 
 /* Compile routine */
-bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler);
+bool compile(char* source, FILE* writeOutstream);
 
 #endif

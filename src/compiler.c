@@ -577,11 +577,11 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     offsetMulInstruction->rd = targetRegister->number;
     /* Write the actual instruction */
     uint32_t bitsInstruction = instructionToUint32(offsetMulInstruction);
-    disassembleInstruction(bitsInstruction, disassembler);
+    disassembleInstruction(bitsInstruction);
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
     if (!isAssignment) incrementTopTempRegister();
-    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, disassembler);
+    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
 
     /* Process ADD operation */
     Instruction* addAddressInstruction = initInstruction();
@@ -591,7 +591,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     addAddressInstruction->rd = targetRegister->number;
     addAddressInstruction->cfg_mask = CFG_IR;
     bitsInstruction = instructionToUint32(addAddressInstruction);
-    disassembleInstruction(bitsInstruction, disassembler);
+    disassembleInstruction(bitsInstruction);
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
 
@@ -718,7 +718,7 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
-  disassembleInstruction(bitsInstruction, disassembler);
+  disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Consume the closing square bracket */
@@ -855,7 +855,7 @@ static void globalArrayAccess(String* globKey) {
   incrementTopTempRegister();
   /* Write the load instruction */
   uint32_t bitsInstruction = instructionToUint32(loadValueInstruction);
-  disassembleInstruction(bitsInstruction, disassembler);
+  disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Consume the closing square bracket */
@@ -868,7 +868,7 @@ static void globalArrayAccess(String* globKey) {
   /* Determine rd */
   expressionInstruction->rd = loadedValueRegister->number;
   bitsInstruction = instructionToUint32(expressionInstruction);
-  disassembleInstruction(bitsInstruction, disassembler);
+  disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
 
@@ -876,7 +876,7 @@ static void globalArrayAccess(String* globKey) {
   if (negated) {
     Instruction* notInstr = initInstruction();
     uint32_t bitsNotInstruction = notInstruction(notInstr, expressionInstruction->rd);
-    disassembleInstruction(bitsNotInstruction, disassembler);
+    disassembleInstruction(bitsNotInstruction);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
   }
@@ -889,7 +889,7 @@ static void globalArrayAccess(String* globKey) {
   storeInstruction->cfg_mask = STORE_RAA; // STOREs_REG_AS_ADDR to define
   storeInstruction->type = typeCode;
   bitsInstruction = instructionToUint32(storeInstruction);
-  disassembleInstruction(bitsInstruction, disassembler);
+  disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   decrementTopTempRegister(); // Loaded value processed
@@ -915,14 +915,14 @@ static void globalAssignment(String* globKey) {
   }
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
-  disassembleInstruction(bitsInstruction, disassembler);
+  disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Write not instruction */
   if (negated) {
     Instruction* notInstr = initInstruction();
     uint32_t bitsNotInstruction = notInstruction(notInstr, instruction->rd);
-    disassembleInstruction(bitsNotInstruction, disassembler);
+    disassembleInstruction(bitsNotInstruction);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
   }
@@ -954,14 +954,14 @@ static void tempAssignment() {
   instruction->rd = incrementTopTempRegister();
   /* Write instruction */
   uint32_t bitsInstruction = instructionToUint32(instruction);
-  disassembleInstruction(bitsInstruction, disassembler);
+  disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
   /* Write not instruction */
   if (negated) {
     Instruction* notInstr = initInstruction();
     uint32_t bitsNotInstruction = notInstruction(notInstr, instruction->rd);
-    disassembleInstruction(bitsNotInstruction, disassembler);
+    disassembleInstruction(bitsNotInstruction);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
   }
@@ -990,7 +990,7 @@ static void assignment() {
   }
 
   if (parser.panicMode) synchronize();
-  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, disassembler);
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
 }
 
 
@@ -1089,7 +1089,7 @@ static void process() {
 /* ==================================
           COMPILE ROUTINE
 =================================== */
-bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler) {
+bool compile(char* source, FILE* writeOutstream) {
   /* Initialize scanner */
   initScanner(source);
   advance(); // Move to the first token
@@ -1102,12 +1102,12 @@ bool compile(char* source, FILE* writeOutstream, Disassembler* disassembler) {
     globalDeclaration();
   }
   /* Show the table state if the verbose option is checked */
-  showTableState(compiler->globals, disassembler);
+  showTableState(compiler->globals);
   /* Go through processes */
   while(!match(TOKEN_EOF)) {
     process();
   }
-  disassembleChunk(compiler->chunk, disassembler);
+  disassembleChunk(compiler->chunk);
 
   /* Write the output */
   fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);

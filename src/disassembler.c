@@ -58,7 +58,7 @@ void freeDisassembler() {
   FREE(disassembler);
 }
 
-void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler) {
+void disassembleInstruction(uint32_t bitInstruction) {
   /* If not verbose quit immediately */
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
@@ -129,7 +129,7 @@ void disassembleInstruction(uint32_t bitInstruction, Disassembler* disassembler)
 }
 
 /* Prints the table state if the verbose option is checked */
-void showTableState(Table* table, Disassembler* disassembler) {
+void showTableState(Table* table) {
   /* If not verbose quit immediately */
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
@@ -144,7 +144,7 @@ void showTableState(Table* table, Disassembler* disassembler) {
   fprintf(outstream, "=== --------------------------- ===\n");
 }
 
-void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister, Disassembler* disassembler) {
+void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister) {
   /* If not verbose quit immediately */
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
@@ -169,18 +169,18 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
   fprintf(outstream, "=== --------------- ===\n");
 }
 
-void disassembleChunk(Chunk* chunk, Disassembler* disassembler) {
+void disassembleChunk(Chunk* chunk) {
   /* If not verbose quit immediately */
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
   fprintf(outstream,"=== Disassembling resulting chunk ===\n");
   for (int i = 0 ; i < chunk->capacity ; i++) {
-    disassembleInstruction(chunk->instructions[i], disassembler);
+    disassembleInstruction(chunk->instructions[i]);
   }
   fprintf(outstream, "=== ----------------------------- ===\n");
 }
 
-void disassembleBinary(const char* path, Disassembler* disassembler) {
+void disassembleBinary(const char* path) {
   /* Create buffer to read into */
   uint32_t buf;
   /* Open the file to read */
@@ -188,7 +188,7 @@ void disassembleBinary(const char* path, Disassembler* disassembler) {
   if (file == NULL) exit(64);
   /* Loop over, fill the buffer then disassemble */
   while (fread(&buf, sizeof(buf), 1, file) == 1) {
-      disassembleInstruction(buf, disassembler);
+      disassembleInstruction(buf);
   }
   fclose(file);
 }
