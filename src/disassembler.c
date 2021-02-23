@@ -64,7 +64,7 @@ void disassembleInstruction(uint32_t bitInstruction) {
   FILE* outstream = disassembler->outstream;
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
   if (op_code == OP_NOT) {
-    unsigned int rd   = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+    unsigned int rd   = (bitInstruction & 0x0F00000) >> 24; // 0000 1111 0000 0000 0000 0000 0000 0000
     unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
     fprintf(outstream, WHT "  OP_NOT -                   - Rd: %2u -   Ra: %5u\n" RESET, rd, ra);
   } else if (op_code == OP_LOAD) {
