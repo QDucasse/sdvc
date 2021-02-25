@@ -295,7 +295,7 @@ static void intVal(String* varName, int length) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
-  compiler->globals->currentAddress += sizeof(uint16_t) * length;
+  compiler->globals->currentAddress += sizeof(int) * length;
 }
 
 /* Globals Declarations
@@ -423,7 +423,7 @@ static void globalStateDeclaration() {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
-  compiler->globals->currentAddress += sizeof(int);
+  compiler->globals->currentAddress += sizeof(uint16_t);
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
 
