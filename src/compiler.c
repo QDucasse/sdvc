@@ -259,7 +259,7 @@ static void boolVal(String* varName, int length) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added bool */
-  compiler->globals->currentAddress += sizeof(bool) * length;
+  compiler->globals->currentAddress += BOOL_SIZE * length;
 }
 
 static void byteVal(String* varName, int length) {
@@ -277,7 +277,7 @@ static void byteVal(String* varName, int length) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added byte */
-  compiler->globals->currentAddress += sizeof(uint8_t) * length;
+  compiler->globals->currentAddress += BYTE_SIZE * length;
 }
 
 static void intVal(String* varName, int length) {
@@ -295,7 +295,7 @@ static void intVal(String* varName, int length) {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
-  compiler->globals->currentAddress += sizeof(int) * length;
+  compiler->globals->currentAddress += INT_SIZE * length;
 }
 
 /* Globals Declarations
@@ -423,7 +423,7 @@ static void globalStateDeclaration() {
   /* Add to the globals table */
   tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
-  compiler->globals->currentAddress += sizeof(uint16_t);
+  compiler->globals->currentAddress += STATE_SIZE;
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
 

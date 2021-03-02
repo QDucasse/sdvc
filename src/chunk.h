@@ -38,6 +38,12 @@
 #define STORE_ADR 0b00
 #define STORE_RAA 0b01
 
+/* Type sizes */
+#define BOOL_SIZE  8
+#define BYTE_SIZE  8
+#define INT_SIZE   32
+#define STATE_SIZE 16
+
 /* Chunk of instructions definition */
 typedef struct {
   int count;              // Number of allocated entries in use
