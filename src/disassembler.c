@@ -67,6 +67,10 @@ void disassembleInstruction(uint32_t bitInstruction) {
     unsigned int rd   = (bitInstruction & 0x0F00000) >> 24; // 0000 1111 0000 0000 0000 0000 0000 0000
     unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
     fprintf(outstream, WHT "  OP_NOT -                   - Rd: %2u -   Ra: %5u\n" RESET, rd, ra);
+  // } else if (op_code == OP_NOP) {
+  //   fprintf(outstream, CYN "OP_NOP\n");
+  } else if (op_code == OP_ENDGA){
+    fprintf(outstream, CYN "OP_ENDGA\n");
   } else if (op_code == OP_LOAD) {
     unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
     unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000

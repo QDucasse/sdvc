@@ -97,6 +97,11 @@ uint32_t instructionToUint32(Instruction* instruction) {
   /* Adding op code to the instruction*/
   uint32_t convertedInstruction = instruction->op_code << 28;
   switch(instruction->op_code) {
+      /* NOP AND ENDGA OPERATIONS
+      ======================== */
+      // case OP_NOP: break;
+      case OP_ENDGA: break;
+
       /* LOAD OPERATION
       ============== */
       case OP_LOAD: {
@@ -284,15 +289,6 @@ uint32_t jumpInstruction(Instruction* instruction,  unsigned int rd, unsigned in
   return instructionToUint32(instruction);
 }
 
-/* Emit reset jump */
-uint32_t resetJump(Instruction* instruction) {
-  instruction->op_code = OP_JMP;
-  instruction->rd = 0;
-  instruction->addr = 0;
-  return instructionToUint32(instruction);
-}
-
-
 /* LOAD instructions
 ================= */
 
@@ -362,4 +358,20 @@ void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
   disassembleInstruction(bitLoadInstruction);
   writeChunk(chunk, bitLoadInstruction);
+}
+
+// /* NOP operation
+// ============= */
+// uint32_t nopInstruction(Instruction* instruction) {
+//   instruction->op_code = OP_NOP;
+//   return instructionToUint32(instruction);
+// }
+
+
+/* ENDGA operation
+=============== */
+
+uint32_t endGAInstruction(Instruction* instruction) {
+  instruction->op_code = OP_ENDGA;
+  return instructionToUint32(instruction);
 }

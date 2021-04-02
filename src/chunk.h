@@ -7,6 +7,7 @@
 #include "value.h"
 
 /* OPCODE constants */
+//#define OP_NOP   0b0000
 #define OP_ADD   0b0000
 #define OP_SUB   0b0001
 #define OP_MUL   0b0010
@@ -21,6 +22,8 @@
 #define OP_JMP   0b1011
 #define OP_STORE 0b1100
 #define OP_LOAD  0b1101
+#define OP_ENDGA 0b1110
+
 
 /* CONFIG bitmasks for binary operations */
 #define CFG_RR  0b00
@@ -91,8 +94,6 @@ uint32_t binaryInstructionII(Instruction* instruction, unsigned int op_code, uns
 uint32_t storeInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr, unsigned int type);
 /* Jump Instruction */
 uint32_t jumpInstruction(Instruction* instruction,  unsigned int rd, unsigned int addr);
-/* Emit reset jump */
-uint32_t resetJump(Instruction* instruction);
 /* Load from a register */
 uint32_t loadInstructionReg(Instruction* instruction, unsigned int rd, unsigned int ra);
 /* Load from an immediate value */
@@ -105,5 +106,9 @@ uint32_t notInstruction(Instruction* instruction, unsigned int rd);
 void writeStoreFromRegister(Register* reg, Chunk* chunk);
 /* Write a load instruction from a register */
 void writeLoadFromRegister(Register* reg, Chunk* chunk);
+/* Create a NOP instruction */
+uint32_t nopInstruction(Instruction* instruction);
+/* Create a ENDGA instruction */
+uint32_t endGAInstruction(Instruction* instruction);
 
 #endif

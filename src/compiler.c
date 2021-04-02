@@ -1054,16 +1054,14 @@ static void effect() {
 /* Process end of a process */
 static void endProcess(int jmpSrc) {
   /* Emit a reset jump instruction */
-  Instruction* rstJump = initInstruction();
-  uint32_t bitRstJump = resetJump(rstJump);
-  writeChunk(compiler->chunk, bitRstJump);
-  compiler->pc += 4;
+  Instruction* endGA = initInstruction();
+  uint32_t bitEndGA = endGAInstruction(endGA);
+  writeChunk(compiler->chunk, bitEndGA);
+  incrementPC();
   /* Patch the jump from guardcondition */
   if (disassembler->verbose) fprintf(disassembler->outstream, "Backpatching Jump from: %d\n", jmpSrc);
   uint32_t oldInstr = compiler->chunk->instructions[jmpSrc-1];
   compiler->chunk->instructions[jmpSrc-1] = (oldInstr & 0xFF000000) | (compiler->pc);
-  /* Reset PC */
-  compiler->pc = 0;
   /* Reset top glob and temp registers */
   compiler->topTempRegister = &compiler->registers[0];
   compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
