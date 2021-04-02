@@ -29,10 +29,10 @@ char* binConfigs[] = {
 };
 
 char* typeConfigs[] = {
-  [VAL_BOOL]  = "VAL_BOL",
-  [VAL_BYTE]  = "VAL_BYT",
-  [VAL_INT]   = "VAL_INT",
-  [VAL_STATE] = "VAL_STA"
+  [VAL_BOOL-1]  = "VAL_BOL",
+  [VAL_BYTE-1]  = "VAL_BYT",
+  [VAL_INT-1]   = "VAL_INT",
+  [VAL_STATE-1] = "VAL_STA"
 };
 
 char* loadConfigs[] = {
