@@ -158,6 +158,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
       ============== */
       case OP_JMP: {
           /* JMP OPERATION */
+          fprintf(disassembler->outstream, "bloup\n");
           /* Adding destination register (register holding value to test here) */
           convertedInstruction |= instruction->rd << 24;
           /* Adding address */

@@ -7,22 +7,22 @@
 #include "value.h"
 
 /* OPCODE constants */
-#define OP_NOP   0b0000
-#define OP_ADD   0b0001
-#define OP_SUB   0b0010
-#define OP_MUL   0b0011
-#define OP_DIV   0b0100
-#define OP_MOD   0b0101
-#define OP_AND   0b0110
-#define OP_OR    0b0111
-#define OP_LT    0b1000
-#define OP_GT    0b1001
-#define OP_EQ    0b1010
-#define OP_NOT   0b1011
-#define OP_JMP   0b1100
-#define OP_STORE 0b1101
-#define OP_LOAD  0b1110
-#define OP_ENDGA 0b1111
+#define OP_NOP   0b0000 // 0
+#define OP_ADD   0b0001 // 1
+#define OP_SUB   0b0010 // 2
+#define OP_MUL   0b0011 // 3
+#define OP_DIV   0b0100 // 4
+#define OP_MOD   0b0101 // 5
+#define OP_AND   0b0110 // 6
+#define OP_OR    0b0111 // 7
+#define OP_LT    0b1000 // 8
+#define OP_GT    0b1001 // 9
+#define OP_EQ    0b1010 // A
+#define OP_NOT   0b1011 // B
+#define OP_JMP   0b1100 // C
+#define OP_STORE 0b1101 // D
+#define OP_LOAD  0b1110 // E
+#define OP_ENDGA 0b1111 // F
 
 
 /* CONFIG bitmasks for binary operations */

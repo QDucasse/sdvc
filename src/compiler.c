@@ -108,6 +108,7 @@ void initCompiler() {
   compiler->topTempRegister = &compiler->registers[0];
   compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
   compiler->addressRegister = initRegister(REG_NUMBER);
+  compiler->pc = 0;
 }
 
 
@@ -240,7 +241,8 @@ static bool match(TokenType type) {
 
 /* Utility to increment the PC */
 static void incrementPC() {
-  compiler->pc += 4;
+  if (compiler->pc == 0xFFFFFF) return;
+  compiler->pc += 1;
 }
 
 /* Values
@@ -1058,9 +1060,9 @@ static void endProcess(int jmpSrc) {
   uint32_t bitEndGA = endGAInstruction(endGA);
   writeChunk(compiler->chunk, bitEndGA);
   incrementPC();
+  uint32_t oldInstr = compiler->chunk->instructions[jmpSrc-1];
   /* Patch the jump from guardcondition */
   if (disassembler->verbose) fprintf(disassembler->outstream, "Backpatching Jump from: %d\n", jmpSrc);
-  uint32_t oldInstr = compiler->chunk->instructions[jmpSrc-1];
   compiler->chunk->instructions[jmpSrc-1] = (oldInstr & 0xFF000000) | (compiler->pc);
   /* Reset top glob and temp registers */
   compiler->topTempRegister = &compiler->registers[0];
@@ -1070,6 +1072,7 @@ static void endProcess(int jmpSrc) {
 /* Process declaration */
 static void process() {
   /* Consume process token */
+  printf("PC: %u\n", compiler->pc);
   consume(TOKEN_PROCESS, "Expecting 'process' to begin a process declaration.");
   /* Consume process name */
   consume(TOKEN_IDENTIFIER, "Process should be given a name.");
