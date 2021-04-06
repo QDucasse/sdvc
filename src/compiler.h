@@ -33,6 +33,6 @@ void initCompiler();
 void freeCompiler();
 
 /* Compile routine */
-bool compile(char* source, FILE* writeOutstream);
+bool compile(char* source, int nbTargets, int nbGA, char* binName);
 
 #endif

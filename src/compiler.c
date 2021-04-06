@@ -1072,7 +1072,6 @@ static void endProcess(int jmpSrc) {
 /* Process declaration */
 static void process() {
   /* Consume process token */
-  printf("PC: %u\n", compiler->pc);
   consume(TOKEN_PROCESS, "Expecting 'process' to begin a process declaration.");
   /* Consume process name */
   consume(TOKEN_IDENTIFIER, "Process should be given a name.");
@@ -1090,7 +1089,7 @@ static void process() {
 /* ==================================
           COMPILE ROUTINE
 =================================== */
-bool compile(char* source, FILE* writeOutstream) {
+bool compile(char* source, int nbTargets, int nbGA, char* binName) {
   /* Initialize scanner */
   initScanner(source);
   advance(); // Move to the first token
@@ -1104,14 +1103,34 @@ bool compile(char* source, FILE* writeOutstream) {
   }
   /* Show the table state if the verbose option is checked */
   showTableState(compiler->globals);
-  /* Go through processes */
-  while(!match(TOKEN_EOF)) {
-    process();
-  }
-  disassembleChunk(compiler->chunk);
 
-  /* Write the output */
-  fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
+  /* Distribute the number of GA per target */
+  int gaPerTarget = nbGA / nbTargets;
+  /* Go through processes */
+  int targetCount = 0;
+  while(!match(TOKEN_EOF)) {
+     int count = 0;
+     while (count < gaPerTarget) {
+        process();
+        count++;
+     }
+     disassembleChunk(compiler->chunk);
+     /* Write the output to the binary */
+     char outFileName[100];
+     snprintf(outFileName, 100, "%s.%d", binName, targetCount);
+     FILE* writeOutstream = fopen(outFileName, "w");
+     fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
+
+     /* Reinitialize the compiler */
+     compiler->chunk = initChunk();
+     compiler->topTempRegister = &compiler->registers[0];
+     compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
+     compiler->pc = 0;
+     targetCount++;
+  }
+
+
+
   fprintf(disassembler->outstream, "Compilation completed. Total number of instructions: %u\n", compiler->chunk->count);
   return parser.hadError;
 }

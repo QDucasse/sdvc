@@ -117,7 +117,6 @@ void disassembleInstruction(uint32_t bitInstruction) {
     /* JMP OPERATION
     ============= */
     case OP_JMP: {
-      fprintf(disassembler->outstream, "bloup\n");
       unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
       unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
       fprintf(outstream, YEL "  OP_JMP -                   - Rd: %2u - Addr: %5u\n" RESET, rd, addr);

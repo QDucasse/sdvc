@@ -6,7 +6,7 @@
 #include "scanner.h"
 
 FILE* logOutstream;
-FILE* writeOutstream;
+char* binName;
 
 /* ==================================
           EXECUTION METHODS
@@ -53,6 +53,27 @@ static char* readFile(const char* path) {
 /* Actions
 ======= */
 
+int countOccurencesInString(char* source, char* word) {
+  int stringLen = strlen(source); // length of string
+  int searchLen = strlen(word);   // length of word to be searched
+  int count = 0;
+  int found = 1;
+  for(int i=0 ; i <= stringLen-searchLen ; i++) {
+    /* Match word with string */
+    found = 1;
+    for(int j=0 ; j < searchLen ; j++) {
+      if(source[i + j] != word[j]) {
+        found = 0;
+        break;
+      }
+    }
+    if(found == 1) {
+      count++;
+    }
+  }
+  return count;
+}
+
 /* Scan a given file */
 static void scanFile(const char* path, FILE* outstream) {
   char* source = readFile(path);
@@ -70,14 +91,19 @@ static void scanFile(const char* path, FILE* outstream) {
 }
 
 /* Compiler a given file */
-static void compileFile(const char* path, bool verbose) {
+static void compileFile(const char* path, int nbTargets, bool verbose) {
   /* Read file */
   char* source = readFile(path);
+  /* Count number of guard/actions if needed */
+  int nbGA = 0;
+  if (nbTargets != 1) {
+    nbGA = countOccurencesInString(source, "process");
+  }
   /* Setup disassembler */
   initDisassembler(verbose, logOutstream);
   /* Setup compiler */
   initCompiler();
-  compile(source, writeOutstream);
+  compile(source, nbTargets, nbGA, binName);
   /* Free resources */
   freeCompiler();
   freeDisassembler();
@@ -105,8 +131,10 @@ int main(int argc, char *argv[]) {
   char* compileTarget = NULL;
   char* disassembleTarget = NULL;
   char* scanTarget = NULL;
-  /* Default write output stream */
-  writeOutstream = stdout;
+  /* Number of CPUs */
+  int nbTargets = 1;
+  /* Name of the resulting binary */
+  binName = "a.out";
   /* Default output stream */
   logOutstream = stdout;
 
@@ -115,7 +143,8 @@ int main(int argc, char *argv[]) {
     ERROR_MODE,
     COMPILE_MODE,
     DISASSEMBLE_MODE,
-    SCAN_MODE
+    SCAN_MODE,
+    COUNT_MODE
   } mode = ERROR_MODE;
 
   /* Parsing arguments */
@@ -142,13 +171,18 @@ int main(int argc, char *argv[]) {
       optind++;
       break;
     }
+    case 'n': {
+      nbTargets = atoi(argv[optind + 1]);
+      optind ++;
+      break;
+    }
     case 'l': {
       logOutstream = fopen(argv[optind + 1], "a");
       optind++;
       break;
     }
     case 'o': {
-      writeOutstream = fopen(argv[optind + 1], "w");
+      binName = argv[optind + 1];
       optind++;
       break;
     }
@@ -161,7 +195,7 @@ int main(int argc, char *argv[]) {
 
   /* Using arguments */
   switch (mode) {
-    case COMPILE_MODE:     compileFile(compileTarget, verbose); break;
+    case COMPILE_MODE:     compileFile(compileTarget, nbTargets, verbose); break;
     case DISASSEMBLE_MODE: disassembleFile(disassembleTarget, verbose); break;
     case SCAN_MODE:        scanFile(scanTarget, logOutstream); break;
     case ERROR_MODE: {
@@ -173,5 +207,4 @@ int main(int argc, char *argv[]) {
   }
   /* Close file if used instead of stdout */
   if (logOutstream != stdout) fclose(logOutstream);
-  if (writeOutstream != stdout) fclose(writeOutstream);
 }
