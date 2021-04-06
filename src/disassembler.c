@@ -4,7 +4,7 @@
 #include "chunk.h"
 #include "disassembler.h"
 
-char* codeNames[] = {
+char* binOps[] = {
   [OP_ADD]   = "OP_ADD",
   [OP_SUB]   = "OP_SUB",
   [OP_MUL]   = "OP_MUL",
@@ -14,11 +14,7 @@ char* codeNames[] = {
   [OP_OR]    = "OP_OR",
   [OP_LT]    = "OP_LT",
   [OP_GT]    = "OP_GT",
-  [OP_EQ]    = "OP_EQ",
-  [OP_NOT]   = "OP_NOT",
-  [OP_JMP]   = "OP_JMP",
-  [OP_STORE] = "OP_STORE",
-  [OP_LOAD]  = "OP_LOAD"
+  [OP_EQ]    = "OP_EQ"
 };
 
 char* binConfigs[] = {
@@ -63,45 +59,73 @@ void disassembleInstruction(uint32_t bitInstruction) {
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
   unsigned int op_code = (bitInstruction & 0xF0000000) >> 28;   // 1111 0000 0000 0000 0000 0000 0000 0000
-  if (op_code == OP_NOT) {
-    unsigned int rd   = (bitInstruction & 0x0F00000) >> 24; // 0000 1111 0000 0000 0000 0000 0000 0000
-    unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
-    fprintf(outstream, WHT "  OP_NOT -                   - Rd: %2u -   Ra: %5u\n" RESET, rd, ra);
-  // } else if (op_code == OP_NOP) {
-  //   fprintf(outstream, CYN "OP_NOP\n");
-  } else if (op_code == OP_ENDGA){
-    fprintf(outstream, CYN "OP_ENDGA\n");
-  } else if (op_code == OP_LOAD) {
-    unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
-    unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
-    unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
-    unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
-    unsigned int imma = (bitInstruction & 0x007FF);             // 0000 0000 0000 0000 0000 0111 1111 1111
-    unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
+  // fprintf(outstream, "opcode: %d\n", op_code);
+  switch (op_code) {
+      /* NO OPERATION
+      ============ */
+      case OP_NOP:   fprintf(outstream, WHT "OP_NOP\n" RESET);
 
-    switch (cfg_mask) {
-      case LOAD_REG: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask], rd, ra); break;
-      case LOAD_IMM: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask], rd, imma); break;
-      case LOAD_ADR: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
-      case LOAD_RAA: fprintf(outstream, CYN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
-      default: break; // Unreachable
-    }
-  } else if (op_code == OP_STORE) { // STORE
-    unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
-    unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
-    unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
-    unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
-    unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
-    switch(cfg_mask) {
-      case STORE_ADR: fprintf(outstream, RED "OP_STORE - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
-      case STORE_RAA: fprintf(outstream, MAG "OP_STORE - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
-      default: break;
-    }
-  } else if (op_code == OP_JMP) { // JMP
-    unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
-    unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
-    fprintf(outstream, YEL "%8s -                   - Rd: %2u - Addr: %5u\n" RESET, codeNames[op_code], rd, addr);
-  } else { // BINARY
+      /* LOAD OPERATION
+      ============== */
+      case OP_LOAD: {
+        unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+        unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
+        unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+        unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
+        unsigned int imma = (bitInstruction & 0x007FF);             // 0000 0000 0000 0000 0000 0111 1111 1111
+        unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
+
+        switch (cfg_mask) {
+          case LOAD_REG: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask], rd, ra); break;
+          case LOAD_IMM: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask], rd, imma); break;
+          case LOAD_ADR: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
+          case LOAD_RAA: fprintf(outstream, CYN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
+          default: break; // Unreachable
+        }
+        break;
+      }
+
+      /* STORE OPERATION
+      =============== */
+      case OP_STORE: {
+        unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+        unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
+        unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+        unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
+        unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
+        switch(cfg_mask) {
+          case STORE_ADR: fprintf(outstream, RED "OP_STORE - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
+          case STORE_RAA: fprintf(outstream, MAG "OP_STORE - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
+          default: break;
+        }
+        break;
+      }
+
+      /* NOT OPERATION
+      ============= */
+      case OP_NOT: {
+        unsigned int rd   = (bitInstruction & 0x0F00000) >> 24; // 0000 1111 0000 0000 0000 0000 0000 0000
+        unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
+        fprintf(outstream, WHT "  OP_NOT -                   - Rd: %2u -   Ra: %5u\n" RESET, rd, ra);
+        break;
+      }
+
+      /* JMP OPERATION
+      ============= */
+      case OP_JMP: {
+        unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
+        unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
+        fprintf(outstream, YEL "OP_JMP -                   - Rd: %2u - Addr: %5u\n" RESET, rd, addr);
+        break;
+      }
+
+      /* ENDGA OPERATION
+      =============== */
+      case OP_ENDGA: fprintf(outstream, WHT "OP_ENDGA\n" RESET); break;
+
+      /* BINARY OPERATION
+      ================ */
+      default: {
         unsigned int rd = (bitInstruction & 0x3C00000) >> 22;       // 0000 0011 1100 0000 0000 0000 0000 0000
         unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
         unsigned int ra = (bitInstruction & 0x7800) >> 11;          // 0000 0000 0000 0000 0111 1000 0000 0000
@@ -110,26 +134,93 @@ void disassembleInstruction(uint32_t bitInstruction) {
         unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
 
         switch (cfg_mask) {
-            case CFG_RR:
-                fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                       rd, ra, rb);
-                break;
-            case CFG_RI:
-                fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                       rd, ra, immb);
-                break;
-            case CFG_IR:
-                fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                       rd, imma, rb);
-                break;
-            case CFG_II:
-                fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
-                       rd, imma, immb);
-                break;
-            default:
-                break; // Unreachable
+          case CFG_RR:
+            fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", binOps[op_code], binConfigs[cfg_mask],
+                     rd, ra, rb); break;
+          case CFG_RI:
+            fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", binOps[op_code], binConfigs[cfg_mask],
+                     rd, ra, immb); break;
+          case CFG_IR:
+            fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", binOps[op_code], binConfigs[cfg_mask],
+                     rd, imma, rb); break;
+          case CFG_II:
+            fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", binOps[op_code], binConfigs[cfg_mask],
+                     rd, imma, immb); break;
+          default: break; // Unreachable
         }
-    }
+        break;
+      }
+  }
+
+
+
+  // if (op_code == OP_NOT) {
+  //   unsigned int rd   = (bitInstruction & 0x0F00000) >> 24; // 0000 1111 0000 0000 0000 0000 0000 0000
+  //   unsigned int ra   = (bitInstruction & 0x0000F);         // 0000 0000 0000 0000 0000 0000 0000 1111
+  //   fprintf(outstream, WHT "  OP_NOT -                   - Rd: %2u -   Ra: %5u\n" RESET, rd, ra);
+  // // } else if (op_code == OP_NOP) {
+  // //   fprintf(outstream, CYN "OP_NOP\n");
+  // } else if (op_code == OP_ENDGA){
+  //   fprintf(outstream, CYN "OP_ENDGA\n");
+  // } else if (op_code == OP_LOAD) {
+  //   unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+  //   unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
+  //   unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+  //   unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
+  //   unsigned int imma = (bitInstruction & 0x007FF);             // 0000 0000 0000 0000 0000 0111 1111 1111
+  //   unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
+  //
+  //   switch (cfg_mask) {
+  //     case LOAD_REG: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u\n" RESET, loadConfigs[cfg_mask], rd, ra); break;
+  //     case LOAD_IMM: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u - Imma: %5u\n" RESET, loadConfigs[cfg_mask], rd, imma); break;
+  //     case LOAD_ADR: fprintf(outstream, GRN " OP_LOAD - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
+  //     case LOAD_RAA: fprintf(outstream, CYN " OP_LOAD - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, loadConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
+  //     default: break; // Unreachable
+  //   }
+  // } else if (op_code == OP_STORE) { // STORE
+  //   unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+  //   unsigned int type     = (bitInstruction & 0x3000000) >> 24; // 0000 0011 0000 0000 0000 0000 0000 0000
+  //   unsigned int rd       = (bitInstruction & 0x0F00000) >> 20; // 0000 0000 1111 0000 0000 0000 0000 0000
+  //   unsigned int ra   = (bitInstruction & 0x0000F);             // 0000 0000 0000 0000 0000 0000 0000 1111
+  //   unsigned int addr = (bitInstruction & 0xFFFFF);             // 0000 0000 0000 1111 1111 1111 1111 1111
+  //   switch(cfg_mask) {
+  //     case STORE_ADR: fprintf(outstream, RED "OP_STORE - Config: %9s - Rd: %2u - Addr: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, addr, typeConfigs[type]); break;
+  //     case STORE_RAA: fprintf(outstream, MAG "OP_STORE - Config: %9s - Rd: %2u -   Ra: %5u - Type: %5s\n" RESET, storeConfigs[cfg_mask], rd, ra, typeConfigs[type]); break;
+  //     default: break;
+  //   }
+  // } else if (op_code == OP_JMP) { // JMP
+  //   unsigned int rd   = (bitInstruction & 0xF000000 ) >> 24;       // 0000 1111 0000 0000 0000 0000 0000 0000
+  //   unsigned int addr = (bitInstruction & 0x0FFFFFF );             // 0000 0000 1111 1111 1111 1111 1111 1111
+  //   fprintf(outstream, YEL "%8s -                   - Rd: %2u - Addr: %5u\n" RESET, codeNames[op_code], rd, addr);
+  // } else { // BINARY
+  //       unsigned int rd = (bitInstruction & 0x3C00000) >> 22;       // 0000 0011 1100 0000 0000 0000 0000 0000
+  //       unsigned int cfg_mask = (bitInstruction & 0xC000000) >> 26; // 0000 1100 0000 0000 0000 0000 0000 0000
+  //       unsigned int ra = (bitInstruction & 0x7800) >> 11;          // 0000 0000 0000 0000 0111 1000 0000 0000
+  //       unsigned int rb = (bitInstruction & 0xF);                   // 0000 0000 0000 0000 0000 0000 0000 1111
+  //       unsigned int imma = (bitInstruction & 0x3FF800) >> 11;      // 0000 0000 0011 1111 1111 1000 0000 0000
+  //       unsigned int immb = (bitInstruction & 0x7FF);               // 0000 0000 0000 0000 0000 0111 1111 1111
+  //
+  //       switch (cfg_mask) {
+  //           case CFG_RR:
+  //               fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+  //                      rd, ra, rb);
+  //               break;
+  //           case CFG_RI:
+  //               fprintf(outstream, "%8s - Config: %9s - Rd: %2u -   Ra: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+  //                      rd, ra, immb);
+  //               break;
+  //           case CFG_IR:
+  //               fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u -   Rb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+  //                      rd, imma, rb);
+  //               break;
+  //           case CFG_II:
+  //               fprintf(outstream, "%8s - Config: %9s - Rd: %2u - Imma: %5u - Immb: %5u\n", codeNames[op_code], binConfigs[cfg_mask],
+  //                      rd, imma, immb);
+  //               break;
+  //           default:
+  //               break; // Unreachable
+  //       }
+  //   }
 }
 
 /* Prints the table state if the verbose option is checked */

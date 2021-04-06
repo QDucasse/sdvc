@@ -99,7 +99,7 @@ uint32_t instructionToUint32(Instruction* instruction) {
   switch(instruction->op_code) {
       /* NOP AND ENDGA OPERATIONS
       ======================== */
-      // case OP_NOP: break;
+      case OP_NOP: break;
       case OP_ENDGA: break;
 
       /* LOAD OPERATION
@@ -360,12 +360,12 @@ void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   writeChunk(chunk, bitLoadInstruction);
 }
 
-// /* NOP operation
-// ============= */
-// uint32_t nopInstruction(Instruction* instruction) {
-//   instruction->op_code = OP_NOP;
-//   return instructionToUint32(instruction);
-// }
+/* NOP operation
+============= */
+uint32_t nopInstruction(Instruction* instruction) {
+  instruction->op_code = OP_NOP;
+  return instructionToUint32(instruction);
+}
 
 
 /* ENDGA operation
