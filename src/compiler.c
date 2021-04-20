@@ -1106,14 +1106,19 @@ bool compile(char* source, int nbTargets, int nbGA, char* binName) {
 
   /* Distribute the number of GA per target */
   int gaPerTarget = nbGA / nbTargets;
+  int additionalGA = nbGA % nbTargets;
   /* Go through processes */
   int targetCount = 0;
   int instrCount = 0;
   while(!match(TOKEN_EOF)) {
      int count = 0;
      while (count < gaPerTarget) {
-        process();
-        count++;
+       process();
+       count++;
+     }
+     if (targetCount < additionalGA) {
+       process();
+       count++;
      }
      disassembleChunk(compiler->chunk);
      /* Write the output to the binary */
