@@ -96,9 +96,7 @@ static void compileFile(const char* path, int nbTargets, bool verbose) {
   char* source = readFile(path);
   /* Count number of guard/actions if needed */
   int nbGA = 0;
-  if (nbTargets != 1) {
-    nbGA = countOccurencesInString(source, "process");
-  }
+  nbGA = countOccurencesInString(source, "process");
   /* Setup disassembler */
   initDisassembler(verbose, logOutstream);
   /* Setup compiler */

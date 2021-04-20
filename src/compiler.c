@@ -1108,6 +1108,7 @@ bool compile(char* source, int nbTargets, int nbGA, char* binName) {
   int gaPerTarget = nbGA / nbTargets;
   /* Go through processes */
   int targetCount = 0;
+  int instrCount = 0;
   while(!match(TOKEN_EOF)) {
      int count = 0;
      while (count < gaPerTarget) {
@@ -1120,7 +1121,7 @@ bool compile(char* source, int nbTargets, int nbGA, char* binName) {
      snprintf(outFileName, 100, "%s.%d", binName, targetCount);
      FILE* writeOutstream = fopen(outFileName, "w");
      fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
-
+     instrCount += compiler->chunk->count;
      /* Reinitialize the compiler */
      compiler->chunk = initChunk();
      compiler->topTempRegister = &compiler->registers[0];
@@ -1131,6 +1132,6 @@ bool compile(char* source, int nbTargets, int nbGA, char* binName) {
 
 
 
-  fprintf(disassembler->outstream, "Compilation completed. Total number of instructions: %u\n", compiler->chunk->count);
+  fprintf(disassembler->outstream, "Compilation completed. Total number of instructions: %u\n", instrCount);
   return parser.hadError;
 }
