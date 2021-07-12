@@ -541,7 +541,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     Value elementValue = NIL_VAL;
     tableGet(compiler->globals, globKey, &elementValue, &baseAddress);
     /* Add the size of the value as the left operand */
-    offsetMulInstruction->imma = elementValue.size;
+    offsetMulInstruction->imma = elementValue.size * 8;
     /* Process offset */
     if (check(TOKEN_NUMBER)) {
         /* Array access of type:   array[2]  */
@@ -1096,10 +1096,10 @@ bool compile(char* source, int nbTargets, int nbGA, char* binName) {
   /* Initialize parser error handling */
   parser.hadError  = false;
   parser.panicMode = false;
-
   /* Compile globals */
-  while(!check(TOKEN_PROCESS)) {
+  while(!check(TOKEN_PROCESS) && !match(TOKEN_EOF)) {
     globalDeclaration();
+    if (parser.hadError) return parser.hadError;
   }
   /* Show the table state if the verbose option is checked */
   showTableState(compiler->globals);
@@ -1111,32 +1111,30 @@ bool compile(char* source, int nbTargets, int nbGA, char* binName) {
   int targetCount = 0;
   int instrCount = 0;
   while(!match(TOKEN_EOF)) {
-     int count = 0;
-     while (count < gaPerTarget) {
-       process();
-       count++;
-     }
-     if (targetCount < additionalGA) {
-       process();
-       count++;
-     }
-     disassembleChunk(compiler->chunk);
-     /* Write the output to the binary */
-     char outFileName[100];
-     snprintf(outFileName, 100, "%s.%d", binName, targetCount);
-     FILE* writeOutstream = fopen(outFileName, "w");
-     fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
-     instrCount += compiler->chunk->count;
-     /* Reinitialize the compiler */
-     compiler->chunk = initChunk();
-     compiler->topTempRegister = &compiler->registers[0];
-     compiler->topGlobRegister = &compiler->registers[REG_NUMBER-1];
-     compiler->pc = 0;
-     targetCount++;
+      int count = 0;
+      while (count < gaPerTarget) {
+          process();
+          count++;
+      }
+      if (targetCount < additionalGA) {
+          process();
+          count++;
+      }
+      disassembleChunk(compiler->chunk);
+      /* Write the output to the binary */
+      char outFileName[100];
+      snprintf(outFileName, 100, "%s.%d", binName, targetCount);
+      FILE *writeOutstream = fopen(outFileName, "w");
+      fwrite(compiler->chunk->instructions, sizeof(uint32_t), compiler->chunk->count, writeOutstream);
+      instrCount += compiler->chunk->count;
+      /* Reinitialize the compiler */
+      compiler->chunk = initChunk();
+      compiler->topTempRegister = &compiler->registers[0];
+      compiler->topGlobRegister = &compiler->registers[REG_NUMBER - 1];
+      compiler->pc = 0;
+      targetCount++;
+      if (parser.hadError) return parser.hadError;
   }
-
-
-
   fprintf(disassembler->outstream, "Compilation completed. Total number of instructions: %u\n", instrCount);
   return parser.hadError;
 }

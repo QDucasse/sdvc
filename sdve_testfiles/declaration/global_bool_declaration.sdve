@@ -1,6 +1,6 @@
 bool plip = false; // No Error
-plip = false;      // Missing type
-bool = false;      // Missing name
-bool plip false;   // Missing '='
-bool plip = 0;     // Wrong initialization type
-bool plip = false  // Missing ';'
+// plip = false;      // Missing type
+// bool = false;      // Missing name
+// bool plip false;   // Missing '='
+// bool plip = 0;     // Wrong initialization type
+// bool plip = false  // Missing ';'

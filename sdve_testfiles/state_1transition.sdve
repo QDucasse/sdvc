@@ -1,0 +1,17 @@
+state {a(0), b(1)} P1.state = 0
+
+  process P1
+    guardBlock
+      temp bool t_0 = P1.state == 1;
+
+    guardCondition t_0;
+    effect
+      P1.state = 1;
+
+
+// OP_LOAD  - Config:  LOAD_ADR - Rd: 14 - Addr:     0 - Type: VAL_STA
+//   OP_EQ  - Config:    CFG_RI - Rd:  0 -   Ra:    14 - Immb:     1
+//  OP_JMP  -                   - Rd:  0 - Addr:     6
+// OP_LOAD  - Config:  LOAD_IMM - Rd: 14 - Imma:     1
+// OP_STORE - Config: STORE_ADR - Rd: 14 - Addr:     0 - Type: VAL_STA
+// OP_ENDGA
