@@ -567,7 +567,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
             offsetMulInstruction->rb = foundReg->number;
         }
         offsetMulInstruction->cfg_mask = CFG_IR;
-        if (isTempVar) decrementTopTempRegister();
+        if (isTempVar && !isAssignment) decrementTopTempRegister();
         advance();
     }
 
@@ -583,7 +583,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
     if (!isAssignment) incrementTopTempRegister();
-    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+    showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, compiler->addressRegister);
 
     /* Process ADD operation */
     Instruction* addAddressInstruction = initInstruction();
@@ -725,20 +725,7 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   incrementPC();
   /* Consume the closing square bracket */
   consume(TOKEN_RIGHT_SQBRACKET, "Expecting usage of an array access as operand to be defined as array[index] (right sqbracket missing).");
-
-  /* Process expression */
-  /* Set the resolved register to the corresponding register */
-  if (isLeftSide) {
-    instruction->ra = loadedValueRegister->number;
-    if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting resolved register %u as an array access!\n", instruction->ra);
-  } else {
-    instruction->rb = loadedValueRegister->number;
-    if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting resolved register %u as an array access!\n", instruction->rb);
-  }
-  /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
-  instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
-  /* Shift the temporary head down */
-  decrementTopTempRegister();
+  decrementTopTempRegister(); // First one for temp
   decrementTopTempRegister();
 }
 
@@ -860,6 +847,7 @@ static void globalArrayAccess(String* globKey) {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, compiler->addressRegister);
   /* Consume the closing square bracket */
   consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index] (right sqbracket missing).");
   consume(TOKEN_EQUAL, "Expecting '=' in assignment.");
@@ -894,7 +882,8 @@ static void globalArrayAccess(String* globKey) {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
-  decrementTopTempRegister(); // Loaded value processed
+  decrementTopTempRegister(); 
+  decrementTopTempRegister();
 }
 
 /* Assign a value to a global variable */
@@ -992,7 +981,7 @@ static void assignment() {
   }
 
   if (parser.panicMode) synchronize();
-  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister);
+  showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, compiler->addressRegister);
 }
 
 

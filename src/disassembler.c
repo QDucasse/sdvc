@@ -169,7 +169,7 @@ void showTableState(Table* table) {
   fprintf(outstream, "=== --------------------------- ===\n");
 }
 
-void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister) {
+void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister, Register* addressRegister) {
   /* If not verbose quit immediately */
   if (!disassembler->verbose) return;
   FILE* outstream = disassembler->outstream;
@@ -191,6 +191,13 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
       fprintf(outstream, "\n");
     }
   }
+  fprintf(outstream, "=== Address Register ===\n");
+  if (!(addressRegister->varName == NULL)) {
+    fprintf(outstream, "[AD] - %8s\n", addressRegister->varName->chars);
+  } else {
+    fprintf(outstream, "[AD] - Empty                    \n");
+  }
+
   fprintf(outstream, "=== --------------- ===\n");
 }
 

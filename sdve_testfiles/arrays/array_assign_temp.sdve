@@ -1,0 +1,12 @@
+state {start(0), end(1)} test_state = 0;
+byte b[3] = {55, 56, 57};
+
+  process test
+    guardBlock
+      temp bool t_0 = true;
+
+    guardCondition t_0;
+    effect
+      temp byte t_8 = 120,
+      b[2] = t_8,
+      test_state = 1;

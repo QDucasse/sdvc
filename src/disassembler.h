@@ -26,7 +26,7 @@ void initDisassembler(bool verbose, FILE* outstream);
 void freeDisassembler();
 void disassembleInstruction(uint32_t bitInstruction);
 void showTableState(Table* table);
-void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister);
+void showRegisterState(Register* registers, Register* topTempRegister, Register* topGlobRegister, Register* addressRegister);
 void disassembleChunk(Chunk* chunk);
 void disassembleBinary(const char* fileContent);
 
