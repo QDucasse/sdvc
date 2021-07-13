@@ -349,6 +349,7 @@ void writeStoreFromRegister(Register* reg, Chunk* chunk) {
   disassembleInstruction(bitStoreInstruction);
   writeChunk(chunk, bitStoreInstruction);
   emptyRegister(reg);
+  freeInstruction(strInstruction);
 }
 
 
@@ -358,6 +359,7 @@ void writeLoadFromRegister(Register* reg, Chunk* chunk) {
   uint32_t bitLoadInstruction = loadInstructionAddr(loadInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
   disassembleInstruction(bitLoadInstruction);
   writeChunk(chunk, bitLoadInstruction);
+  freeInstruction(loadInstruction);
 }
 
 /* NOP operation

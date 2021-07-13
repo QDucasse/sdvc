@@ -29,7 +29,8 @@ sdvc
 sdvc.cbp
 
 # Binaries
-bin/
+bin/*
+!bin/README.md
 
 # Logs
 log/

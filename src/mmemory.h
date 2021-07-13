@@ -13,6 +13,9 @@
 
 #define FREE(pointer) reallocate(pointer, 0)
 
+#define FREE_ARRAY(type, pointer, count) \
+  reallocate(pointer, sizeof(type) * (count))
+
 /* The capacity becomes either 8 if the old one was smaller
 or doubles the amount. 8 is arbitrary but should be looked
 against real-world usage. */

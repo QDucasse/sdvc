@@ -15,6 +15,7 @@ Register* initRegister(int number) {
 
 /* Empty register */
 void emptyRegister(Register* reg) {
+  if (reg->varName != NULL) freeString(reg->varName);
   reg->varName = NULL;
   reg->varValue = NIL_VAL;
   reg->address = 0;
@@ -23,7 +24,7 @@ void emptyRegister(Register* reg) {
 
 /* Free a given register */
 void freeRegister(Register* reg) {
-  FREE(reg);
+    FREE(reg);
 }
 
 /* Textual representation of a given register */

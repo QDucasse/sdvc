@@ -62,6 +62,10 @@ static GlobalName* initGlobalName() {
   return globalName;
 }
 
+void freeGlobalName(GlobalName* globalName) {
+    FREE(globalName);
+}
+
 /* ==================================
           NAME PROCESSING
 =================================== */
@@ -116,6 +120,7 @@ void initCompiler() {
 void freeCompiler() {
   freeChunk(compiler->chunk);
   freeTable(compiler->globals);
+  freeRegister(compiler->addressRegister);
   FREE(compiler->registers);
   FREE(compiler);
 }
@@ -345,6 +350,7 @@ static void globalBoolDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+  freeGlobalName(globName);
 }
 
 
@@ -366,6 +372,7 @@ static void globalByteDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+  freeGlobalName(globName);
 }
 
 
@@ -387,6 +394,7 @@ static void globalIntDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
+  freeGlobalName(globName);
 }
 
 
@@ -410,7 +418,6 @@ static void globalStateDeclaration() {
   /* Process name and '=' */
   GlobalName* globName = initGlobalName();
   assignGlobalName(globName);
-  String* varName = globName->name;
   /* Process Value */
   Value varValue = NIL_VAL;
   if (match(TOKEN_NUMBER)) {
@@ -423,9 +430,10 @@ static void globalStateDeclaration() {
     error("Wrong type, an int variable must be initialized with a number between -32768 and 32767.");
   }
   /* Add to the globals table */
-  tableSet(compiler->globals, varName, varValue, compiler->globals->currentAddress);
+  tableSet(compiler->globals, globName->name, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
   compiler->globals->currentAddress += STATE_SIZE;
+  freeGlobalName(globName);
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
 
@@ -470,6 +478,7 @@ static int incrementTopTempRegister() {
 /* Shift the pointer down for the top register available for temporary variables */
 static int decrementTopTempRegister() {
   int topTempNumber = compiler->topTempRegister->number;
+  emptyRegister(compiler->topTempRegister);
   compiler->topTempRegister = &compiler->registers[topTempNumber - 1];
   return topTempNumber;
 }
@@ -569,6 +578,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
         offsetMulInstruction->cfg_mask = CFG_IR;
         if (isTempVar && !isAssignment) decrementTopTempRegister();
         advance();
+        freeString(varKey);
     }
 
     /* If the array access is an assignment -> special register, else use a temporary */
@@ -582,6 +592,8 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     disassembleInstruction(bitsInstruction);
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
+    freeInstruction(offsetMulInstruction);
+
     if (!isAssignment) incrementTopTempRegister();
     showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, compiler->addressRegister);
 
@@ -596,6 +608,7 @@ static Register* processAddress(String* globKey, bool isAssignment) {
     disassembleInstruction(bitsInstruction);
     writeChunk(compiler->chunk, bitsInstruction);
     incrementPC();
+    freeInstruction(addAddressInstruction);
 
     targetRegister->varValue.type = elementValue.type;
     return targetRegister;
@@ -662,7 +675,7 @@ static void tempVariableOperand(bool isLeftSide, Instruction* instruction) {
   instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
   /* Shift the temporary head down */
   decrementTopTempRegister();
-  freeString(tempKey);
+//  freeString(tempKey);
   /* Consume the operand */
   advance();
 }
@@ -709,7 +722,7 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   /* Setup register */
   Register* loadedValueRegister = addressRegister; // Stay in the same register to load the value
   String* tempValueRegName = initString();
-  assignString(tempValueRegName, "t_loaded_value", 14);
+  assignString(tempValueRegName, "t_larr", 6);
   loadedValueRegister->varName = tempValueRegName;
   /* Setup load instruction */
   loadValueInstruction->op_code = OP_LOAD;
@@ -723,8 +736,23 @@ static void globalArrayAccessOperand(bool isLeftSide, Instruction* instruction, 
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+  freeInstruction(loadValueInstruction);
   /* Consume the closing square bracket */
   consume(TOKEN_RIGHT_SQBRACKET, "Expecting usage of an array access as operand to be defined as array[index] (right sqbracket missing).");
+
+  /* Process expression */
+  /* Set the resolved register to the corresponding register */
+  if (isLeftSide) {
+    instruction->ra = loadedValueRegister->number;
+    if (disassembler->verbose) fprintf(disassembler->outstream, "LHS: Setting resolved register %u as an array access!\n", instruction->ra);
+  } else {
+    instruction->rb = loadedValueRegister->number;
+    if (disassembler->verbose) fprintf(disassembler->outstream, "RHS: Setting resolved register %u as an array access!\n", instruction->rb);
+  }
+  /* Set corresponding cfg bit to 0 (LHS - second, RHS - first) */
+  instruction->cfg_mask = isLeftSide ? 0b0 << 1 : 0b0;
+
+  /* Shift the temporary head down */
   decrementTopTempRegister(); // First one for temp
   decrementTopTempRegister();
 }
@@ -755,6 +783,7 @@ static void operand(bool isLeftSide, Instruction* instruction) {
         /* Simple assignment */
         globVariableOperand(isLeftSide, instruction, globKey);
       }
+//      freeString(globKey);
     }
   } else {
     /* Not a variable or an immediate value */
@@ -834,12 +863,12 @@ static void globalArrayAccess(String* globKey) {
   unsigned int typeCode = typeCfg(addressRegister->varValue.type);
   Register* loadedValueRegister = compiler->topTempRegister;
   String* tempValueRegName = initString();
-  assignString(tempValueRegName, "t_loaded_value", 14);
+  assignString(tempValueRegName, "t_larr", 6);
   loadedValueRegister->varName = tempValueRegName;
   loadValueInstruction->op_code = OP_LOAD;
   loadValueInstruction->rd = loadedValueRegister->number;
   loadValueInstruction->ra = addressRegister->number;
-  loadValueInstruction->cfg_mask = LOAD_RAA; // LOAD_REG_AS_ADDR to define
+  loadValueInstruction->cfg_mask = LOAD_RAA;
   loadValueInstruction->type = typeCode;
   incrementTopTempRegister();
   /* Write the load instruction */
@@ -847,6 +876,7 @@ static void globalArrayAccess(String* globKey) {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+  freeInstruction(loadValueInstruction);
   showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, compiler->addressRegister);
   /* Consume the closing square bracket */
   consume(TOKEN_RIGHT_SQBRACKET, "Expecting assignment to an array element to be defined as array[index] (right sqbracket missing).");
@@ -869,7 +899,10 @@ static void globalArrayAccess(String* globKey) {
     disassembleInstruction(bitsNotInstruction);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
+    freeInstruction(notInstr);
   }
+  /* Free initial instruction */
+  freeInstruction(expressionInstruction);
 
   /* Write Store for the array element */
   Instruction* storeInstruction = initInstruction();
@@ -882,7 +915,8 @@ static void globalArrayAccess(String* globKey) {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
-  decrementTopTempRegister(); 
+  freeInstruction(storeInstruction);
+
   decrementTopTempRegister();
 }
 
@@ -909,6 +943,7 @@ static void globalAssignment(String* globKey) {
   disassembleInstruction(bitsInstruction);
   writeChunk(compiler->chunk, bitsInstruction);
   incrementPC();
+
   /* Write not instruction */
   if (negated) {
     Instruction* notInstr = initInstruction();
@@ -916,7 +951,11 @@ static void globalAssignment(String* globKey) {
     disassembleInstruction(bitsNotInstruction);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
+    freeInstruction(notInstr);
   }
+
+  /* Free initial instruction */
+  freeInstruction(instruction);
 }
 
 
@@ -955,7 +994,11 @@ static void tempAssignment() {
     disassembleInstruction(bitsNotInstruction);
     writeChunk(compiler->chunk,bitsNotInstruction);
     incrementPC();
+    freeInstruction(notInstr);
   }
+
+  /* Free initial instruction */
+  freeInstruction(instruction);
 }
 
 
@@ -976,12 +1019,15 @@ static void assignment() {
       /* Simple assignment */
       globalAssignment(globKey);
     }
+    /* Free the global key string */
+//    freeString(globKey);
   } else {
     error("An assignment should begin with either an identifier (global) or 'temp' (temporary).");
   }
 
   if (parser.panicMode) synchronize();
   showRegisterState(compiler->registers, compiler->topTempRegister, compiler->topGlobRegister, compiler->addressRegister);
+//  showTableState(compiler->globals);
 }
 
 
@@ -1019,7 +1065,11 @@ static int guardCondition() {
     uint32_t bitJmpInstr = jumpInstruction(jmpInstr, foundReg->number, 0x000000);
     writeChunk(compiler->chunk, bitJmpInstr);
     incrementPC();
+    freeInstruction(jmpInstr);
   }
+  /* Free the test string */
+  freeString(tempTest);
+
   decrementTopTempRegister();
   consume(TOKEN_SEMICOLON, "Guardcondition should end with ';'.");
   return compiler->chunk->count;
@@ -1049,6 +1099,7 @@ static void endProcess(int jmpSrc) {
   uint32_t bitEndGA = endGAInstruction(endGA);
   writeChunk(compiler->chunk, bitEndGA);
   incrementPC();
+  freeInstruction(endGA);
   uint32_t oldInstr = compiler->chunk->instructions[jmpSrc-1];
   /* Patch the jump from guardcondition */
   if (disassembler->verbose) fprintf(disassembler->outstream, "Backpatching Jump from: %d\n", jmpSrc);

@@ -114,6 +114,7 @@ static void adjustCapacity(Table* table, int capacity) {
   }
 
   /* Set the new entries and capacity */
+  FREE(table->entries);
   table->entries = entries;
   table->capacity = capacity;
 }

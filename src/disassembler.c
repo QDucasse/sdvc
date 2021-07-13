@@ -175,7 +175,7 @@ void showRegisterState(Register* registers, Register* topTempRegister, Register*
   FILE* outstream = disassembler->outstream;
   fprintf(outstream, "=== Register states ===\n");
   for (int i = 0 ; i < REG_NUMBER ; i++) {
-    if (!(registers[i].varName == NULL)) {
+    if (registers[i].varName != NULL) {
       fprintf(outstream, "[%2i] - Variable named %8s", i, registers[i].varName->chars);
     } else {
       fprintf(outstream, "[%2i] - Empty                  ", i);
