@@ -348,7 +348,6 @@ void writeStoreFromRegister(Register* reg, Chunk* chunk) {
   uint32_t bitStoreInstruction = storeInstruction(strInstruction, reg->number, reg->address, typeCfg(reg->varValue.type));
   disassembleInstruction(bitStoreInstruction);
   writeChunk(chunk, bitStoreInstruction);
-  emptyRegister(reg);
   freeInstruction(strInstruction);
 }
 
