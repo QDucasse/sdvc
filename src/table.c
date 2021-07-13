@@ -29,6 +29,7 @@ void assignEntry(Entry* entry, String* key, Value value, uint32_t address) {
 
 /* Free the memory of an entry */
 void freeEntry(Entry* entry) {
+  freeString(entry->key);
   FREE(entry);
 }
 
@@ -110,6 +111,7 @@ static void adjustCapacity(Table* table, int capacity) {
     dest->key = entry->key;
     dest->value = entry->value;
     dest->address = entry->address;
+
     table->count++; /* Increment if non-tombstone */
   }
 

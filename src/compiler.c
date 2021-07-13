@@ -63,6 +63,7 @@ static GlobalName* initGlobalName() {
 }
 
 void freeGlobalName(GlobalName* globalName) {
+    freeString(globalName->name);
     FREE(globalName);
 }
 
@@ -350,7 +351,6 @@ static void globalBoolDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
-  freeGlobalName(globName);
 }
 
 
@@ -372,7 +372,6 @@ static void globalByteDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
-  freeGlobalName(globName);
 }
 
 
@@ -394,7 +393,6 @@ static void globalIntDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expecting '}' after array initialization.");
   }
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
-  freeGlobalName(globName);
 }
 
 
@@ -433,7 +431,6 @@ static void globalStateDeclaration() {
   tableSet(compiler->globals, globName->name, varValue, compiler->globals->currentAddress);
   /* Update the current size with the added int */
   compiler->globals->currentAddress += STATE_SIZE;
-  freeGlobalName(globName);
   consume(TOKEN_SEMICOLON, "Expecting ';' after variable declaration.");
 }
 
