@@ -4,6 +4,8 @@
 #include "chunk.h"
 #include "disassembler.h"
 
+Disassembler* disassembler;
+
 char* binOps[] = {
   [OP_ADD]   = "OP_ADD",
   [OP_SUB]   = "OP_SUB",

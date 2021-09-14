@@ -26,7 +26,8 @@ typedef struct {
 } Compiler;
 
 /* Compiler singleton */
-Compiler* compiler;
+extern Compiler* compiler;
+extern Disassembler* disassembler;
 
 /* Allocation/Deallocation routine */
 void initCompiler();

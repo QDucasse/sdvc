@@ -12,7 +12,7 @@
 #include "table.h"
 #include "value.h"
 
-extern Disassembler* disassembler;
+Compiler* compiler;
 
 /* Parser structure */
 typedef struct {

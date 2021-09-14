@@ -20,8 +20,6 @@ typedef struct {
   FILE* outstream;
 } Disassembler;
 
-Disassembler* disassembler;
-
 void initDisassembler(bool verbose, FILE* outstream);
 void freeDisassembler();
 void disassembleInstruction(uint32_t bitInstruction);
